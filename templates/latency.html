@@ -1,0 +1,118 @@
+{% extends 'menu.html' %}
+{% block content %}
+<HEAD>
+	<link href="/css/gmilatency.css" rel="stylesheet" type="text/css" />	
+	<SCRIPT src="/js/jquery-3.6.0.min.js"></SCRIPT>
+	<script>
+		var sites = null;
+		$(document).ready(function() {
+			updateContent();
+			setInterval(updateContent, 60000); 
+		});
+
+		function fixup(name) {
+			return (name.replaceAll("(","").replaceAll(")","").replaceAll(" ","_").toUpperCase())
+		}
+
+		function breakStamp(stamp) {
+			let copy = stamp.slice();
+			copy = copy.slice(copy.indexOf(" ")+1);
+			copy = copy.slice(copy.indexOf(" ")+1);
+			copy = copy.slice(copy.indexOf(" ")+1);
+			copy = copy.slice(copy.indexOf(" ")+1);
+			pos = stamp.length-copy.length;
+			return [stamp.slice(0,pos),"<BR>",stamp.slice(pos)].join('');
+		}
+		function breakName(name) {
+			let copy = name.slice();
+			pos = name.indexOf("(");
+			return [name.slice(0,pos),"<BR>",name.slice(pos)].join('');
+		}
+		function updateContent() {
+				var sites;
+				$.ajaxSetup({
+						    async: false
+							});
+
+				$.getJSON("/rest/v1/gmi-sites", function(json){
+						sites = json;
+
+				});
+
+				$.get("/rest/v1/gmi-latency", function(data, status){
+				var gridObj = {};
+				var row = {};
+				data["result"].forEach(function(result) {
+					row[result["sla_id"]] =  {
+							"min" 	   : result["min_sample"],
+							"max" 	   : result["max_sample"],
+							"avg" 	   : result["avg_sample"],
+							"last"	   : result["last_sample"],
+							"status"   : result["status"],
+							"stamp"	   : result["stamp"],
+							"sla_name" : result["sla_name"],
+							"delta"	   : result["delta"],
+							"description" : result["description"]
+						}
+					gridObj[result["device"]]=$.extend(true,{},row);
+				});
+
+				var largest=0;
+
+				var content = "";
+
+				for (var key in gridObj) {
+					if (largest==0) {
+						for (var key2 in gridObj[key]) {
+							if (largest < parseInt(key2)) { largest = parseInt(key2); }
+						}	
+					}
+					if (content == "") {
+						content += "<div class='row sticky-top' style='top: 45px; border: solid 1px black;'>";
+						content += "<div class=col id=deviceCol><div style='padding-top:20%'>location</div></div><div class='col' id=timeStampCol><div style='padding-top:20%'>time</div></div>";
+						for (i = 1; i <= largest; i++) {
+							content += "<div class='col logoContainer img-fluid' id="+fixup(gridObj[key][i]["sla_name"])+"></div>";
+						}
+						content += "</div>";
+					}
+					content += "<div class='row' ";
+
+					if (gridObj[key][1]["delta"] > 5) { 
+						content += " id=notUpdatingLongTerm"; 
+					} else if (gridObj[key][1]["delta"] >0) { 
+						content += " id=notUpdatingShortTerm"; 
+					} else {
+						content += " id=datarow";
+					}
+
+					content += ">";
+					content += "<div class='col' style='border: solid 1px' id=device>"+breakName(gridObj[key][1]["description"])+"</div><div class='col' style='border: solid 1px' id=timestamp>"+breakStamp(gridObj[key][1]["stamp"]);
+					if (gridObj[key][1]["delta"] > 0) {
+						content += " ("+(gridObj[key][1]["delta"]).toString()+" days)"
+					}
+					content += "</div>";
+					for (i = 1; i<= largest; i++) {
+						content += "<div class=col style='border: solid 1px' id=latencyData"
+									if ( gridObj[key][i]["delta"] < 5 ) {
+                        			if ( gridObj[key][i]["last"] > ( (gridObj[key][i]["avg"]-gridObj[key][i]["min"]+gridObj[key][i]["avg"])*1.5 ) ) {
+			                        	content += " class=alert";
+									} else if (gridObj[key][i]["last"] > ( (gridObj[key][i]["avg"]-gridObj[key][i]["min"]+gridObj[key][i]["avg"])*1.2 ) ) {
+										content += " class=warn";
+									}
+									}
+						content += ">"+gridObj[key][i]["last"].toString()+"<div id=otherData>"+gridObj[key][i]["min"].toString()+" / "+gridObj[key][i]["avg"].toString()+" / "+gridObj[key][i]["max"].toString()+"</div></div>";
+					}
+					content += "</div>";
+				}
+				content += "</div>";
+				$('#gmilatency').html(content);
+			});
+                };
+	</script>
+</HEAD>
+<BODY>
+<div class=container id="gmilatency">
+</div>
+<DIV id="informationBox">Measurements are in milleseconds and are round trip time (RTT) from perspective of the network core at facility to the destination in the column heading.  Underneath current measurement is min / avg / max.  <BR>If the measurement is > the difference of the average and the minimum, plus the average, multiplied by 1.5 (sample > (avg+(avg-min))*1.5), the sample will alert (red).</DIV>
+</BODY>
+{% endblock %}

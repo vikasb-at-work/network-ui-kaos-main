@@ -1,0 +1,621 @@
+{% extends 'menu.html' %}
+{% block content %}
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="check-circle-fill" fill="currentColor" viewBox="0 0 16 16">
+    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+  </symbol>
+  <symbol id="info-fill" fill="currentColor" viewBox="0 0 16 16">
+    <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+  </symbol>
+  <symbol id="exclamation-triangle-fill" fill="currentColor" viewBox="0 0 16 16">
+    <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+  </symbol>
+</svg>
+<STYLE>
+    .gmiDkBlue {
+        background-color: #202975;
+    }
+	/* css for wider columns so they don't wrap*/
+	.wider-model {
+		min-width: 85px;
+	}
+	.wider-switch_name {
+		min-width: 75px;
+	}
+	.wider-type {
+		min-width: 125px;
+	}
+	.wider-serial {
+		min-width: 65px;
+	}
+	.wider-MAC {
+		min-width: 65px;
+	}
+</STYLE>
+<template id="gridTemplate">
+  <div id="alert" class="alert fixed-top" style="margin-top: 50px; padding: 10px; z-index: 1" role="alert">
+	  <svg id="message_box_icon" class="bi flex-shrink-0 me-2" width="24" height="24" role="img"><use xlink:href=""></svg>{%raw%}{{message}}{%endraw%}
+  </div>
+  <div class="container">
+    <div class="row">
+      <div class="col-sm-10">
+        <h1>Site Switches</h1>
+        <hr><br><br>
+		<select id="siteSelect" name="siteSelect" id="siteSelect" v-model="siteSelect" @change="get_data()">
+			{% for site in sites %}<option value="{{site['site']}}">{{site["site"]}}{% endfor%}
+		</select>
+        <button type="button" @click="toggleAddData" class="btn btn-success btn-sm">Add Switch</button>
+        <br><br>
+        <table class="table table-hover">
+          <thead>
+            <tr>
+			  <th v-for="(c, index) in cols" :key=index scope="col" :class="{'wider-model': c.name === 'model',
+																			 'wider-switch_name': c.name === 'switch_name',
+																			 'wider-type': c.name === 'type',
+																			 'wider-serial': c.name === 'serial',
+																			 'wider-MAC': c.name === 'MAC'}">
+					<div>{%raw%}{{c.text}}{%endraw%}
+					  <template v-if="sort.column === c.name && sort.by === 'asc'">
+						<i class="fa-solid fa-sort-up" @click="sort={column: c.name, by: 'desc'}"></i>
+					  </template>
+					  <template v-else-if="sort.column === c.name && sort.by === 'desc'">
+						<i class="fa-solid fa-sort-down" @click="sort={column: c.name, by: ''}"></i>
+					  </template>
+					  <template v-else>
+						<i class="fa-solid fa-sort" @click="sort={column: c.name, by: 'asc'}"></i>
+					  </template>
+					</div>
+				   </div>
+				  </div>
+				</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody class="text-nowrap">
+		  <style>
+				.r-1 { background-color: #cce0ff; }
+				.r-2 { background-color: #c7ffdb; }
+				.r-3 { background-color: #99afff; }
+				.r-4 { background-color: #ffd599; }
+				.r-5 { background-color: #ff6600; }
+				.r-6 { background-color: #ffd7d4; }
+
+				.over { border: 3px dotted #666; }
+		  </style>
+		  <tr v-for="(row, index) in filtered_data" :key="index" :class="'r-' + row.type">
+			  <td>{%raw%}{{row.model}}{%endraw%}</td>
+			  <td>{%raw%}{{row.switch_name}}{%endraw%}</td>
+			  <td>{%raw%}{{zoneText[row.type]}}{%endraw%}</td>
+			  <td>{%raw%}{{row.serial}}{%endraw%}</td>
+			  <td>{%raw%}{{row.MAC}}{%endraw%}</td>
+		  <td>
+			<div class="btn-group" role="group">
+			  <button type="button" @click="launchSwitchEdit (row)" class="btn btn-warning btn-sm">Manage</button>
+			  <span style="margin-left: 20px; border-left: 1px dashed #333; padding-left: 10px;"></span>
+			  <button style="margin-left: 10px" type="button" @click="are_you_sure(handleDelete,row)" class="btn btn-danger btn-sm">Delete</button>
+			  <span style="margin-left: 20px; border-left: 1px dashed #333; padding-left: 10px; padding-right: 20px; font-weight: bolder; background: #ffffff44">CHANGE:
+			  <button style="margin-left: 10px" type="button" @click="changeSwitchZone (row)" class="btn btn-danger btn-sm gmiDkBlue">Zone</button>
+			  <button style="margin-left: 10px" type="button" @click="changeSwitchName (row)" class="btn btn-danger btn-sm gmiDkBlue">Name</button>
+			  </span>
+			</div>
+		  </td>
+		</tr>
+	  </tbody>
+	</table>
+  </div>
+</div>
+
+<!--add data modal -->
+<div
+ref="addData"
+class="modal fade"
+:class="{ show: activeAddData, 'd-block': activeAddData }"
+tabindex="-1"
+role="dialog">
+<div class="modal-dialog" role="document">
+<div class="modal-content">
+  <div class="modal-header">
+	<h5 class="modal-title">Add a new switch</h5>
+	<button
+	  type="button"
+	  class="close"
+	  data-dismiss="modal"
+	  aria-label="Close"
+	  @click="toggleAddData">
+	  <span aria-hidden="true">&times;</span>
+	</button>
+  </div>
+  <div class="modal-body">
+	<form>
+	  <div class="mb-3">
+		<label for="addSwitchModel" class="form-label">Switch Model:</label>
+	  <select type="text" class="form-select" id="addModel" v-model="addData.model" placeholder="Select a gswitch model">
+			  <option value="" disabled>Please select a valid switch model number from the list</option>
+			  {% for model in models %}{% if model['display'] %}<option value="{{model['model']}}">{{model['model']}}-{{model["description"]}}</option>{%endif%}{% endfor%}
+	  </select>
+	  </div>
+	  <!-- per aruba "The first character of the host name must be a letter or a number. Length: 1 to 32 characters." -->
+	  <div class="mb-3">
+		<label for="addName" class="form-label">Switch Name:</label>
+		<input
+		  type="text"
+		  maxlength="32"
+		  class="form-control"
+		  id="addName"
+		  v-model="addData.switch_name"
+		  placeholder="Enter a name for this switch."> 
+	  </div>
+
+	  <div class="mb-3">
+		  <label for="addType" class="form-label">Zone Type:</label>
+		<select
+		  type="text"
+		  class="form-select"
+		  id="addType"
+		  v-model="addData.type"
+		  placeholder="Which zone is this switch in?">
+		  <option value="" disabled>Please select the zone this switch is in.</option>
+		  <option value=1>Default/All</option>
+		  <option value=2>Enterprise</option>
+		  <option value=3>ESX TOR</option>
+		  <option value=4>Manufacturing</option>
+		  <option value=5>FW Stack</option>
+		  <option value=6>WAN POD</option>
+	  </select>
+	  </div>
+
+	  <div class="mb-3">
+		<label for="addSerial" class="form-label">Serial#:</label>
+		<input
+		  type="text"
+		  maxlength="48"
+		  class="form-control"
+		  id="addSerial"
+		  v-model="addData.serial"
+		  placeholder="Enter a serial# for this switch.">
+	  </div>
+
+	  <div class="mb-3">
+		<label for="addMac" class="form-label">Switch MAC Address:</label>
+		<input
+		  type="text"
+		  maxlength="24"
+		  class="form-control"
+		  id="addMac"
+		  v-model="addData.MAC"
+		  placeholder="Enter a MAC address for this switch.">
+	  </div>
+
+	  <div class="btn-group" role="group">
+		<button
+		  type="button"
+		  class="btn btn-primary btn-sm"
+		  @click="handleAddSubmit">
+		  Submit
+		</button>
+		<button
+		  type="button"
+		  class="btn btn-danger btn-sm"
+		  @click="handleAddReset">
+		  Reset
+		</button>
+	  </div>
+	</form>
+  </div>
+</div>
+</div>
+</div>
+<div v-if="activeAddData" class="modal-backdrop fade show"></div>
+
+{% include "vue_utility_modal_are_you_sure.html" %}
+{% include "vue_site_switches_edit_name.html" %}
+{% include "vue_site_switches_edit_zone.html" %}
+{% include "vue_utility_modal_alert.html" %}
+
+</div>
+</template>
+
+<script type="module">
+import { createApp } from 'https://unpkg.com/petite-vue?module'
+import 'https://unpkg.com/axios/dist/axios.min.js'
+
+let endpoint = "/rest/v1/config/siteSwitches";
+let switchEndpointbySite = "/rest/v1/config/siteSwitches/{}";
+const renameSwitchEndpoint = "/rest/v1/config/switchRename/{}/{}";
+const rezoneSwitchEndpoint = "/rest/v1/config/switchRezone/{}/{}";
+
+function app() {
+return {
+  $template: '#gridTemplate',
+  cols: [
+	{name: 'model', text: 'Model'},
+	{name: 'switch_name', text: 'Switch Name'},
+	{name: 'type', text: 'Zone Type'},
+	{name: 'serial', text: 'Serial'},
+	{name: 'MAC', text: 'MAC'}
+  ],
+  data: [],
+  siteSelect: 'ADA',
+  sort: {
+	  column: 'type',
+	  by: 'asc'
+  },
+  containerenv: "{{ auth["dockerenv"] }}",
+  areYouSure: {title: 'WARNING - DATA WILL BE REMOVED', body: 'This action will delete data.  Are you sure?', button:'Yes, proceed.', action:undefined},
+  areYouSureDefault: {title: 'WARNING - DATA WILL BE REMOVED', body: 'This action will delete data.  Are you sure?', button:'Yes, proceed.', action:undefined},
+  areYouSureModify: {title: 'WARNING - IMPORTANT DATA WILL BE MODIFIED', body: 'This action will change important data that affects how Aruba Central sees this device.  Are you sure?', button:'Yes, proceed.', action:undefined},
+  areYouSureZone: {title: 'ALERT', body: 'Changing a switch zone does NOT reset any zone specific data.  You must remove any LAGs, TRUNKs, or VLANs and their port assignments if they reference VLANs that are not available in this zone.  Alternatively, you can add the VLANs to this zone.  You will not see configuration time errors but will see errors when you push if this is not corrected.', button:'I understand', action:undefined},
+  message_class: "none",
+  message: "",
+  message_icon: "",
+  activeAddData: false,
+  siteSelect: 'ADA',
+  activeEditData: false,
+  switch_activeEditNameData: false,
+  switch_activeEditZoneData: false,
+  switch_editName: { name: "" },
+  switch_editZone: { zone: "" },
+  addData: { site: '', model: '', switch_name: '', switch_number: '', type: '', serial: '', MAC: '' },
+  editData: { site: '', model: '', switch_name: '', switch_number: '', type: '', serial: '', MAC: '', id: ''},
+  shutdownText: { true: "Enabled", false: "Enabled" },
+  zoneText: { 1: "Default/All", 2: "Enterprise", 3:"ESX TOR", 4:"Manufacturing", 5:"FW Stack", 6:"WAN POD"},
+  enableDisableText: { false: "Disabled", true: "Enabled" },
+  igmpText: { 0: "Disabled", 2: "V2", 3: "V3" },
+  deleteData: { id: '' },
+  modalAlert: {title: '', body: '', button:'OK'},
+  activate_modal_alert(title, message, button, action){
+  	this.modalAlert.title = title;
+    this.modalAlert.displayed = true;
+    this.modalAlert.button = button;
+    var el = document.getElementById('modalAlert');
+    var bel = new bootstrap.Modal(el);
+    bel.show();
+    this.modalAlert.active = bel;
+    var modalBody = document.getElementById('modalBody');
+    modalBody.innerHTML = message;
+  },
+  dismiss_modal_alert(){
+  	if (this.modalAlert.displayed) {
+    	this.modalAlert.displayed=false;
+        this.modalAlert.active.hide();
+    }
+  },
+  add_data(payload) {
+	const path = endpoint;
+	axios.post(path, payload).then( response => {
+		this.get_data(); 
+		//console.log(response.data);
+		if (response.data.Result === "Success") {
+			this.message_alert("alert-success","You have added a new record to the database.");
+		} else if (response.data.Result === "Failure") {
+			this.message_alert("alert-danger","Switch add error: " + response.data.Error_Message);
+		}
+		})
+		.catch((error) => {
+			console.log(error);
+			this.get_data();
+		});
+  },
+	  message_alert(message_class, message){
+		  this.message_class=message_class;
+		  this.message=message;
+		  switch (message_class) {
+			case 'alert-success': this.message_icon = "#check-circle-fill"; break;
+			case 'alert-info' : this.message_icon = "#info-fill"; break;
+			case 'alert-warning': this.message_icon = "#exclamation-triangle-fill"; break;
+		    case 'alert-danger' : this.message_icon = "#exclamation-triangle-fill"; break;
+		  }
+		  this.alert_box = document.getElementById("alert");
+		  this.message_box_icon = document.getElementById("message_box_icon");
+		  this.message_box_icon.getElementsByTagName("use")[0].setAttributeNS('http://www.w3.org/1999/xlink', 'href', this.message_icon);
+		  this.alert_box.classList = ("alert fixed-top");
+		  this.alert_box.classList.add(this.message_class);
+	  },
+	  edit_data(payload) {
+		const path = endpoint+"/"+this.editData.id
+		axios.put(path, payload).then( response => {
+			this.get_data(); 
+			//console.log(response.data);
+			this.message_alert("alert-success","You have updated the record successfully");
+			}).catch((error) => {
+				console.log(error); 
+				this.get_data(); 
+			});
+	  },
+	  delete_data(payload) {
+		  const path = endpoint+"/"+this.deleteData.id
+		  axios.delete(path).then( response => {
+			if (response.data.Result === "Success") {
+		  		this.message_alert("alert-danger","You have deleted record "+this.deleteData.id)
+		  		//console.log(response.data);
+			} else if (response.data.Result === "Failure") {
+				this.message_alert("alert-danger","Delete action failed on record "+this.deleteData.id)
+				console.error(response.data);
+				this.activate_modal_alert("Delete action failed", response.data.Error_Message, "OK");			
+			}
+			this.get_data(); 
+			}).catch((error) => {
+				console.log(error);
+				this.get_data(); 
+			});
+	  },
+      get_data() {
+		let path = endpoint;
+		if (this.containerenv === "dockerenv") {
+			path = "/rest/v1/config/filteredsiteSwitches/"+this.siteSelect;
+		}
+		axios.get(path).then((res) => {
+			this.data = return_result(res.data);
+			//if ("{{ auth['host_version'] }}" != 2 ) {
+			//	this.data = this.data[0];
+			//}
+			// console.log("this is the get data op")
+			// console.log(this.data);
+		}).catch((error) => {console.error(error);})
+      },
+	  get filtered_data() {
+		let new_data = this.data;
+ 	    if (new_data && new_data[0] != "undefined") {
+		if (typeof new_data.filter === "function") {
+			// let siteElement = document.getElementById('siteSelect');
+			// new_data = new_data.filter(row => row.site == document.getElementById('siteSelect').value);
+			// console.log(new_data);
+			// console.log(new_data[0]);
+			// console.log(this.siteSelect);
+			new_data = new_data.filter(row => row.site == this.siteSelect);
+			// console.log(siteval);
+			// console.log("this is the filtered data");
+			// console.log(new_data);
+		}
+		if (new_data && typeof new_data[0] != "undefined") {
+		if (this.sort.by == 'asc') {
+			for (const[k,v] of Object.entries(new_data[0])){
+				if (this.sort.column == k) {
+					new_data.sort ( (a,b) => (a[k] > b[k]) ? 1: -1);
+					// console.log("this is sorted filtered data")
+					// console.log(new_data);
+				}
+			}
+		} else {
+			for (const[k,v] of Object.entries(new_data[0])){
+				if (this.sort.column == k) {
+					new_data.sort ( (a,b) => (a[k] < b[k]) ? 1: -1);
+				}
+			}
+		}
+		}
+		// console.log("data that will be returned");
+		// console.log(new_data);
+		return new_data;
+		}
+	  },
+      handleAddReset() {
+		this.initForm()
+	  },
+	  switch_handleEditNameSubmit() {
+		this.switch_editName.name = this.switch_editName.name.trim();
+		const path = renameSwitchEndpoint.format(this.switch_editName.id, this.switch_editName.name);
+		if (this.switch_editName.name !== "" && this.switch_editName.name !== undefined && !this.switch_editName.name.includes(' ')) {
+			axios.put(path).then( response => { 
+				//console.log(response.data);
+				if (response.data.Result === "Success") {
+					this.message_alert("alert-success","You have successfully changed the name of the switch in the database.");
+					this.get_data();           
+		  			this.switch_toggleEditName();
+				}
+			}).catch((error) => {
+				console.log(error.response.data); 
+				this.activate_modal_alert("Switch Name Change Error ", error.response.data.Error_Message, "OK");
+				this.get_data(); 
+				this.switch_toggleEditName();
+			});
+		} else {
+			this.activate_modal_alert("Switch Name Change Error ", "The switch name cannot be empty or have spaces.  Change the name and resubmit.", "OK");	
+		}
+	  },
+	  switch_handleEditZoneSubmit() {
+		const path = rezoneSwitchEndpoint.format(this.switch_editZone.switch_name, this.switch_editZone.zone);
+		axios.put(path).then( response => {
+			//console.log(response.data);
+			this.message_alert("alert-success","You have successfully changed the zone of the switch in the database.");
+			this.get_data();
+		}).catch((error) => {
+			console.log(error.response.data);
+			this.activate_modal_alert("Switch Name Change Error ", error.response.data.Error_Message, "OK");
+			this.get_data();
+		});
+	  },
+      handleAddSubmit() {
+		const payload = {
+			site: document.getElementById('siteSelect').value.toUpperCase(),
+			model: this.addData.model,
+			switch_name: this.addData.switch_name.toUpperCase().trim(),
+			switch_number: 1,
+			serial: this.addData.serial.toUpperCase().trim(),
+			MAC: this.addData.MAC.toUpperCase().trim(),
+			zone_type: this.addData.type,
+			stack_link1: this.addData.stack_link1,
+			stack_link2: this.addData.stack_link2
+		}
+		//If none of these values are empty proceed
+		if (payload.site && payload.model && payload.switch_name && payload.serial && payload.MAC && payload.zone_type){
+			//check that there isn't a space in the switch name
+			if (!payload.switch_name.includes(' ')) {
+				//Check if the switch name exists
+				let nameExists = false;			
+				for (var i = 0; i < this.data.length; i++) {
+					if (payload.switch_name === this.data[i].switch_name) {
+						nameExists = true;
+						break;
+					}
+				}
+				if (nameExists === false) {
+					this.toggleAddData();
+					this.add_data(payload);
+					this.initForm();
+				} else {
+					this.activate_modal_alert("Switch name error", "The switch name you are using already exists in the database.  Change the name and resubmit.", "OK");
+				}
+			} else {
+				this.activate_modal_alert("Switch name error", "The switch name cannot have a space in it.  Change the name and resubmit.", "OK")
+			}
+		} else {
+			this.activate_modal_alert("Data Missing", "Some data is missing. Please reset the form and resubmit", "OK")
+		}
+	  },
+	  handleEditCancel() {
+		this.toggleEditData()
+	  },
+      handleEditSubmit() {
+		this.toggleEditData();
+		const payload = {
+			id: this.editData.id,
+			site: document.getElementById('siteSelect').value,
+			model: this.editData.model,
+			switch_name: this.editData.switch_name.toUpperCase(),
+			switch_number: 1,
+			MAC: this.editData.MAC.toUpperCase(),
+			serial: this.editData.serial.toUpperCase(),
+			zone_type: this.editData.type
+		}
+		//If none of these values are empty proceed
+		if (payload.site && payload.model && payload.switch_name && payload.serial && payload.MAC && payload.zone_type){
+			//check that there isn't a space in the switch name
+			if (!payload.switch_name.includes(' ')) {
+				//Check if the switch name exists
+				let nameExists = false;			
+				for (var i = 0; i < this.data.length; i++) {
+					if (payload.switch_name === this.data[i].switch_name) {
+						nameExists = true;
+						break;
+					}
+				}
+				if (nameExists === false) {
+					this.edit_data(payload);
+				} else {
+					this.activate_modal_alert("Switch name error", "The switch name you are using already exists in the database.  Change the name and resubmit.", "OK");
+				}
+			} else {
+				this.activate_modal_alert("Switch name error", "The switch name cannot have a space in it.  Change the name and resubmit.", "OK")
+			}
+		} else {
+			this.activate_modal_alert("Data Missing", "Some data is missing. Please reset the form and resubmit", "OK")
+		}
+      },
+	  handleDelete(id) {
+		if (id) {
+			this.deleteData.id = id.id;
+			this.delete_data();
+		}
+	  },
+	  initForm() {
+      	this.addData = { site: '', model: '', switch_name: '', switch_number: 1, serial: '', MAC: '', type: '', stack_link1: 0, stack_link2: 0}
+	  },
+      toggleAddData() {
+        const body = document.querySelector('body');
+        this.activeAddData = !this.activeAddData;
+        if (this.activeAddData) {
+          body.classList.add('modal-open');
+        } else {
+          body.classList.remove('modal-open');
+        }
+      },
+	  switch_toggleEditName() {
+		  const body = document.querySelector('body');
+		  this.switch_activeEditNameData = !this.switch_activeEditNameData;
+		  if (this.switch_activeEditNameData) {
+			  body.classList.add('modal-open');
+		  } else {
+			  body.classList.remove('modal-open');
+		  }
+	  },
+	  switch_toggleEditZone() {
+		const body = document.querySelector('body');
+		this.switch_activeEditZoneData = !this.switch_activeEditZoneData;
+		if (this.switch_activeEditZoneData) {
+			body.classList.add('modal-open');
+		} else {
+			body.classList.remove('modal-open');
+		}
+	  },
+	  changeSwitchName(id) {
+		  this.switch_editName.name = id.switch_name;
+		  this.switch_editName.id = id.id;
+		  this.switch_toggleEditName();
+	  },
+	  changeSwitchZone(id) {
+		  this.switch_editZone.zone = id.type;
+		  this.switch_editZone.id = id.id;
+		  this.switch_editZone.switch_name = id.switch_name;
+		  this.switch_toggleEditZone();
+	  },
+	  toggleEditData(id) {
+		if (id) {
+			this.editData = id;
+		}
+		const body = document.querySelector('body');
+		this.activeEditData = !this.activeEditData;
+		if (this.activeEditData) {
+			body.classList.add('modal-open');
+		} else {
+			body.classList.remove('modal-open');
+		}
+	  },
+	  launchSwitchEdit(id) {
+		  window.open ("/switch/config?device="+id.switch_name, "_switchEdit")
+	  },
+    are_you_sure(action,id,profile=this.areYouSureDefault){
+        //console.error(id)
+        this.areYouSure = Object.create(profile);
+        this.areYouSure.displayed=true
+        var el = document.getElementById('modalAreYouSure');
+        var bel = new bootstrap.Modal(el);
+        bel.show();
+        this.areYouSure.active = bel;
+        this.areYouSure.action=action
+        if (id != -1) {
+            this.areYouSure.id=id
+        }
+    },
+    dismiss_are_you_sure(value){
+        if (this.areYouSure.displayed) {
+            this.areYouSure.result = value;
+            if (value) {
+                this.areYouSure.action(this.areYouSure.id)
+            }
+            this.areYouSure.displayed=false;
+            this.areYouSure.active.hide();
+        }
+    },
+	load_page_by_site() {
+		let site_input = window.location.href.split("/").pop();
+		// console.log("this is the site input")
+		// console.log(site_input);
+
+		let site_list = document.getElementById('siteSelect').childNodes;
+		// console.log("this is the site list")
+		// console.log(site_list);
+
+		for (let i = 0; i < site_list.length; i++){
+			if (site_input === site_list[i].innerText){
+				document.getElementById('siteSelect').value = site_input;
+				this.siteSelect = site_input;
+				// console.log("defined the site value");
+			}
+		}
+
+	},
+	  mounted() {
+		this.initForm();
+		this.get_data();
+		this.load_page_by_site();
+	  }
+    }
+  }
+
+  createApp({app}).mount()
+</script>
+
+<div v-scope="app()" @vue:mounted="mounted"></div>
+
+{% endblock %}

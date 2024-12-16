@@ -1,0 +1,193 @@
+{% extends 'menu.html' %}
+{% block content %}
+<template id="gridTemplate">
+    <div class="container my-2 px-4 py-2 pt-2 bg-body rounded shadow">
+        <div class="row">
+            <div class="col">
+                <br> 
+                <h1>CP Region</h1>
+                <hr><br>
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">Region</th>
+                            <th scope="col">Description</th>
+                            <th scope="col">Hub Code</th>
+                            <th scope="col">API URL</th>
+                            <th scope="col">CP Primary</th>
+                            <th scope="col">CP Primary IP</th>
+                            <th scope="col">CP Secondary</th>
+                            <th scope="col">CP Secondary IP</th>
+                            <th scope="col">CP Tertiary</th>
+                            <th scope="col">CP Tertiary IP</th>
+                            <th></th> <!-- this is for the button column-->
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="region in cp_regions" :key="region.id">
+                            <td>{%raw%}{{region.name}}{%endraw%}</td>
+                            <td>{%raw%}{{region.desc}}{%endraw%}</td>
+                            <td>{%raw%}{{region.hub_code}}{%endraw%}</td>
+                            <td>{%raw%}{{region.api_url}}{%endraw%}</td>
+                            <td>{%raw%}{{region.primary}}{%endraw%}</td>
+                            <td>{%raw%}{{region.primary_ip}}{%endraw%}</td>
+                            <td>{%raw%}{{region.secondary}}{%endraw%}</td>
+                            <td>{%raw%}{{region.secondary_ip}}{%endraw%}</td>
+                            <td>{%raw%}{{region.tertiary}}{%endraw%}</td>
+                            <td>{%raw%}{{region.tertiary_ip}}{%endraw%}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <br>
+            </div> <!-- end column -->
+        </div> <!-- end row -->
+    </div>
+    <div class="container my-2 px-4 p-2 pt-4 bg-body rounded shadow">
+        <div class="row">
+            <div class="col">
+                <h3>Clearpass Servers and Controllers - Site level</h3>
+                <br>
+                <div class="input-group">
+                    <span class="input-group-text" >Select Region: {{ regionSelected }} &nbsp;&nbsp;&nbsp;</span>
+                    <select class="form-select" name="regionName" id="regionName" v-model="regionSelected" @change="get_cp_profile_data">
+                            <option class="col-auto w-25" style="width: 500px;" v-for="region1 in site_regions" v-bind:value="region1.region">{%raw%}{{region1.name}}{%endraw%}</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col">
+                <br>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <br>
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">Site</th>
+                            <th scope="col">Primary Clearpass</th>
+                            <th scope="col">Secondary Clearpass</th>
+                            <th scope="col">Controller MC1</th>
+                            <th scope="col">Controller MC2</th>
+                            <th scope="col">Zone</th>
+                            <th></th> <!-- this is for the button column-->
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="cp_site_profile_val in cp_site_profile_data">
+                            <td>{%raw%}{{cp_site_profile_val.site}}{%endraw%}</td>
+                            <td>{%raw%}{{cp_site_profile_val.primary_ip}}{%endraw%}</td>
+                            <td>{%raw%}{{cp_site_profile_val.secondary_ip}}{%endraw%}</td>
+                            <td>{%raw%}<template v-if="cp_site_profile_val.controller1_ip !== 'None'">{{cp_site_profile_val.controller1_ip}}{%endraw%}</template></td>
+                            <td>{%raw%}<template v-if="cp_site_profile_val.controller2_ip !== 'None'">{{cp_site_profile_val.controller2_ip}}{%endraw%}</template></td>
+                            <td>{%raw%}{{zoneText[cp_site_profile_val.record_type]}}{%endraw%}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                </div>
+        </div>
+    </div> <!-- end container -->
+    <div class="container">
+    <br>
+    <p style="font-size: 16px">**This data is updated nightly from its respective source.</p>
+    </div>       
+
+</template>
+
+<script type="module">
+    import { createApp } from 'https://unpkg.com/petite-vue?module'
+    import 'https://unpkg.com/axios/dist/axios.min.js'
+ 
+    let cp_siteprofile_endpoint;
+    const cp_region_endpoint = "/rest/v1/config/cp/regions";
+    cp_siteprofile_endpoint = "/rest/v1/config/cp/siteprofile/region/";
+
+    function app() {
+        return {
+            data() {
+                    return { 
+                        activeAddData: false,
+                        regionSelected: 1
+                    }
+            },
+            $template: '#gridTemplate',
+            modalAlert: { title: '', body: '', button:'OK'},
+            zoneText: { 1: "Default/All", 2: "Enterprise", 3:"ESX TOR", 4:"Manufacturing", 5:"FW Stack", 6:"WAN POD"},
+            areYouSure: {
+                title: 'WARNING - DATA WILL BE REMOVED',
+                body: 'This action will delete data.  Are you sure?',
+                button:'Yes, proceed.',
+                action:undefined},
+            cp_regions: {},
+            site_regions: [],
+            cp_site_profile_data: {},
+            regionSelected: 1,
+            activate_modal_alert(title, message, button, action){
+                this.modalAlert.title = title;
+                this.modalAlert.displayed = true;
+                this.modalAlert.button = button;
+                var el = document.getElementById('modalAlert');
+                var bel = new bootstrap.Modal(el);
+                bel.show();
+                this.modalAlert.active = bel;
+                var modalBody = document.getElementById('modalBody');
+                modalBody.innerHTML = message;
+            },
+            get_cp_profile_data() {
+                const path1 = `${cp_siteprofile_endpoint}${this.regionSelected}`;
+                axios.get(path1).then((response) => {
+                    this.cp_site_profile_data = return_result(response.data);
+                    //console.log(this.cp_regions)
+                    }).catch((error) => {
+                        console.error(error.response.data);
+                    });
+            },
+            get_data() {
+                const path = cp_region_endpoint;
+                axios.get(path).then((response) => {
+                    console.log(response.data);
+                    this.cp_regions = return_result(response.data);
+                    console.log(this.cp_regions);
+                    for (let i = this.cp_regions.length - 1; i >=0; i--) {
+                        //remove the brackets from the ouptut
+                        this.site_regions.push({
+                            name: this.cp_regions[i].name,
+                            region: this.cp_regions[i].id
+                        });
+                    };
+                    this.regionSelected = 1;
+                    console.log(this.site_regions);
+                    //console.log(this.cp_regions)
+                    }).catch((error) => {
+                        console.error(error.response.data);
+                    })
+            },
+            are_you_sure(action,id){
+                this.areYouSure.displayed=true
+                var el = document.getElementById('modalAreYouSure');
+                var bel = new bootstrap.Modal(el);
+                bel.show();
+                this.areYouSure.active = bel;
+                this.areYouSure.action=action
+                this.areYouSure.id=id
+            },
+            dismiss_are_you_sure(value){
+                if (this.areYouSure.displayed) {
+                    this.areYouSure.result = value;
+                    if (value) {
+                        this.areYouSure.action(this.areYouSure.id)
+                    }
+                    this.areYouSure.displayed=false;
+                    this.areYouSure.active.hide();
+                }
+            },
+            mounted() {
+                this.get_cp_profile_data();
+                this.get_data();
+                }
+            }
+        }
+createApp({app}).mount()
+</script>
+<div v-scope="app()" @vue:mounted="mounted"></div>
+{% endblock %}

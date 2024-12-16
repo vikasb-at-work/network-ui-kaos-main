@@ -1,0 +1,5 @@
+apiVersion: v2
+name: network-ui-kaos
+description: A Helm chart for network-ui-kaos
+type: application
+version: 1.0.0

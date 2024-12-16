@@ -1,0 +1,150 @@
+
+{% extends 'CradlepointReportingProject/base.html' %}
+
+{% block crp_content %}
+  <style>
+    .column {
+      float: left;
+      margin-right: 0;
+    }
+    .left {
+      width: 52%;
+    }
+    .right{
+      width: 48%;
+    }
+    .row::after {
+      content: "";    
+      display: table;
+      clear: both;
+    }
+    #minDataUsageInputWrapper {
+      color: #3b3b3b77;
+    }
+    #minDataUsageInputWrapper input {
+      background-color: #3b3b3b77;
+      border-color: #d0d0d0;
+    }
+  </style>
+
+</head>
+<body>
+    <h2>Cradlepoint Usage Report</h2>
+    <br>
+    <div class="row">
+        <div class="column left" id="crp_picker_column">
+            <form>
+                <h4>Select a Cradlepoint:</h4>
+                <select id="CP_Picker" name="CP" class="form-select" aria-label="Default select"> <!-- onchange="showInfo();" -->
+                {% for device in CP_LIST%}
+                <option value="{{device}}">{{device}}</option>
+                {% endfor %}
+                </select>
+            </form>
+            <br>
+            <form>
+              <strong>Sort by:</strong>
+              <label>Date&nbsp;</label><input type="radio" name="sort_by" value="Date" checked> 
+              <label>Usage&nbsp;</label><input type="radio" name="sort_by" value="Usage">
+              &nbsp;
+              <strong>Sort order:</strong>
+              <label>Ascending&nbsp;</label><input type="radio" name="sort_order" value="ASC"> 
+              <label>Decending&nbsp;</label><input type="radio" name="sort_order" value="DESC" checked>
+            </form>
+            <br>
+            <div id="minDataUsageInputWrapper">
+              <label for="minDataUsageInput">Minimum Data Usage (MB):</label>
+              <input type="number" id="minDataUsageInput" name="minDataUsageInput" min="0" disabled>
+            </div>
+            <br>
+            <label for="limitInput">Limit the number of responses:</label>
+            <input type="number" id="limitInput" name="limitInput" min="1" max="9999" value="9999"><br><br>
+            <button class="btn btn-outline-secondary" type="submit" id="executeButton">Show Usage</button>
+          </div>
+
+        <div class="column right" id="crp_device_usage_column">
+        <!-- Device info will get stuffed in here after a device selection is made -->
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script type="text/javascript">
+
+    var option1, option2, response_limit;
+
+      // Function to show/hide the minDataUsageInput based on the "Usage" radio button
+  function toggleMinDataUsageInput() {
+    var minDataUsageInput = document.getElementById('minDataUsageInput');
+    var minDataUsageLabel = document.querySelector('label[for="minDataUsageInput"]');
+
+    console.log("option1.value:", option1 && option1.value); // Check if option1 is defined before accessing its value
+
+    if (option1 && option1.value === 'Usage') { // Make sure option1 is defined before accessing its value
+      minDataUsageInput.disabled = false;
+      console.log("if option1 = Usage minDataUsageInput.disabled:", minDataUsageInput.disabled);
+      minDataUsageLabel.style.color = '#000';
+      minDataUsageInput.style.backgroundColor = '#ffffff';
+      console.log("minDataUsageLabel.style.color:", minDataUsageLabel.style.color);
+    } else {
+      minDataUsageInput.disabled = true;
+      console.log("else minDataUsageInput.disabled:", minDataUsageInput.disabled);
+      minDataUsageLabel.style.color = '#3b3b3b77';
+      minDataUsageInput.style.backgroundColor = '#3b3b3b77';
+      console.log("minDataUsageLabel.style.color:", minDataUsageLabel.style.color);
+    }
+  }
+
+    function executeReport() {
+      var selectedCP = document.getElementById("CP_Picker").value;
+      getSelectedOptions();
+
+      //alert("Selected options:\nsort_by: " + option1.value + "\nsort_order: " + option2.value);
+            
+      axios.get('/crp/device_usage_data', {
+      params: {
+          cp: selectedCP,
+          sort_by_value: option1.value,
+          sort_order_value: option2.value,
+          response_limit: response_limit,
+          min_data_usage: option1.value === 'Usage' ? document.getElementById('minDataUsageInput').value : 0
+      }
+      })
+      .then(function (response) {
+        document.getElementById("crp_device_usage_column").innerHTML = response.data;
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+    }
+    function getSelectedOptions() {
+      option1 = document.querySelector('input[name="sort_by"]:checked');
+      option2 = document.querySelector('input[name="sort_order"]:checked');
+      // if the user clears out the "Limit the number of responses box we need to set a value"
+      if (document.getElementById("limitInput").value === "") {
+        //console.log("response = null", document.getElementById("limitInput").value)
+        response_limit = 9999;
+      } else {
+        //console.log("response != null", document.getElementById("limitInput").value)
+        response_limit = document.getElementById("limitInput").value;
+      }
+    }
+
+    //add event listener to the Execute button
+    document.getElementById('executeButton').addEventListener('click', executeReport);
+    
+    // Add event listener to the radio buttons to toggle the minDataUsageInput visibility
+    var sortRadioButtons = document.querySelectorAll('input[name="sort_by"]');
+    sortRadioButtons.forEach(function (radioButton) {
+      radioButton.addEventListener('change', function() {
+        getSelectedOptions();
+        toggleMinDataUsageInput();
+      });
+    });
+
+    // Initially, disable the minDataUsageInput since "Date" is checked by default
+    getSelectedOptions();
+    toggleMinDataUsageInput();
+  </script>
+   
+{% endblock %}

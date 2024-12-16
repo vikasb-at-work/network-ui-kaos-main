@@ -1,0 +1,33 @@
+<!-- Brian add default route modal spawns from L3 vlan modal working-->
+
+<div ref="switch_routeData" class="modal fade" :class="{show: switch_toggleaddDefaultRoute, 'd-block': switch_toggleaddDefaultRoute  }"	tabindex="-1" role="dialog">
+<div class="modal-dialog modal-sm " role="document">
+<div class="modal-content">
+  <div class="modal-header">
+    <h5 class="modal-title">Create Default Route</h5>
+		<button type="button" class="close" data-dismiss="modal" aria-label="Close" @click.prevent="switch_toggleDefaultRoute()">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+	<div class="modal-body">
+		<!-- <button type="button" class="btn btn-primary btn-sm" @click.prevent="switch_addDefaultRouteExists()">list static routes</button> -->
+		<label for ="Route" class="form-label">IP Route in CIDR Format</label>
+        <input type="text" class="form-control" id="Route" v-model="switch_addDefaultRoute_route" value="0.0.0.0/0" readonly>
+        <label for="addNextHop" class="form-label">IP Next Hop</label>
+        <input type="text" class="form-control" id="addNextHop" v-model="switch_addDefaultRoute_nexthop" value="">
+        <label for="Description" class="form-label">Route Description</label>
+        <input type="text" class="form-control" id="Description" v-model="switch_addDefaultRoute_description" value="Default route">     
+	</div>
+    <div class="modal-footer">
+    	<div class="btn-group" role="group">
+        	<button type="button" class="btn btn-primary btn-sm" @click.prevent="switch_addDefaultRouteSave()">Create Default Route</button>
+            <button type="button" class="btn btn-danger btn-sm" @click.prevent="switch_toggleDefaultRoute()">Cancel</button>
+		</div>
+	</div>
+  </div>
+</div>
+</div>
+<div v-if="switch_toggleaddDefaultRoute" class="modal-backdrop fade show"></div>
+
+
+  

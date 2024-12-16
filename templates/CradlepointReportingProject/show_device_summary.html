@@ -1,0 +1,68 @@
+{% extends 'CradlepointReportingProject/base.html' %}
+
+{% block crp_content %}
+    
+<style>
+.column {
+  float: left;
+  margin-right: 0
+}
+.left {
+  width: 52%;
+}
+.right {
+  width: 48%;
+}
+.row::after {
+    content: "";    
+    display: table;
+    clear: both;
+}
+</style>
+
+    <h2>Cradlepoint Summary</h2>
+    <br>
+    <div class="row">
+        <div class="column left" id="crp_picker_column">
+            <form>
+                <h4>Select a Cradlepoint:</h4>
+                <select id="CP_Picker" name="CP" class="form-select" aria-label="Default select"> <!-- onchange="showInfo();" -->
+                {% for device in CP_LIST%}
+                <option value="{{device}}">{{device}}</option>
+                {% endfor %}
+                </select>
+            </form>
+          <br><br>
+          <button class="btn btn-outline-secondary" type="submit" id="executeButton">Show Summary Report</button>
+        </div>
+
+        <div class="column right" id="crp_info_column">
+        <!-- Device info will get stuffed in here after a device selection is made -->
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script type="text/javascript">
+    
+    function executeReport() {
+      var selectedCP = document.getElementById("CP_Picker").value;      
+            axios.get('/crp/device_summary_data', {
+                params: {
+                    cp: selectedCP
+                }
+            })
+            .then(function (response) {
+                document.getElementById("crp_info_column").innerHTML = response.data;
+            })
+            .catch(function (error) {
+                console.log(error);
+            });
+        };
+    
+    //add event listener to the Execute button
+    document.getElementById('executeButton').addEventListener('click', executeReport);
+    </script>
+
+
+{% endblock %}

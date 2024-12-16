@@ -1,0 +1,140 @@
+<!--add data modal - add or edit route from list-->
+<div
+ref="switch_ModalRouteAddData"
+class="modal fade"
+:class="{ show: switch_activeModalRouteAddData, 'd-block': switch_activeModalRouteAddData }"
+tabindex="-1"
+role="dialog">
+<div class="modal-dialog" role="document">
+<div class="modal-content">
+  <div class="modal-header">
+	<h5 class="modal-title">Route</h5>
+	<button
+	  type="button"
+	  class="close"
+	  data-dismiss="modal"
+	  aria-label="Close"
+	  @click="switch_toggleModalRouteAdd">
+	  <span aria-hidden="true">&times;</span>
+	</button>
+  </div>
+  <div class="modal-body">
+	<form>
+
+      <div class="mb-3">
+        <label for="addRoute" class="form-label">IP Route in CIDR Format</label>
+        <input
+          type="text"
+          class="form-control"
+          id="addRoute"
+          v-model="switch_route.ip_route"
+          placeholder="Enter an IP route e.g. 1.1.1.1/32"/>
+      </div>
+
+      <div class="mb-3">
+        <label for="addNexthop" class="form-label">IP Next Hop</label>
+        <input
+          type="text"
+          class="form-control"
+          id="addNexthop"
+          v-model="switch_route.ip_nexthop"
+          placeholder="Enter the route's next hop e.g. 1.1.1.2"/>
+      </div>
+
+	<div class="btn-group" role="group">
+      <div class="mb-3">
+        <label for="addOutinterface" class="form-label">Outgoing Interface</label>
+        <input
+		  style="width:95%"
+          type="text"
+          class="form-control"
+          id="addOutinterface"
+          v-model="switch_route.outgoing_interface"
+          placeholder="Interface e.g. 1/1/24 or blank"/>
+      </div>
+
+      <div class="mb-3" style="border-left: 1px dashed #333; margin-left: 20px; padding-left: 10px;">
+        <label for="addVrf" class="form-label">VRF</label>
+        <input
+		  style="width: 95%"
+          type="text"
+          class="form-control"
+          id="addVrf"
+          v-model="switch_route.vrf"
+          placeholder="VRF blank for default"/>
+      </div>
+	</div>
+
+	<div class="btn-group" role="group">
+      <div class="mb-3">
+        <label for="addDistance" class="form-label">Distance</label>
+        <input
+		  style="width:95%"
+          type="text"
+          class="form-control"
+          id="addOutinterface"
+          v-model="switch_route.distance"
+          placeholder="1-255 (if left blank, default is 1)"/>
+      </div>
+
+      <div class="mb-3" style="border-left: 1px dashed #333; margin-left: 20px; padding-left: 10px;">
+        <label for="addOutinterface" class="form-label">Tag</label>
+        <input
+		  style="width: 95%"
+          type="text"
+          class="form-control"
+          id="addOutinterface"
+          v-model="switch_route.tag"
+          placeholder="1-4294967295 or blank"/>
+      </div>
+	</div>
+
+      <div class="mb-3">
+          <label class="switch">
+          <input type="checkbox" @click="toggleCheckbox" id="blackhole" v-model="switch_route.blackhole">
+          <div class="slider round"></div>
+      </label><label for="blackhole"> Blackhole</label>
+      </div>
+      <div class="mb-3">
+          <label class="switch">
+          <input type="checkbox" @click="toggleCheckbox" id="reject" v-model="switch_route.reject">
+          <div class="slider round"></div>
+      </label><label for="reject"> Reject</label>
+      </div>
+      <div class="mb-3">
+          <label class="switch">
+          <input type="checkbox" @click="toggleCheckbox" id="bfd" v-model="switch_route.bfd">
+          <div class="slider round"></div>
+      </label><label for="bfd"> BFD</label>
+      </div>
+
+      <div class="mb-3">
+        <label for="addRoute" class="form-label">Route Description</label>
+        <input
+          type="text"
+          class="form-control"
+          id="addDescription"
+          v-model="switch_route.description"
+          placeholder="What is this route for"/>
+      </div>
+
+	  <div class="btn-group" role="group">
+		<button
+		  type="button"
+		  class="btn btn-primary btn-sm"
+		  @click="switch_handleModalRouteAddSubmit">
+		  Submit
+		</button>
+		<button
+		  type="button"
+		  class="btn btn-danger btn-sm"
+		  @click="switch_toggleModalRouteAdd">
+		  Cancel
+		</button>
+	  </div>
+	</form>
+  </div>
+</div>
+</div>
+</div>
+<div v-if="switch_activeModalRouteAddData" class="modal-backdrop fade show"></div>

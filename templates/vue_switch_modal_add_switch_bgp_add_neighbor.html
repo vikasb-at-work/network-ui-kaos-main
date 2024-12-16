@@ -1,0 +1,155 @@
+<!--add data modal - add or edit bgp neighbor from list-->
+<div
+ref="switch_modalAddEditNeighbor"
+class="modal fade"
+:class="{ show: switch_activeModalAddNeighborData, 'd-block': switch_activeModalAddNeighborData }"
+tabindex="-1"
+role="dialog">
+<div class="modal-dialog modal-xl" role="document">
+<div class="modal-content">
+  <div class="modal-header">
+	<h5 class="modal-title">Add BGP Neighbor</h5>
+	<button
+	  type="button"
+	  class="close"
+	  data-dismiss="modal"
+	  aria-label="Close"
+	  @click="switch_toggleModalAddBGPNeighbor()">
+	  <span aria-hidden="true">&times;</span>
+	</button>
+  </div>
+  <div class="modal-body">
+	<form>
+     <div class="btn-group" role="group">
+     	<div class="mb-3">
+			<div class="btn-group" role="group">
+        	<label for="addEndpoint" class="form-label">Neighbor Description</label><div class="mb-3" style="border-left: 1px dashed #333; margin-left: 20px; padding-left: 10px;">
+        	<label class="switch">
+            <input type="checkbox" @click="toggleCheckbox" id="enabled" v-model="switch_bgp_neighbor.enabled">
+            <div class="slider round"></div>
+				</label><label for="enabled">Neighbor {%raw%}{{ {true:"Enabled",false:"Disabled"}[switch_bgp_neighbor.enabled] }}{%endraw%}</label>
+			</div></div>
+	        <input type="text" class="form-control" id="addDescription" v-model="switch_bgp_neighbor.description" placeholder="Enter a description for this neighbor" size=100/>
+      	</div>
+      </div>
+
+        <div class="btn-group" role="group">
+        	<div class="mb-3">
+	            <label for="addNeighborIP" class="form-label">Neighbor IP</label>
+    	        <input type="text" class="form-control" id="addNeighborIp" v-model="switch_bgp_neighbor.neighbor_ip" placeholder="1.1.1.1" size=45/>
+	        </div>
+	        <div class="mb-3" style="border-left: 1px dashed #333; margin-left: 20px; padding-left: 10px;">
+    	        <label for="addRemoteAS" class="form-label">Remote AS</label>
+        	    <input type="text" class="form-control" id="addRemoteAS" v-model="switch_bgp_neighbor.remote_as" placeholder="11111" size=11/>
+	        </div>
+	        <div class="mb-3" style="border-left: 1px dashed #333; margin-left: 20px; padding-left: 10px;">
+    	        <label for="addLocalAS" class="form-label">Local AS</label>
+        	    <input type="text" class="form-control" id="addLocalAS" v-model="switch_bgp_neighbor.local_as" placeholder="same" size=11/>
+	        </div>
+			<div class="mb-3" style="border-left: 1px dashed #333; margin-left: 20px; padding-left: 10px;">
+	            <label for="addVrf" class="form-label">VRF</label>
+    	        <input type="text" class="form-control" id="addVrf" v-model="switch_bgp_neighbor.vrf" placeholder="default" size=64/>
+	        </div>
+			<div class="mb-3" style="border-left: 1px dashed #333; margin-left: 20px; padding-left: 10px;">
+	            <label for="addVrf" class="form-label">Password Profile</label>
+    	        <input type="text" class="form-control" id="addPassword" v-model="switch_bgp_neighbor.password" placeholder="No LastPass Profile" size=64/>
+	        </div>
+        </div>
+
+        <div class="input-group" role="group">
+        	<div class="mb-3">
+	            <label for="addUpdateSource" class="form-label">Update Source Type</label>
+    	        <select type="text" class="form-select" id="addUpdateSourceType" v-model="switch_bgp_neighbor.update_source_type">
+					 <option v-for="s in switch_bgp_update_sources" v-bind:value="s.value">{%raw%}{{s.name}}{%endraw%}</option>
+				</select>
+	        </div>
+	        <div class="mb-3" style="border-left: 1px dashed #333; margin-left: 20px; padding-left: 10px;">
+    	        <label for="addUpdateSource" class="form-label">Update Source</label>
+        	    <input type="text" class="form-control" id="addUpdateSource" v-model="switch_bgp_neighbor.update_source" placeholder="None">
+	        </div>
+	        <div class="mb-3" style="border-left: 1px dashed #333; margin-left: 20px; padding-left: 10px;">
+    	        <label for="addAddressFamily" class="form-label">Address Family</label>
+        	    <select type="text" class="form-select" id="addAddressFamily" v-model="switch_bgp_neighbor.address_family">
+					<option v-for="af in switch_bgp_address_family" v-bind:value="af.value">{%raw%}{{af.name}}{%endraw%}</option>
+				</select>
+	        </div>
+			<div class="mb-3" style="border-left: 1px dashed #333; margin-left: 20px; padding-left: 10px;">
+	            <label for="addRouteMapIn" class="form-label">Route Map - Inbound</label>
+    	        <input type="text" class="form-control" id="addRouteMapIn" v-model="switch_bgp_neighbor.rm_inbound" placeholder="None" size=23/>
+	        </div>
+			<div class="mb-3" style="border-left: 1px dashed #333; margin-left: 20px; padding-left: 10px;">
+	            <label for="addRouteMapOut" class="form-label">Route Map - Outbound</label>
+    	        <input type="text" class="form-control" id="addRouteMapOut" v-model="switch_bgp_neighbor.rm_outbound" placeholder="None" size=23/>
+	        </div>
+        </div>
+
+		<div class="input-group" role="group">
+		<div class="mb-3">
+	      <div class="mb-3">
+    	      <label class="switch">
+	          <input type="checkbox" @click="toggleCheckbox" id="local_as_prepend" v-model="switch_bgp_neighbor.local_as_prepend">
+    	      <div class="slider round"></div>
+	      </label><label for="local_as_prepend"> Local AS Prepend</label>
+    	  </div>
+	      <div class="mb-3">
+    	      <label class="switch">
+        	  <input type="checkbox" @click="toggleCheckbox" id="local_as_replace" v-model="switch_bgp_neighbor.local_as_replace">
+	          <div class="slider round"></div>
+    	  </label><label for="local_as_replace"> Local AS Replace</label>
+	      </div>
+	      <div class="mb-3">
+    	      <label class="switch">
+        	  <input type="checkbox" @click="toggleCheckbox" id="remove_private_as" v-model="switch_bgp_neighbor.remove_private_as">
+	          <div class="slider round"></div>
+    	  </label><label for="remove_private_as"> Remove Private AS</label>
+	      </div>
+	      <div class="mb-3">
+    	      <label class="switch">
+        	  <input type="checkbox" @click="toggleCheckbox" id="fast_external_failover" v-model="switch_bgp_neighbor.fast_external_failover">
+	          <div class="slider round"></div>
+    	  </label><label for="fast_external_failover"> Fast External Failover</label>
+	      </div>
+	      <div class="mb-3">
+    	      <label class="switch">
+        	  <input type="checkbox" @click="toggleCheckbox" id="fallover_bfd" v-model="switch_bgp_neighbor.fallover_bfd">
+	          <div class="slider round"></div>
+    	  </label><label for="fallover_bfd"> Fallover BFD</label>
+	      </div>
+	      <div class="mb-3">
+    	      <label class="switch">
+        	  <input type="checkbox" @click="toggleCheckbox" id="bgp_passive" v-model="switch_bgp_neighbor.bgp_passive">
+	          <div class="slider round"></div>
+    	  </label><label for="bgp_passive"> BGP Passive</label>
+	      </div>
+		</div>
+
+		<div class="mb-3" style="border-left: 1px dashed #333; margin-left: 20px; padding-left: 10px;">
+    	      <label class="switch">
+        	  <input type="checkbox" @click="toggleCheckbox" id="bgp_timer_neighbor" v-model="switch_bgp_neighbor.bgp_timer_neighbor">
+	          <div class="slider round"></div>
+    	  </label><label for="bgp_timer_neighbor"> BGP Neighbor Timers</label>
+		  <div class="mb-3" :class="!switch_bgp_neighbor.bgp_timer_neighbor && invisible">
+			<div class="mb-3" style="margin-top: 20px">
+	            <label for="addKeepalive" class="form-label">Neighbor Keepalive</label>
+    	        <input type="text" class="form-control" id="bgp_timer_keepalive" v-model="switch_bgp_neighbor.bgp_timer_keepalive" placeholder="" size=20/>
+	        </div>
+			<div class="mb-3">
+	            <label for="addHold" class="form-label">Neighbor Hold</label>
+    	        <input type="text" class="form-control" id="bgp_timer_hold" v-model="switch_bgp_neighbor.bgp_timer_hold" placeholder="" size=20/>
+	        </div>
+		  </div>
+		</div>
+
+		</div>
+
+	  	<div class="btn-group" role="group">
+			<button type="button" class="btn btn-primary btn-sm" @click="switch_handleModalAddBGPNeighborSubmit"> Save</button>
+			<button type="button" class="btn btn-danger btn-sm"  @click="switch_toggleModalAddBGPNeighbor"> Cancel</button>
+		</div>
+	 </div>
+	</form>
+  </div>
+</div>
+</div>
+</div>
+<div v-if="switch_activeModalAddNeighborData" class="modal-backdrop fade show"></div>

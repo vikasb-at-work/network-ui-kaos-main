@@ -1,0 +1,57 @@
+<!--add data modal - select VLANs-->
+<div
+ref="switch_addVlans"
+class="modal fade"
+:class="{ show: switch_activeAddVlans, 'd-block': switch_activeAddVlans }"
+tabindex="-1"
+role="dialog">
+<div class="modal-dialog modal-lg" style="width: 650px" role="document">
+<div class="modal-content">
+  <div class="modal-header">
+	<h5 class="modal-title">Assign VLANs to switch</h5>
+	<button
+	  type="button"
+	  class="close"
+	  data-dismiss="modal"
+	  aria-label="Close"
+	  @click="switch_handleAddVlanReset">
+	  <span aria-hidden="true">&times;</span>
+	</button>
+  </div>
+  <div class="modal-body">
+	<form>
+	  <div class="mb-3" id="VLANS">
+		{% for vlan in vlans %}
+		<div id="{{vlan['vlan']}}">
+			<div class="ui button small vlanOff" style="border: solid 1px black; display: inline-block;" {% if vlan['vlan'] in device_vlans %}state=1{%else%}state=0{%endif%}>
+				<button class="ui button toggle vlanOff{% if vlan['vlan'] not in device_vlans %} vlanOn{%endif%}" onClick="window.switchApp.toggle(this);">Unassigned</button>
+				<button class="ui button toggle vlanOff{% if vlan['vlan'] in device_vlans %} vlanOn{%endif%}" onClick="window.switchApp.toggle(this);">Assigned</button>
+			</div>
+			<div style="width: 60%; display: inline-block">{{ vlan["vlan"] }}-{{ vlan["name"] }}</div>
+			<div style="display: inline-block;">
+				<button vlan="{{vlan['vlan']}}" switch="{{switch_name}}" class="ui button{%if vlan['vlan'] in l3 and l3helpers[vlan['vlan']]==1%} btn-success{%elif vlan['vlan'] in l3%} btn-primary{%endif%}" onClick="window.switchApp.switch_toggle{%if vlan['vlan'] in l3%}Edit{%else%}Add{%endif%}ModalL3(this)">L3</button>
+			</div>
+		</div>
+		{% endfor %}
+	  </div>
+
+	  <div class="btn-group" role="group">
+		<button
+		  type="button"
+		  class="btn btn-primary btn-sm"
+		  @click="switch_handleAddVlanSubmit">
+		  Save
+		</button>
+		<button
+		  type="button"
+		  class="btn btn-danger btn-sm"
+		  @click="switch_handleAddVlanReset">
+		  Cancel
+		</button>
+	  </div>
+	</form>
+  </div>
+</div>
+</div>
+</div>
+<div v-if="switch_activeAddVlans" class="modal-backdrop fade show"></div>

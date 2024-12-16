@@ -1,0 +1,246 @@
+{% extends 'menu.html' %}
+{% block content %}
+
+<template id="gridTemplate">
+  <div class="container">
+    <div class="row">
+      <div class="col-sm-10">
+        <h1>DNS Servers</h1>
+        <hr><br><br>
+        <button type="button" @click="toggleAddData" class="btn btn-success btn-sm">Add DNS Server</button>
+        <br><br>
+        <table class="table table-hover">
+          <thead>
+            <tr>
+			  <th scope="col">ID</th>
+              <th scope="col">Server IP</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="row in ip_addresses">
+              <td>{%raw%}{{row.id}}{%endraw%}</td>
+			  <td>{%raw%}{{row.ip_addr}}{%endraw%}</td>
+              <td>
+                <div class="btn-group" role="group">
+                  <button type="button" @click="toggleEditData (row)" class="btn btn-warning btn-sm">Update</button>
+                  <button type="button" @click="handleDelete (row)" class="btn btn-danger btn-sm">Delete</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+<!--add data modal -->
+<div
+  ref="addData"
+  class="modal fade"
+  :class="{ show: activeAddData, 'd-block': activeAddData }"
+  tabindex="-1"
+  role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Add a new DNS Server</h5>
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close"
+          @click="toggleAddData">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <div class="mb-3">
+            <label for="addDNSServerIP" class="form-label">IP Address:</label>
+            <input
+              type="text"
+              class="form-control"
+              id="addDNSServerIP"
+              v-model="addData.server_ip"
+              placeholder="Enter DNS server IP">
+          </div>
+          <div class="btn-group" role="group">
+            <button
+              type="button"
+              class="btn btn-primary btn-sm"
+              @click="handleAddSubmit">
+              Submit
+            </button>
+            <button
+              type="button"
+              class="btn btn-danger btn-sm"
+              @click="handleAddReset">
+              Reset
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<div v-if="activeAddData" class="modal-backdrop fade show"></div>
+
+<!-- edit data modal -->
+<div
+  ref="editData"
+  class="modal fade"
+  :class="{ show: activeEditData, 'd-block': activeEditData }"
+  tabindex="-1"
+  role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Update</h5>
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close"
+          @click="toggleEditData">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <div class="mb-3">
+            <label for="editServer" class="form-label">DNS Server:</label>
+            <input
+              type="text"
+              class="form-control"
+              id="editData"
+              v-model="editData.server_ip"
+              placeholder="Enter New Server IP">
+		    <input type="hidden" id="editData" v-model="editData.id">
+          </div>
+          <div class="btn-group" role="group">
+            <button
+              type="button"
+              class="btn btn-primary btn-sm"
+              @click="handleEditSubmit">
+              Submit
+            </button>
+            <button
+              type="button"
+              class="btn btn-danger btn-sm"
+              @click="handleEditCancel">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<div v-if="activeEditData" class="modal-backdrop fade show"></div>
+
+  </div>
+</template>
+
+<script type="module">
+  import { createApp } from 'https://unpkg.com/petite-vue?module'
+  import 'https://unpkg.com/axios/dist/axios.min.js'
+ 
+  const endpoint = "/rest/v1/config/dnsServer";
+
+  function app() {
+    return {
+      $template: '#gridTemplate',
+      ip_addresses: [],
+	  data() {
+		return { 
+			activeAddData: false
+		}
+	  },
+	  activeAddData: false,
+	  activeEditData: false,
+      addData: { server_ip: '' },
+	  editData: { server_ip: '', id: ''},
+	  deleteData: { id: '' },
+	  add_data(payload) {
+		const path = endpoint;
+		axios.post(path, payload).then(() => { this.get_data(); }).catch((error) => {console.log(error); this.get_data(); });
+	  },
+	  edit_data(payload) {
+		const path = endpoint+"/"+this.editData.id
+		axios.put(path, payload).then(() => { this.get_data(); }).catch((error) => {console.log(error); this.get_data(); });
+	  },
+	  delete_data(payload) {
+		  const path = endpoint+"/"+this.deleteData.id
+		  axios.delete(path).then(() => { this.get_data(); }).catch((error) => {console.log(error); this.get_data(); });
+	  },
+      get_data() {
+		const path = endpoint;
+		axios.get(path).then((res) => {
+			this.ip_addresses = return_result(res.data);
+		}).catch((error) => {console.error(error);})
+      },
+      handleAddReset() {
+		this.initForm()
+	  },
+      handleAddSubmit() {
+		this.toggleAddData();
+		const payload = {
+			ip_address: this.addData.server_ip
+		}	
+		this.add_data(payload);
+		this.initForm();
+	  },
+	  handleEditCancel() {
+		this.toggleEditData()
+	  },
+      handleEditSubmit() {
+		this.toggleEditData();
+		const payload = {
+			id: this.editData.id,
+			ip_address: this.editData.server_ip
+		}
+		this.edit_data(payload);
+      },
+	  handleDelete(id) {
+		if (id) {
+			this.deleteData.id = id.id;
+			this.delete_data();
+		}
+	  },
+	  initForm() {
+		this.addData.server_ip = '';
+	  },
+      toggleAddData() {
+        const body = document.querySelector('body');
+        this.activeAddData = !this.activeAddData;
+        if (this.activeAddData) {
+          body.classList.add('modal-open');
+        } else {
+          body.classList.remove('modal-open');
+        }
+      },
+	  toggleEditData(id) {
+		if (id) {
+			this.editData.server_ip = id.ip_addr;
+			this.editData.id = id.id;
+		}
+		const body = document.querySelector('body');
+		this.activeEditData = !this.activeEditData;
+		if (this.activeEditData) {
+			body.classList.add('modal-open');
+		} else {
+			body.classList.remove('modal-open');
+		}
+	  },
+	  mounted() {
+		this.get_data();
+	  }
+    }
+  }
+
+  createApp({app}).mount()
+</script>
+
+<div v-scope="app()" @vue:mounted="mounted"></div>
+
+{% endblock %}

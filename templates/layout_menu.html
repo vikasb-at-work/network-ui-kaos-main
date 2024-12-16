@@ -1,0 +1,51 @@
+<!doctype html>
+<title>F5-Neo4j Project</title>
+<body>
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+<link rel="stylesheet" type="text/css"
+      href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/css/bootstrap.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css">
+<link href="/css/menu.css" rel="stylesheet" type="text/css" media="all">
+<div class=menubar>
+        <h1 class=logo><a href="#">Global Network</a></h1>
+        <nav>
+                <ul class="cf">
+                        <li><a href="#">VIEW</a></li>
+                        <li><a class="dropdown" href="#">MODIFY</a>
+                          <ul>
+                                  <li><a href="/">CONTROL</a></li>
+                                  <li><a href="#">SAMURAI</a></li>
+                                  <li><a href="#">CONFIGURATION BUILDER</a></li>
+                          </ul>
+                        </li>
+                        <li><a href="#">REPORTS</a></li>
+                        <li class="last"><a class="dropdown" href="#">LINKS</a>
+                        <ul>
+                                <li><a TARGET=_new href="http://go/bluecat">BLUECAT</a></li>
+                                <li><a TARGET=_new href="http://go/inmon">INMON</a></li>
+                                <li><a TARGET=_new href="http://go/cacti">CACTI</a></li>
+                                <li><a TARGET=_new href="http://go/tacacs">TACACS</a></li>
+                                <li><a TARGET=_new href="http://go/splunkit">SPLUNK</a></li>
+                                <li><a TARGET=_new href="http://go/f5">F5</a></li>
+                                <li><a TARGET=_new href="{{ url_for('f5')}}">F5-Clean up</a></li>
+                                <li><a TARGET=_new href="http://go/zabbix">Zabbix</a></li>
+                                <li><a TARGET=_new href="http://go/airwave">AirWave</a></li>
+                                <li><a TARGET=_new href="http://go/clearpass">ClearPass</a></li>
+                                <li><a TARGET=_new href="http://go/cradlepoint">CradlePoint</a></li>
+                        </ul>
+                        </li>
+                </ul>
+        </nav>
+</div>
+<div class="main_content">
+
+<div class="page">
+  <h1>F5 Clean Up</h1><p><a href="{{ url_for('application') }}">Home</a>
+  <a href="{{ url_for('f5') }}">F5-Home</a></p>
+  {% block body %}{% endblock %}
+</div>
+
+</div>
+</body>
+</html>
+

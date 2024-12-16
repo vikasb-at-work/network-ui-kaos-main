@@ -1,0 +1,52 @@
+{% extends 'menu.html' %}
+{% block content %}
+<style>
+    .form-signin {
+        max-width: 330px;
+        padding: 1rem;
+    }
+    .form-signin .form-floating:focus-within {
+        z-index: 2;
+      }
+    .form-signin input[type="email"] {
+        margin-bottom: -1px;
+        border-bottom-right-radius: 0;
+        border-bottom-left-radius: 0;
+      }
+      .form-signin input[type="password"] {
+        margin-bottom: 10px;
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
+      }
+</style>
+    <div style="margin-top: 100px;">
+        &nbsp;    
+    </div>
+    <div class="container-fluid text-center" style="overflow: hidden;">
+    <DIV id=message>{{ message }}</DIV>
+    <main class="form-signin w-100 m-auto text-center">
+    <form action="" method="post">
+      <h3 class="form-signin-heading h3 mb-3 fw-normal">Sign in</h3>
+      <label for="username" class="sr-only">Username</label>
+      <input type="text" name="username" class="form-control" placeholder="Username" required autofocus>
+      <label for="password" class="sr-only">Password</label>
+      <input type="password" name="password" class="form-control" placeholder="Password" required>
+      <button class="btn btn-lg btn-primary btn-block" type="submit">Submit</button>
+    </form>
+    </main>
+    </div>
+    <!--
+    <form action="" method="post">
+        <p>
+            <label for="username">Username</label>
+            <input type="text" name="username">
+        </p>
+        <p>
+            <label for="password">Password</label>
+            <input type="password" name="password">
+        </p>
+        <p>
+            <input type="submit">
+        </p>
+    </form>-->
+{% endblock %}

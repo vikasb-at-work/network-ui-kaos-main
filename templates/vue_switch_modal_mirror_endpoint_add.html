@@ -1,0 +1,75 @@
+<!--add data modal - add or edit mirror endpoint from list-->
+<div
+ref="switch_ModalMirrorEndpointAddData"
+class="modal fade"
+:class="{ show: switch_activeModalMirrorEndpointAddData, 'd-block': switch_activeModalMirrorEndpointAddData }"
+tabindex="-1"
+role="dialog">
+<div class="modal-dialog modal-xl" role="document">
+<div class="modal-content">
+  <div class="modal-header">
+	<h5 class="modal-title">Mirror Endpoint</h5>
+	<button
+	  type="button"
+	  class="close"
+	  data-dismiss="modal"
+	  aria-label="Close"
+	  @click="switch_toggleModalMirrorEndpointAdd()">
+	  <span aria-hidden="true">&times;</span>
+	</button>
+  </div>
+  <div class="modal-body">
+	<form>
+     <div class="btn-group" role="group">
+     	<div class="mb-3">
+        	<label for="addEndpoint" class="form-label">Endpoint Name</label>
+	        <input type="text" class="form-control" id="addEndpoint" v-model="switch_endpointData.endpoint" placeholder="Enter a name for this endpoint" size=200/>
+      	</div>
+      	<div class="mb-3" style="border-left: 1px dashed #333; margin-left: 20px; padding-left: 10px;">
+        	<label class="switch">
+            <input type="checkbox" @click="toggleCheckbox" id="enabled" v-model="switch_endpointData.enable">
+            <div class="slider round"></div>
+            	</label><label for="enabled">Enabled ({%raw%}{{switch_endpointData.enable}}{%endraw%})</label>
+      		</div>
+      	</div>
+      	<div class="mb-3">
+        	<label for="addComment" class="form-label">Comment</label>
+        	<input type="text" class="form-control" id="addComment" v-model="switch_endpointData.comment" placeholder="Enter a comment/description for this endpoint"/>
+     	</div>
+
+        <div class="btn-group" role="group">
+        	<div class="mb-3">
+	            <label for="addSourceIp" class="form-label">Mirror Source IP</label>
+    	        <input type="text" class="form-control" id="addSourceIp" v-model="switch_endpointData.mirror_source_ip" placeholder="Enter a mirror source IP" size=200/>
+	        </div>
+	        <div class="mb-3">
+    	        <label for="addDestIp" class="form-label">Mirror Destination IP</label>
+        	    <input type="text" class="form-control" id="addDestIp" v-model="switch_endpointData.mirror_dest_ip" placeholder="Enter a mirror destination IP" size=200/>
+	        </div>
+        </div>
+
+        <div class="btn-group" role="group">
+			<div class="mb-3">
+                <label for="addDestInterfaces" class="form-label">Destination Interfaces</label>
+                <select type="text" class="form-control" id="addDestInterfaces" v-model="switch_endpointData.destination" multiple="multiple" style="font-family: courier, courner-new, serif;">
+                    <option disabled>Required - select destination(s)</option>
+                    <option v-for="v in switch_interfaces" v-bind:value="v.value">{%raw%}{{v.name}}{%endraw%}</option>
+                </select>
+			</div>
+			<div class="mb-3">
+	            <label for="addVrf" class="form-label">Mirror Endpoint VRF (leave blank for default)</label>
+    	        <input type="text" class="form-control" id="addVrf" v-model="switch_endpointData.vrf" placeholder="VRF for Mirror Endpoint" size=50/>
+	        </div>
+        </div>
+
+	  	<div class="btn-group" role="group">
+			<button type="button" class="btn btn-primary btn-sm" @click="switch_handleModalMirrorEndpointAddSubmit"> Submit</button>
+			<button type="button" class="btn btn-danger btn-sm"  @click="switch_toggleModalMirrorEndpointAdd"> Cancel</button>
+		</div>
+	 </div>
+	</form>
+  </div>
+</div>
+</div>
+</div>
+<div v-if="switch_activeModalMirrorEndpointAddData" class="modal-backdrop fade show"></div>

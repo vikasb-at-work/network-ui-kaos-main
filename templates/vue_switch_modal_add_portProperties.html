@@ -1,0 +1,212 @@
+<!--add/edit data modal - port properties-->
+<div
+ref="switch_PortaddData"
+class="modal fade"
+:class="{ show: switch_activePortAddData, 'd-block': switch_activePortAddData }"
+tabindex="-1"
+role="dialog">
+<div class="modal-dialog" role="document">
+<div class="modal-content">
+  <div class="modal-header">
+	<h5 v-if="switch_PortData.multiEdit"          class="modal-title">Edit Ports</h5>
+	<h5 v-else-if="switch_data[0].family=='6400'" class="modal-title">Edit Port {%raw%}1/{{switch_PortData.switch_stack_number}}/{{switch_PortData.port_number}}{%endraw%}</h5>
+	<h5 v-else 		    		 	              class="modal-title">Edit Port {%raw%}{{switch_PortData.switch_stack_number}}/1/{{switch_PortData.port_number}}{%endraw%}</h5>
+	<button type="button" class="close" data-dismiss="modal" aria-label="Close" @click="switch_toggleAddPortProperties"><span aria-hidden="true">&times;</span></button>
+  </div>
+  <div class="modal-body">
+	<form>
+
+	<div v-show="switch_PortData.multiEdit && switch_PortData.same" class="mb-3 alert alert-primary" role="alert">
+		You are editing multiple ports to have the same definition.
+	</div>
+	<div v-show="switch_PortData.multiEdit && !switch_PortData.same" class="mb-3 alert alert-danger" role="alert">
+		You are editing multiple ports to have the same defintion.  Data on the target ports you have selected selected will be overwritten, but only for the fields that are checked.<BR><BR>Select a source port to pull data from (this will overwrite any values set below):<BR>
+		<select v-model="switch_PortData.sourcePort" @change="switch_PortData_load">
+			<option v-for="port in switch_PortData.distinctPorts" v-bind:value="port.value">{%raw%}{{port.name}}{%endraw%}</option>
+		</select>
+	</div>
+
+	<div class="container">
+		<div class="row">
+			<div class="col" style="border-right: 1px dashed #333;">
+				<!-- Shutdown port toggle -->				
+				<span v-show="switch_PortData.multiEdit && !switch_PortData.same">
+					<input type="checkbox" @click="toggleCheckbox" id="shutdownToggle" v-model="switch_PortData.toggleShutdown">
+				</span>
+				<label class="switch">
+					<input type="checkbox" @click="toggleCheckbox" id="shutdown" v-model="switch_PortData.shutdown">
+					<div class="slider round"></div>
+				</label>
+				<label for="shutdown">Shutdown ({%raw%}{{switch_PortData.shutdown}}{%endraw%})</label>
+				<!-- IP routing toggle -->
+				<div style="margin-top: 10px">
+					<span v-show="switch_PortData.multiEdit && !switch_PortData.same">
+						<input disabled type="checkbox" id="ipRoutingToggle" style="visibility: hidden;">
+					</span> 
+					<label class="switch">
+							<input type="checkbox" @click="toggleCheckbox" id="ip_routing" v-model="switch_PortData.ip_routing">
+							<div class="slider round"></div>
+					</label>
+					<label for="ip_routing">IP Routing ({%raw%}{{switch_PortData.ip_routing}}{%endraw%})</label>
+				</div>
+			</div>
+			<div class="col">
+				<!-- POE Enabled toggle -->
+				<div>
+					<span v-show="switch_PortData.multiEdit && !switch_PortData.same">
+						<input type="checkbox" @click="toggleCheckbox" id="poeToggle" v-model="switch_PortData.togglePOE">
+					</span>
+					<label class="switch">
+						<input type="checkbox" @click="toggleCheckbox" id="poe" v-model="switch_PortData.poe">
+						<div class="slider round"></div>
+					</label>
+					<label for="poe">POE Enabled ({%raw%}{{switch_PortData.poe}}{%endraw%})</label>
+				</div>
+			</div>
+      	</div>
+	</div>
+	<!-- Begin grey box if IP routing enabled -->
+	<div class="rounded-corners" style="padding: 10px; padding-bottom: 1px; margin: 5px;" :class="switch_PortData.ip_routing && ltGrey">
+	  <div v-show="switch_PortData.ip_routing" class="fade show">
+	      <div class="mb-3 port-input-label">
+			<span v-show="switch_PortData.multiEdit && !switch_PortData.same">
+				<input type="checkbox" @click="toggleCheckbox" id="ipRoutingVrfToggle" v-model="switch_PortData.toggleVRF">
+			</span>
+    	    <label for="addVrf" class="form-label" style="padding-left: 5px;">VRF</label>
+	        <input type="text" class="form-control port-input-iprouting" id="addVrf" v-model="switch_PortData.vrf" placeholder="Enter a VRF or leave blank for default"/>
+	      </div>
+    	  <!-- only show the IP input box if not in multi edit mode-->
+		  <div v-show="!switch_PortData.multiEdit" class="mb-3 port-input-label"> 
+	        <label for="addIP" class="form-label">IP Address</label>
+			<input id="addIP" class="form-control port-input-iprouting" type="text" v-model="switch_PortData.ip" placeholder="Enter an IP address in CIDR format"/>
+    	  </div>
+		</div>
+	</div>
+	<!-- End grey box -->
+
+	  <div class="mb-3 port-input-label">
+		<span v-show="switch_PortData.multiEdit && !switch_PortData.same"><input type="checkbox" @click="toggleCheckbox" id="descriptionToggle" v-model="switch_PortData.toggleDescription">&nbsp;</span>
+        <label for="addDescription" class="form-label">Description</label>
+        <input
+          type="text"
+		  maxlength="64"
+          class="form-control port-input-desc"
+          idLAG or Trunk ="addDescription"
+          v-model="switch_PortData.description"
+          placeholder="Enter a description for this interface"/>
+      </div>
+
+	  <div class="mb-3 port-input-label" >
+		<span v-show="switch_PortData.multiEdit && !switch_PortData.same"><input type="checkbox" @click="toggleCheckbox" id="speedDuplexToggle" v-model="switch_PortData.toggleSpeedDuplex">&nbsp;</span>
+		<label for="portSpeedDuplex" class="form-label">Port Speed & Duplex</label>
+		<select type=text class="form-select port-input-box" id="speedDuplex" v-model="switch_PortData.speed">
+			<option v-for="i in switch_port_speed_duplex_types" v-bind:value="i.value">{%raw%}{{i.name}}{%endraw%}</option>
+		</select>
+	  </div>
+
+	  <div class="mb-3 port-input-label">
+		<span v-show="switch_PortData.multiEdit && !switch_PortData.same"><input type="checkbox" @click="toggleCheckbox" id="spantreeProfile" v-model="switch_PortData.toggleSpantreeProfile">&nbsp;</span>
+		<label for="spantreeProfile" class="form-label">Port Spanning Tree Profile</label>
+		<select type=text class="form-select port-input-box" id="spantreeProfile" v-model="switch_PortData.spantree_profile" @load="switch_PortData.spantree_profile=1">
+			<option v-for="i in switch_spantree_policies_filtered_data" v-bind:value="i.id" :key="i.id">{%raw%}{{i.name}}{%endraw%}</option>
+		</select>
+	  </div>
+
+      <div class="mb-3 port-input-label">
+		<span v-show="switch_PortData.multiEdit && !switch_PortData.same"><input type="checkbox" @click="toggleCheckbox" id="mtuToggle" v-model="switch_PortData.toggleMTU">&nbsp;</span>
+        <label for="addMTU" class="form-label" style="margin-right: auto;">MTU</label>
+        <div class="btn-group" role="group">
+        <input type="text" class="form-control port-input-mtu" id="addMTU" v-model="switch_PortData.mtu">
+		  <!-- placeholder="Enter the MTU range 68 - 9168 for this interface" -->
+        <button type="button" class="btn btn-info btn-sm" @click.prevent="switch_PortData.mtu=1500">STD</button>
+        <button type="button" class="btn btn-warning btn-sm" @click.prevent="switch_PortData.mtu=9198">JUMBO</button>
+        </div>
+      </div>
+
+	  <div class="mb-3 port-input-label">
+		<span v-show="switch_PortData.multiEdit && !switch_PortData.same"><input type="checkbox" @click="toggleCheckbox" id="intProfileToggle" v-model="switch_PortData.toggleIntProfile">&nbsp;</span>
+        <label for="addIntProfile" class="form-label">Interface Profile</label>
+        <select type="text" class="form-select port-input-box" idLAG or Trunk ="addIntProfile" v-model="switch_PortData.intProfile">
+			<option value="" disabled>Select an interface profile</option>
+			<option v-for="profile in interfaceProfiles_filtered" v-bind:value="profile.id">{%raw%}{{profile.name}}{%endraw%}</option>
+	  	</select>
+      </div>
+
+		<div class="mb-3 port-toggle-label">
+				<label style="margin-right:auto;">Port Type</label>
+				<div>
+					<ul class="toggle-switch-inline">
+						<li v-for="(item, index) in switch_porttypes" :key=index>
+							<input :id="item.name + '_select_port_type'" :value="item.value" name="toggle_select_port_type" type="radio" v-on:click="switch_toggle_select_port_type">
+							<label v-if="item.value == switch_PortData.selected_port_type" class="btn-primary" :for="item.value + '_select_port_type'" type=radio>
+							{%raw%}{{ item.name }}{%endraw%}
+							</label>
+							<label v-else :for="item.name + '_select_port_type'" type=radio>
+							{%raw%}{{ item.name }}{%endraw%}
+							</label>
+						</li>
+					</ul>
+				</div>
+		</div>
+
+		<div class="mb-3" v-show="switch_PortData.selected_port_type==0" class="fade show">
+			<div class="mb-3">
+				<div class="btn-group port-input-label" role="group">
+					<span v-if="switch_PortData.multiEdit && !switch_PortData.same"><input type="checkbox" @click="toggleCheckbox" id="portTypeToggle" v-model="switch_PortData.togglePortType">&nbsp;</span>
+					<label for="addAccess" class="form-label">Select an access VLAN </label>
+					<select type="text" class="form-select port-toggle-box" id="addAccess" v-model="switch_PortData.access" placeholder="Select an Access VLAN">
+						<option value="0" disabled>Required - select an access VLAN</option>
+						<option v-for="v in switch_vlans" v-bind:value="v.value">{%raw%}{{v.name}}{%endraw%}</option>
+					</select>
+				</div>
+			</div>
+		</div>
+		<div class="mb-3" v-show="switch_PortData.selected_port_type==1" class="fade show">
+			<div class="mb-3">
+				<div class="btn-group port-input-label" role="group">
+					<span v-if="switch_PortData.multiEdit && !switch_PortData.same"><input type="checkbox" @click="toggleCheckbox" id="portTypeToggle" v-model="switch_PortData.togglePortType">&nbsp;</span>
+					<label for="addTrunk" class="form-label">Select a Trunk</label>
+					<select type="text" class="form-select port-toggle-box" id="addTrunk" v-model="switch_PortData.trunk" @change="if (switch_PortData.description=='') {switch_PortData.description = switch_trunks[$event.target.selectedIndex-1].description }">
+						<option value="0" disabled>Required - select a trunk</option>
+						<option v-for="v in switch_trunks" v-bind:value="v.value">{%raw%}{{makePretty(v.value)}}{{v.name}} ( {{v.allowed.join(',')}} native {{v.native_vlan}} {{tag_status[+v.native_tag]}} ){%endraw%}</option>
+					</select>
+				</div>
+			</div>
+		</div>
+		<div class="mb-3" v-show="switch_PortData.selected_port_type==2" class="fade show">
+			<div class="mb-3">
+				<div class="btn-group port-input-label" role="group">
+					<span v-if="switch_PortData.multiEdit && !switch_PortData.same"><input type="checkbox" @click="toggleCheckbox" id="portTypeToggle" v-model="switch_PortData.togglePortType">&nbsp;</span>
+					<label for="addLAG" class="form-label">Select a LAG</label>
+					<!-- display if no interface profile is selected -->
+					<select v-if="switch_PortData.intProfile ==1" type="text" class="form-select port-toggle-box" id="addLAG" v-model="switch_PortData.lag" @change="if (switch_PortData.description=='') { switch_PortData.description = switch_lags[$event.target.selectedIndex-1].description }">
+						<option value="0" disabled>Required - select a LAG</option>
+						<option v-for="v in switch_lags" v-bind:value="v.value">{%raw%}{{makePretty(v.value)}}{{v.name}} ( {{v.allowed.join(',')}} native {{v.native_vlan}}{{tag_status[+v.native_tag]}} ){%endraw%}</option>
+					</select>
+					<!-- display if any interface profile is selected -->
+					<select v-else disabled type="text" class="form-select port-toggle-box" id="addLAG">
+						<option value="0" selected disabled>Not compatible with Dyn Seg</option>
+					</select>
+				</div>
+			</div>
+		</div>
+		<!-- Save/Cancel and Check/Uncheck all buttons-->
+		<div class="btn-group" role="group">
+			<button v-if="switch_PortData.same" type="button" class="btn btn-primary btn-sm" @click="switch_handleAddPortProperties">Save</button>
+			<button v-else 						type="button" class="btn btn-primary btn-sm" @click="are_you_sure(switch_handleAddPortProperties,1,profile=areYouSureChangePort)">Save</button>
+			<button 							type="button" class="btn btn-danger btn-sm"  @click="switch_toggleAddPortProperties">Cancel</button>
+		</div>
+		<!-- this will put the button in the far right corner of the modal-->
+		<div class="btn-group" role="group" style="position: absolute; bottom: 16px; right: 16px;">
+			<button v-if="switch_PortData.multiEdit && !switch_PortData.same" type="button" class="btn btn-success btn-sm" @click="switch_toggleAllCheckboxes">
+			<span v-if="switch_PortData.toggleAll">Uncheck All</span>
+			<span v-else                          >Check All</span>
+			</button>
+		</div>
+	</form>
+  </div>
+
+</div>
+</div>
+</div>
+<div v-show="switch_activePortAddData" class="modal-backdrop fade show"></div>

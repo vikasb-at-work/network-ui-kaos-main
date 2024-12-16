@@ -1,0 +1,43 @@
+
+{% extends 'CradlepointReportingProject/base.html' %}
+
+{% block crp_content %}
+<style>
+	.right-align {
+		text-align: right;
+	}
+	th {
+		padding: 1px;
+		text-align: center;
+		border-bottom: 1px solid black;
+	}
+	td {
+		padding: 1px;
+		border-bottom: 1px solid #ddd;
+	}
+</style>
+
+
+<h1> Highest single day usage </h1>
+    <br>
+    <div class="container">
+        <table>
+            <tr>
+                <th>Cradlepoint</th>
+                <th>Date</th>
+                <th>Usage</th>
+            </tr>
+            {% for cp in CP_DICT %}
+            <tr>
+                <td>{{ cp["Cradlepoint"] }}</td>
+                <td style="padding-left: 20px; padding-right: 20px;">{{ cp["date"] }}</td>   
+                <td class="right-align">{{ "{:,.2f}".format(cp["MB_used"]|round(2)) }}</td>   
+            </tr>
+            {% endfor %}
+          </table>
+        <br>
+        <br>
+    </div>
+{% endblock %}
+
+

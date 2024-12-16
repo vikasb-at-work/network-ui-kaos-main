@@ -1,0 +1,1439 @@
+{% extends 'menu.html' %}
+{% block content %}
+<head>
+    <title>Change Audit Log</title>
+</head>
+<style>
+    .container-fluid {
+        /* This widens the entire page instead of or normal margins*/
+        width: 90%;
+        margin: 0 auto;
+    }
+    .input-group-label {
+        width: 130px;
+    }    
+    .form-control.text-right {
+        text-align: right;
+    }
+    td:nth-child(1),
+    th:nth-child(1) {
+        /* This is for the ID Column */
+        max-width: 35px;
+        min-width: 35px;
+        white-space: normal;
+    }
+    td:nth-child(2),
+    th:nth-child(2) {
+        /* This is for the Created Date Column */
+        max-width: 110px; 
+        /*min-width: 110px;*/
+        white-space: normal;
+    }
+    td:nth-child(3),
+    th:nth-child(3) {
+        /* This is for the submitted by Column */
+        max-width: 95px;
+        /*min-width: 70px;*/
+        white-space: normal;
+    }
+    td:nth-child(4),
+    th:nth-child(4) {
+        /* This is for the Team Column */
+        max-width: 73px;
+        min-width: 73px;
+        white-space: normal;
+    }
+    td:nth-child(5),
+    th:nth-child(5) {
+        /* This is for the Group Column */
+        max-width: 65px;
+        min-width: 65px;
+        white-space: normal;
+    }
+    td:nth-child(6),
+    th:nth-child(6) {
+        /* This is for the Environment Column */
+        max-width: 78px;
+        min-width: 78px;
+        white-space: normal;
+    }
+    td:nth-child(7),
+    th:nth-child(7) {
+        /* This is for the Site Column */
+        max-width: 70px;
+        min-width: 70px;
+        white-space: normal;
+    }
+    td:nth-child(8),
+    th:nth-child(8) {
+        /* Sets a max width for the Change Log column and prevents the text from wrapping */
+        max-width: 225px; /* 240 */
+        min-width: 225px;
+        white-space: nowrap; 
+        overflow: hidden; 
+        text-overflow: ellipsis; 
+    }
+    td:nth-child(9),
+    th:nth-child(9) {
+        /* This is for the CRQ Column */
+        max-width: 90px;
+        min-width: 90px;
+        white-space: normal;
+    }
+    td:nth-child(10),
+    th:nth-child(10) {
+        /* This is for the Button Column */
+        max-width: 140px;
+        min-width: 140px;
+        white-space: normal;
+    }
+    /* Text color for non-active items */
+    .lighter-text {
+        color: #a0a0a0;
+    }
+    .icon-warning-color {
+        color: #dc3545;
+    }
+    .icon-check-mod-color {
+        color: #ffc107;
+    }
+    .icon-detail-view-color {
+        color: #007bff;
+    }
+    .font-mod-color {
+        color: #007bff;
+    }
+    .icon-export-color {
+        color: #6c757d;
+    }
+    textarea {
+        resize: none;
+    }
+    .viewModButton {
+        width: 185px;
+    }
+    th input[type="text"] {
+        width: 90%;
+        padding: 5px;
+        box-sizing: border-box;
+        border: 1px solid #ddd;
+        border-radius: .25rem;
+    }
+    /* Remove the green checkmark for valid form-control */
+    .was-validated .form-control:valid {
+        background-image: none;
+        padding: .375rem .75rem;
+    }
+    /* Remove the green checkmark for valid form-select */
+    .was-validated .form-select:valid:not([multiple]):not([size]) {
+        padding: .375rem 2.25rem .375rem .75rem;
+        /* This is the caret (down arrow) that indicates there is a drop down menu */
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+        background-position: right .75rem center;
+        background-size: 16px 12px;
+    }
+    tfoot {
+        border: none; 
+        background-color: transparent; 
+    }
+    tfoot td {
+        border: none;
+    }
+</style>
+<template id="gridTemplate">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col"> <!-- how wide the whole table is-->
+                <h1>Change Audit Log</h1>
+                <br>
+                <h5><strong>Enter a new change log entry:</strong></h5>
+                <form ref="entryForm" @submit.prevent="handleChangeEntrySubmit" class="needs-validation" novalidate>
+                    <div class="row mb-3"> <!-- Top row for the log entry area-->
+                        <div class="col-2">
+                            <label for="inputSubmittedBy">Submitted By*</label>
+                            <input type="text" id="inputSubmittedBy" class="form-control" disabled v-model="addChangeEntry.submitted_by">
+                        </div>
+                        <div class="col-2">
+                            <label for="inputTeam">Team*</label>
+                            <select id="inputTeam" class="form-select" v-model="addChangeEntry.team" autofocus required>
+                                <option value="Network" >Network</option>
+                                <option value="Platform">Platform</option>
+                            </select>
+                            <div class="invalid-feedback">
+                                Please select a team.
+                            </div>
+                        </div>
+                        <div class="col-2">
+                            <label for="inputGroup">Group*</label>
+                            <select id="inputGroup" class="form-select" v-model="addChangeEntry.team_group" required>
+                                <option value=""          >Select a group</option>
+                                <option v-for="group in addChangeEntryTeamGroups" :key="group" :value="group">{%raw%}{{group}}{%endraw%}</option>
+                            </select>
+                            <div class="invalid-feedback">
+                                Please select a group.
+                            </div>
+                        </div>
+                        <div class="col-2">
+                            <label for="inputEnvironment">Environment*</label>
+                            <select id="inputEnvironment" class="form-select" v-model.number="addChangeEntry.environment" required>
+                                <option value=0>Prod</option>
+                                <option value=1>Non-Prod</option>
+                            </select>
+                            <div class="invalid-feedback">
+                                Please select an environment.
+                              </div>
+                        </div>
+                        <div class="col-2"> <!-- dynamically builds a dropdown list from the gmiSites table-->
+                            <label for="inputSite">Site</label>
+                            <select id="inputSite" class="form-select" v-model="addChangeEntry.site">
+                                <option value="">Select a site</option>
+                                <option v-for="row in site_list" :key="row.site" :value="row.site">{%raw%}{{row.site}}{%endraw%}</option>
+                            </select>
+                        </div>
+                        <div class="col-2">
+                            <label for="inputCRQ">Reference</label>
+                            <input type="text" id="inputCRQ" class="form-control" placeholder="CRQ or reference" v-model="addChangeEntry.crq">
+                        </div>
+                    </div>
+                    <div class="row mb-3"> <!-- Lower row for log entry area-->
+                        <div class="col-6">
+                            <label for="inputChangeLog">Change Log*</label>
+                            <textarea id="inputChangeLog" class="form-control" placeholder="Enter information about the change here" rows="2" v-model="addChangeEntry.change_log" minlength="3" required></textarea>
+                            <div class="invalid-feedback">
+                                Change information is required.
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <label for="inputAffectedSystems">Affected Systems</label>
+                            <textarea id="inputAffectedSystems" class="form-control" placeholder="Add details about any affected system here" rows="2" v-model="addChangeEntry.affected_systems"></textarea>
+                        </div>
+                        <div v-if="quick_entry_template !==''" class="col-2"> <!-- this is hidden for now until I am ready to implement-->
+                            <label for="inputQuickEntry">Quick Entry Templates</label>
+                            <select id="inputQuickEntry" class="form-select" v-model="quick_entry_template">
+                                <option value="">Choose QET</option>
+                                <option value="DNS">DNS change</option>
+                                <option value="SDWAN">SDWAN change</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <button type="submit" class="btn btn-success btn-lg">Submit</button>
+                        <button type="button" class="btn btn-warning btn-sm" @click="reset_addChangeEntry_data()" tabindex="-1">Reset Form</button>
+                    </div>
+                </form>
+                <!-- <br> border: none; background-color: black;-->
+                <hr style="color:black; height: 2px; ">
+
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">ID</th>
+                            <th scope="col">Created Date</th>
+                            <th scope="col">Submitted By</th>
+                            <th scope="col">Team</th>
+                            <th scope="col">Group</th>
+                            <th scope="col">Environment</th>
+                            <th scope="col">Site</th>
+                            <th scope="col">Change Log</th>
+                            <th scope="col">Reference</th>
+                            <th class="lighter-text">{%raw%}{{filteredEntryCount}} out of {{totalEntryCount}} total entries{%endraw%}</th>
+                        </tr>
+                        <!-- filter header row -->
+                        <tr>
+                            <th><input type="text" v-model="filter.entryID"></th>
+                            <th><input type="text" v-model="filter.entryCreatedTime"></th>
+                            <th><input type="text" v-model="filter.entrySubmittedBy"></th>
+                            <th>
+                                <select class="form-select" v-model="filter.entryTeam">
+                                    <option value="" selected></option>
+                                    <option value="Network" >Network</option>
+                                    <option value="Platform">Platform</option>
+                                </select>
+                            </th>
+                            <th><input type="text" v-model="filter.entryTeamGroup"></th>
+                            <th>
+                                <select class="form-select" v-model="filter.entryEnvironment">
+                                    <option value="" selected></option>
+                                    <option value="0">Prod</option>
+                                    <option value="1">Non-Prod</option>
+                                </select>
+                            </th>
+                            <th><input type="text" v-model="filter.entrySite"></th>
+                            <th><input type="text" v-model="filter.entryChangeLog"></th>
+                            <th><input type="text" v-model="filter.entryCRQ"></th>                            
+                            <th>
+                                <div class="row">
+                                    <div class="col">
+                                        <button type="button" class="btn btn-secondary btn-sm" @click="resetFilter()" style="margin-left: 10px;">Reset Filters</button>
+                                    </div>
+                                    <div class="col">    
+                                        <small>Filter by column</small>
+                                    </div>
+                                </div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="row in paginatedEntries" :key="row.id"> <!-- :class="{ 'lighter-text': row.archived == 1 }"-->
+                            <td>{%raw%}{{ row.id            }}{%endraw%}</td>
+                            <td>{%raw%}{{ row.created_time  }}{%endraw%}</td>
+                            <td>{%raw%}{{ row.submitted_by  }}{%endraw%}</td>
+                            <td>{%raw%}{{ row.team          }}{%endraw%}</td>
+                            <td>{%raw%}{{ row.team_group    }}{%endraw%}</td>
+                            <td v-if="row.environment==0">Prod</td>
+                            <td v-else-if="row.environment==1">Non-Prod</td>
+                            <td v-else></td>
+                            <td>{%raw%}{{ row.site    }}{%endraw%}</td> 
+                            <td>{%raw%}{{ row.change_log    }}{%endraw%}</td> 
+                            <td>
+                                <a v-if="makeExternalLink(row)" :href="getExternalLink(row)" target="_blank">{%raw%}{{ row.crq }}{%endraw%}</a>
+                                <span v-else>{%raw%}{{ row.crq    }}{%endraw%}</span>
+                            </td>
+                            
+                            <td>
+                                <!-- this pushes the buttons to the far right of the div / me-1 adds 4px to the right margin-->
+                                <div v-if="row.created_time !== 'No filter match'" class="d-flex justify-content-end">
+                                    <button type="button" class="btn btn-info btn-sm me-1" @click="handleViewEntry(row)">View Details</button>
+                                    <button type="button" class="btn btn-warning btn-sm me-1" @click="toggleModifyEntry(row)">Modify</button>
+                                    <button type="button" class="btn btn-danger btn-sm" @click="toggleDeleteEntry(row)">Delete</button>    
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="10"> <!-- expands the cell across all 10 cells defined above-->
+                                <div class="row align-items-center">
+                                    <div class="col-4 d-flex justify-content-start align-items-center">
+                                        <button type="button" class="btn btn-secondary me-2 mb-0" @click="toggleExport()">Export</button>
+                                        <!-- <span>Total Pages: {%raw%}{{totalPages}}{%endraw%}</span> -->
+                                    </div>
+                                    <div class="col-4 d-flex justify-content-center">
+                                        <nav>
+                                            <div v-if="totalPages > 2">                                                
+                                                <ul class="pagination mb-0">
+                                                    <li class="page-item" :class="{ disabled: currentPage === 1 }">
+                                                        <a class="page-link" href="#" @click.prevent="goToPreviousPage">
+                                                        <span>&laquo;</span>
+                                                        </a>
+                                                    </li>
+                                                    <li v-if="currentPage > 2" class="page-item">
+                                                        <a class="page-link" href="#" @click.prevent="goToSpecificPage(1)">
+                                                            1
+                                                        </a>
+                                                    </li>
+                                                    <li v-if="totalPages > 5 && currentPage > 3" class="page-item disabled" >
+                                                        <a class="page-link">
+                                                            <span>...</span>
+                                                        </a>
+                                                    </li>
+                                                    <li v-if="totalPages > 5 && currentPage == totalPages" class="page-item">
+                                                        <a class="page-link" href="#" @click.prevent="goToSpecificPage(totalPages - 2)">
+                                                            {%raw%}{{totalPages - 2}}{%endraw%}
+                                                        </a>
+                                                    </li>
+                                                    <li v-if="currentPage > 1" class="page-item">
+                                                        <a class="page-link" href="#" @click.prevent="goToSpecificPage(currentPage - 1)">
+                                                            {%raw%}{{currentPage - 1}}{%endraw%}
+                                                        </a>
+                                                    </li>    
+                                                    <li class="page-item active">
+                                                        <a class="page-link">
+                                                            {%raw%}{{currentPage}}{%endraw%}
+                                                        </a>
+                                                    </li>
+                                                    <li v-if="currentPage < totalPages" class="page-item">
+                                                        <a class="page-link" href="#" @click.prevent="goToSpecificPage(currentPage + 1)">
+                                                            {%raw%}{{currentPage + 1}}{%endraw%}
+                                                        </a>
+                                                    </li>
+                                                    <li v-if="currentPage == 1" class="page-item">
+                                                        <a class="page-link" href="#" @click.prevent="goToSpecificPage(currentPage + 2)">
+                                                            {%raw%}{{currentPage + 2}}{%endraw%}
+                                                        </a>
+                                                    </li>
+                                                    <li v-if="totalPages > 5 && currentPage < totalPages - 2" class="page-item disabled" >
+                                                        <a class="page-link">
+                                                            <span>...</span>
+                                                        </a>
+                                                    </li>
+                                                    <li v-if="totalPages > 5 && currentPage < totalPages - 1" class="page-item">
+                                                        <a class="page-link" href="#" @click.prevent="goToSpecificPage(totalPages)">
+                                                            {%raw%}{{totalPages}}{%endraw%}
+                                                        </a>
+                                                    </li>
+                                                    <li class="page-item" :class="{ disabled: currentPage === totalPages}">
+                                                        <a class="page-link" href="#" @click.prevent="goToNextPage">
+                                                        <span>&raquo;</span>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <div v-if="totalPages === 1">
+                                                <ul class="pagination mb-0">
+                                                    <li class="page-item disabled">
+                                                        <a class="page-link" href="#">
+                                                        <span>&laquo;</span>
+                                                        </a>
+                                                    </li>
+                                                    <li class="page-item active">
+                                                        <a class="page-link">
+                                                            1
+                                                        </a>
+                                                    </li>
+                                                    <li class="page-item disabled">
+                                                        <a class="page-link" href="#">
+                                                        <span>&raquo;</span>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                            <div v-if="totalPages === 2">
+                                                <ul class="pagination mb-0">
+                                                    <li class="page-item" :class="{ disabled: currentPage === 1 }">
+                                                        <a class="page-link" href="#" @click.prevent="goToPreviousPage">
+                                                        <span>&laquo;</span>
+                                                        </a>
+                                                    </li>
+                                                    <li v-if="currentPage === 2" class="page-item">
+                                                        <a class="page-link" href="#" @click.prevent="goToSpecificPage(1)">
+                                                            1
+                                                        </a>
+                                                    </li>   
+                                                    <li class="page-item active">
+                                                        <a class="page-link">
+                                                            {%raw%}{{currentPage}}{%endraw%}
+                                                        </a>
+                                                    </li>
+                                                    <li v-if="currentPage === 1" class="page-item">
+                                                        <a class="page-link" href="#" @click.prevent="goToSpecificPage(2)">
+                                                            2
+                                                        </a>
+                                                    </li>   
+                                                    <li class="page-item" :class="{ disabled: currentPage === totalPages}">
+                                                        <a class="page-link" href="#" @click.prevent="goToNextPage">
+                                                        <span>&raquo;</span>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </nav>
+                                    </div>
+                                    <div class="col-4 d-flex justify-content-end align-items-center">
+                                        <label for="selectNumberPerPage" class="me-2 mb-0">Items per page</label>
+                                        <select id="selectNumberPerPage" class="form-select" v-model.number="itemsPerPage" style="width: 75px;">
+                                            <option value="5">5</option>
+                                            <option value="25">25</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                            <option value="0">All</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div> <!-- end column -->
+        </div> <!-- end row -->
+    </div> <!-- end container -->
+
+<!-- Delete log entry modal -->
+<div ref="deleteEntryData" class="modal fade" :class="{ show: activeDeleteEntryData, 'd-block': activeDeleteEntryData }" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Change Log Entry</h5>
+                <i class="fa-solid fa-circle-exclamation fa-2xl icon-warning-color"></i>
+            </div> <!-- End modal header-->
+            <div class="modal-body" ref="modalBodyRef">
+                <form>
+                    <div class="container">
+                        <div class="row" style="border-bottom: 1px solid lightgrey; margin-bottom: 10px; padding-bottom: 10px; margin-top: 0; padding-top: 0;">
+                            <!-- details about the item to be deleted -->
+                             <p style="margin: 0;">
+                                <div>
+                                    <strong>Submitted by: </strong>{%raw%}{{ deleteEntryData.submitted_by  }}{%endraw%}
+                                </div>
+                                <div>
+                                    <strong>Created date: </strong>{%raw%}{{ deleteEntryData.created_time  }}{%endraw%}
+                                </div>
+                                <div>
+                                    <strong>Team: </strong>{%raw%}{{ deleteEntryData.team  }}{%endraw%}
+                                </div>
+                                <div>
+                                    <strong>Group: </strong>{%raw%}{{ deleteEntryData.team_group  }}{%endraw%}
+                                </div>
+                                <div v-if="deleteEntryData.environment==0">
+                                    <strong>Environment: </strong>Prod
+                                </div>
+                                <div v-else>
+                                    <strong>Environment: </strong>Non-Prod
+                                </div>
+                                <div v-if="deleteEntryData.site!==''">
+                                    <strong>Site: </strong>{%raw%}{{ deleteEntryData.site  }}{%endraw%}
+                                </div>
+                                <div v-else>
+                                    <strong>Site: </strong>N/A<br>
+                                </div>
+                                <div v-if="deleteEntryData.crq!==''">
+                                    <strong>Change Req or Reference: </strong>{%raw%}{{ deleteEntryData.crq  }}{%endraw%}
+                                </div>
+                                <div v-else>
+                                    <strong>Change Req or Reference: </strong>N/A
+                                </div>
+                                <div v-if="deleteEntryData.affected_systems!==''">
+                                    <strong>Affected Systems: </strong>{%raw%}{{ deleteEntryData.affected_systems  }}{%endraw%}
+                                </div>
+                                <div v-else>
+                                    <strong>Affected Systems: </strong>N/A
+                                </div>
+                                <div>
+                                    <strong>Change log: </strong>{%raw%}{{ deleteEntryData.change_log  }}{%endraw%}
+                                </div>
+                             </p>
+                        </div>
+                        <form ref="deleteForm" class="needs-validation" novalidate>
+                            <div class="row">
+                                <div class="col">
+                                    <!-- Archived by -->
+                                    <label for="deleteArchivedBy" class="form-label" style="display: inline-block">Deleted by*</label>
+                                    <input id="deleteArchivedBy" class="form-control" type="text" required v-model="deleteEntryData.archived_by" readonly />
+                                    <div class="invalid-feedback">
+                                        A user ID is required.
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <!-- Archived reason -->
+                                    <label for="deleteArchivedReason" class="form-label" style="display: inline-block">Reason for deletion*</label>
+                                    <textarea id="deleteArchivedReason" class="form-control" rows="3" v-model="deleteEntryData.archived_reason" autofocus minlength="3" required></textarea>
+                                    <div class="invalid-feedback">
+                                        A reason is required.
+                                    </div>
+                                </div>
+                            </div> <!-- End row -->
+                        </form>
+                    </div> <!-- End container -->
+                    <!-- Submit and cancel buttons -->
+                    <div class="d-flex justify-content-between mt-3">
+                        <button type="button" class="btn btn-danger btn-sm" @click="handleDeleteEntrySubmit">Delete</button> <!-- Submit button on the left-->                        
+                        <button type="button" class="btn btn-warning btn-sm" @click="handleDeleteEntryCancel">Cancel</button> <!-- Cancel button on the right-->
+                    </div>
+                </form>
+            </div> <!-- End modal body -->
+        </div> <!-- End modal content -->
+    </div> <!-- End modal dialog -->
+</div> <!-- End ref="deleteEntryData" -->
+<div v-if="activeDeleteEntryData" class="modal-backdrop fade show"></div>
+
+<!-- Modify log entry modal -->
+<div ref="modifyEntryData" class="modal fade" :class="{ show: activeModifyEntryData, 'd-block': activeModifyEntryData }" tabindex="-1"role="dialog">
+    <div class="modal-dialog modal-xl" role="document"> <!-- Need XL modal here -->
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Modify Change Log Entry</h5>
+                <i class="fa-solid fa-circle-check fa-2xl icon-check-mod-color"></i>
+                <!-- 
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" @click="handleModifyEntryCancel">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                -->
+            </div> <!-- end modal header-->
+            <div class="modal-body" ref="modalBodyRef">
+                <form ref="modifyForm" class="needs-validation" novalidate>
+                    <div class= "container" style="border-bottom: 1px solid lightgrey; margin-bottom: 20px; padding-bottom: 20px;"> 
+                        <div class="row" style="margin-bottom: 10px;"> <!-- Top row for the log entry area-->
+                            <div class="col-2">
+                                <label for="inputSubmittedBy">Submitted By*</label>
+                                <input type="text" id="inputSubmittedBy" class="form-control" v-model="modifyChangeEntry.submitted_by" autofocus required>
+                                <div class="invalid-feedback">
+                                    A user ID is required.
+                                </div>
+                            </div>
+                            <div class="col-2">
+                                <label for="inputTeam">Team*</label>
+                                <select id="inputTeam" class="form-select" v-model="modifyChangeEntry.team" required>
+                                    <option value="Network" >Network</option>
+                                    <option value="Platform">Platform</option>
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please select a team.
+                                </div>
+                            </div>
+                            <div class="col-2">
+                                <label for="inputGroup">Group*</label>
+                                <select id="inputGroup" class="form-select" v-model="modifyChangeEntry.team_group" required>
+                                    <option value=""          >Select a group</option>
+                                    <option v-for="group in modifyChangeEntryTeamGroups" :key="group" :value="group">{%raw%}{{group}}{%endraw%}</option>
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please select a team.
+                                </div>
+                            </div>
+                            <div class="col-2">
+                                <label for="inputEnvironment">Environment*</label>
+                                <select id="inputEnvironment" class="form-select" v-model.number="modifyChangeEntry.environment" required>
+                                    <option value=0>Prod</option>
+                                    <option value=1>Non-Prod</option>
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please select a team.
+                                </div>
+                            </div>
+                            <div class="col-2"> <!-- dynamically builds a dropdown list from the gmiSites table-->
+                                <label for="inputSite">Site</label>
+                                <select id="inputSite" class="form-select" v-model="modifyChangeEntry.site">
+                                    <option value="">Select a site</option>
+                                    <option v-for="row in site_list" :key="row.site" :value="row.site">{%raw%}{{row.site}}{%endraw%}</option>
+                                </select>
+                            </div>
+                            <div class="col-2">
+                                <label for="inputCRQ">Change Req or Ref</label>
+                                <input type="text" id="inputCRQ" class="form-control" placeholder="CRQ or reference" v-model="modifyChangeEntry.crq">
+                            </div>
+                        </div>
+                        <div class="row"> <!-- Lower row for log entry area-->
+                            <div class="col-8">
+                                <label for="inputChangeLog">Change Log*</label>
+                                <textarea id="inputChangeLog" class="form-control" placeholder="Enter information about the change here" rows="3" v-model="modifyChangeEntry.change_log" minlength="3" required></textarea>
+                                <div class="invalid-feedback">
+                                    Change information is required.
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <label for="inputAffectedSystems">Affected Systems</label>
+                                <textarea id="inputAffectedSystems" class="form-control" placeholder="Add details about any affected system here" rows="3" v-model="modifyChangeEntry.affected_systems"></textarea>
+                            </div>
+                        </div>
+                    </div> <!-- end container -->
+                    <div class="container" style="margin-bottom: 20px; padding-bottom: 10px;">
+                        <h6>Make the needed modifications above and enter a reason for the modification.</h6>
+                        <div class="row">
+                            <div class="col-2">
+                                <!-- Archived by -->
+                                <label for="modifyBy" class="form-label" style="display: inline-block" >Modified by*</label>
+                                <input id="modifyBy" class="form-control" type="text" v-model="modifyChangeEntry.modified_by" readonly required/>
+                                <div class="invalid-feedback">
+                                    A user ID is required.
+                                </div>
+                            </div>
+                            <div class="col-8">
+                                <!-- Archived reason -->
+                                <label for="modifyReason" class="form-label" style="display: inline-block">Reason for modification*</label>
+                                <textarea id="modifyReason" class="form-control" placeholder="Why did you make the modification?" rows="2" v-model="modifyChangeEntry.modification_reason" minlength="3" required></textarea>
+                                <div class="invalid-feedback">
+                                    A reason is required.
+                                </div>
+                            </div>
+                        </div> <!-- End row -->
+                    </div> <!-- end container-->
+                    <!-- submit and reset buttons -->
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-primary btn-sm" @click="handleModifyEntrySubmit">Submit</button>
+                    </div>
+                    <!-- cancel button -->
+                    <div class="btn-group" role="group" style="position: absolute; bottom: 16px; right: 16px;">
+                        <button type="button" class="btn btn-warning btn-sm" @click="handleModifyEntryCancel">Cancel</button>
+                    </div>
+                </form>
+            </div> <!-- end modal body -->
+        </div> <!-- end modal content -->
+    </div> <!-- end modal dialog -->
+</div> <!-- end ref="editData" -->
+<div v-if="activeModifyEntryData" class="modal-backdrop fade show"></div>
+
+<!-- View details log entry modal -->
+<div ref="viewEntryData" class="modal fade" :class="{ show: activeViewEntryData, 'd-block': activeViewEntryData }" tabindex="-1"role="dialog">
+    <div class="modal-dialog modal-xl" role="document"> <!-- Need XL modal here -->
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">View Change Log Entry Details</h5>
+                <i class="fa-solid fa-circle-info fa-2xl icon-detail-view-color"></i>
+            </div> <!-- end modal header-->
+            <div class="modal-body" ref="modalBodyRef">
+                <form>
+                    <div class= "container"> 
+                        <div class="row">
+                            <div class="col-4">
+                                <strong>Create date: </strong>{%raw%}{{ viewChangeEntry.created_time  }}{%endraw%}
+                            </div>
+                            <div class="col-4 font-mod-color" v-if="viewChangeEntry.original_id != null" >
+                                This change has been modified.
+                            </div>
+                        </div>
+                        <div class="row" style="margin-bottom: 10px; margin-top: 5px;"> <!-- Top row for the log entry area-->
+                            <div class="col-2">
+                                <label for="inputSubmittedBy">Submitted By</label>
+                                <input type="text" id="inputSubmittedBy" class="form-control" v-model="viewChangeEntry.submitted_by" readonly>
+                            </div>
+                            <div class="col-2">
+                                <label for="inputTeam">Team</label>
+                                <input type="text" id="inputTeam" class="form-control" v-model="viewChangeEntry.team" readonly>
+                            </div>
+                            <div class="col-2">
+                                <label for="inputGroup">Group</label>
+                                <input type="text" id="inputGroup" class="form-control" v-model="viewChangeEntry.team_group" readonly>
+                            </div>
+                            <div class="col-2">
+                                <label for="inputEnvironment">Environment</label>
+                                <input type="text" id="inputEnvironment" class="form-control" v-model="viewChangeEntry.environment" readonly>
+                            </div>
+                            <div class="col-2">
+                                <label for="inputSite">Site</label>
+                                <input type="text" id="inputSite" class="form-control" v-model="viewChangeEntry.site" readonly>
+                            </div>
+                            <div class="col-2">
+                                <label for="inputCRQ">Change Req or Ref</label>
+                                <input type="text" id="inputCRQ" class="form-control" placeholder="CRQ or reference" v-model="viewChangeEntry.crq" readonly>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-8">
+                                <label for="inputChangeLog">Change Log</label>
+                                <textarea id="inputChangeLog" class="form-control" placeholder="Enter information about the change here" rows="3" v-model="viewChangeEntry.change_log" readonly></textarea>
+                            </div>
+                            <div class="col-4">
+                                <label for="inputAffectedSystems">Affected Systems</label>
+                                <textarea id="inputAffectedSystems" class="form-control" placeholder="Add details about any affected system here" rows="3" v-model="viewChangeEntry.affected_systems" readonly></textarea>
+                            </div>
+                        </div>                        
+                        <div v-if="viewChangeEntry.original_id != null" style="margin-top: 10px">
+                            <button type="button" class="btn btn-primary btn-sm viewModButton" data-bs-toggle="collapse" data-bs-target="#showModificationChain" @click="toggle_view_mod_details_button">{%raw%}{{ viewModButtonLable }}{%endraw%}</button>
+                        </div>
+                        
+                    <!-- This div will only show if the log entry has been modified -->
+                    <!-- style="border: 1px solid lightgrey; margin-bottom: 20px; padding-bottom: 10px;" class="row"-->
+                    <div v-if="viewChangeEntry.original_id != null" style="margin: 10px;" class="collapse" id="showModificationChain">
+                        <div v-for="row in entry_mod_chain_list" :key="row.id"> <!-- This <div> will be the v-for loop for the modification chain -->
+                            <div>
+                                <strong>Previous change modified: </strong> {%raw%}{{ row.modified_time }}{%endraw%}
+                            </div>
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="row" style="margin-bottom: 10px;">
+                                        <div class="col-3">
+                                            <strong>Modified By </strong> {%raw%}{{ row.modified_by }}{%endraw%}
+                                        </div>
+                                        <div class="col-9">
+                                            <strong>Modified Reason</strong> {%raw%}{{ row.modification_reason }}{%endraw%}
+                                        </div>
+                                    </div>
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="row" style="margin-bottom: 5px;">
+                                                <div class="col-3">
+                                                    <strong>Submitted By</strong> {%raw%}{{ row.submitted_by }}{%endraw%}
+                                                </div>
+                                                <div class="col-2">
+                                                    <strong>Team</strong> {%raw%}{{ row.team }}{%endraw%}
+                                                </div>
+                                                <div class="col-2">
+                                                    <strong>Group</strong> {%raw%}{{ row.team_group }}{%endraw%}
+                                                </div>
+                                                <div class="col-3">
+                                                    <strong>Environment</strong> {%raw%}{{ row.environment }}{%endraw%}
+                                                </div>
+                                                <div class="col-2">
+                                                    <strong>Site</strong> {%raw%}{{ row.site }}{%endraw%}
+                                                </div>
+                                            </div>
+                                            <div class="row" style="margin-bottom: 5px;">
+                                                <div class="col-5">
+                                                    <strong>Change Req or Ref</strong> {%raw%}{{ row.crq }}{%endraw%}
+                                                </div>
+                                                <div class="col-7">
+                                                    <strong>Affected Systems</strong> {%raw%}{{ row.affected_systems }}{%endraw%}
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-12">
+                                                    <strong>Change Log</strong> {%raw%}{{ row.change_log }}{%endraw%}
+                                                </div>
+                                            </div>
+                                        </div> <!-- end inside card-body -->
+                                    </div> <!-- end inside card -->
+                                </div> <!-- end outside card-body -->
+                            </div>
+                        </div>
+                    </div> <!-- end row-->
+                </div> <!-- end container -->
+            </form>
+        </div> <!-- end modal body -->
+        <div class="modal-footer d-flex justify-content-end">
+            <!-- cancel button -->
+            <button type="button" class="btn btn-warning btn-sm" @click="handleViewEntryCancel">Close</button>
+        </div>
+
+        </div> <!-- end modal content -->
+    </div> <!-- end modal dialog -->
+</div> <!-- end ref="editData" -->
+<div v-if="activeViewEntryData" class="modal-backdrop fade show"></div>
+
+<!-- Export modal -->
+<div ref="exportData" class="modal fade" :class="{ show: activeExportData, 'd-block': activeExportData }" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Export Data</h5>
+                <i class="fa-solid fa-file-export fa-2xl icon-export-color"></i>
+            </div> <!-- End modal header-->
+            <div class="modal-body" ref="modalBodyRef">
+                <form>
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-12">
+                                <p>What would you like to export?</p>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" id="filtered_list" name="export_options" value="filtered_list" v-model="exportChoice">
+                                    <label class="form-check-label" for="filtered_list">Current filtered list of log entries</label>
+                                    <div>
+                                        <input type="checkbox" id="modChainExpSelect" :disabled="exportChoice !== 'filtered_list'" v-model="modificationChainExportSelection" />
+                                        <label for="checkmodChainExpSelectbox">Include modification details</label>
+                                    </div>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" id="deleted_items" name="export_options" value="deleted_items" v-model="exportChoice">
+                                    <label class="form-check-label" for="deleted_items">All deleted log entries</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" id="all_items" name="export_options" value="all_items" v-model="exportChoice">
+                                    <label class="form-check-label" for="all_items">All log entries</label>
+                                </div>
+                                <div style="color: red">
+                                    <span v-show="showExportError == true">Nothing to export.</span>
+                                    <span v-show="showExportError == false" style="visibility: hidden;">takes up space</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div> <!-- End container -->
+                    <!-- Export and cancel buttons -->
+                    <div class="d-flex justify-content-between mt-3">
+                        <button type="button" class="btn btn-secondary btn-sm" @click="handleExport">Export</button>                         
+                        <button type="button" class="btn btn-warning btn-sm" @click="handleExportClose">Close</button> 
+                    </div>
+                </form>
+            </div> <!-- End modal body -->
+        </div> <!-- End modal content -->
+    </div> <!-- End modal dialog -->
+</div> <!-- End ref="exportData" -->
+<div v-if="activeExportData" class="modal-backdrop fade show"></div>
+
+{% include "vue_utility_modal_are_you_sure.html" %}
+{% include "vue_utility_modal_alert.html" %}
+
+</div> <!-- end container -->
+</template>
+
+<script type="module">
+    import { createApp } from 'https://unpkg.com/petite-vue?module'
+    import 'https://unpkg.com/axios/dist/axios.min.js'
+
+    const change_log_get_entry_endpoint     = "/change_log/getData"; //can add /<filter> to get different views of the data
+    const change_log_update_entry_endpoint  = "/change_log/updateData"; //need to add /<id> to this in the PUT
+    const change_log_delete_entry_endpoint  = "/change_log/archiveData"; //need to add /<id> to this in the PUT
+    const change_log_get_mod_chain_endpoint = "/change_log/getModifyChain"; //need to add /<id> to this in the GET
+    const gmi_sites_endpoint                = "/rest/v1/config/gmiSites/siteCodeOnly";
+    
+    function app() {
+        return {
+            data() {
+                    return { 
+                        activeAddData: false
+                    }
+            },
+            $template: '#gridTemplate',
+            modalAlert: { title: '', body: '', button:'OK'},
+            tokenExpiredAlert: {
+                title: "Your API Token Has Expired",
+                body: "You will need to logout and log back in to reset your token.",
+                body2: "You will need to logout and log back in to reset your token. <br><br> <a href='/login?next=/config/global/irp'>Logout</a>",
+                button: "OK"},
+            areYouSure: {
+                title: 'WARNING - DATA WILL BE REMOVED',
+                body: 'This action will delete data.  Are you sure?',
+                button: 'Yes, proceed.',
+                action: undefined},
+            activeDeleteEntryData: false,
+            activeModifyEntryData: false,
+            activeViewEntryData: false,
+            activeExportData: false,
+            change_log_entry_list: [],
+            entry_mod_chain_list: [],
+            site_list: [],
+            viewModButtonState: true,
+            showModButtonLable: "Show Modification Details",
+            hideModButtonLable: "Hide Modification Details",
+            viewModButtonLable: "Show Modification Details",
+            exportChoice: "filtered_list", //valid options [filtered_list, deleted_items, all_items]
+            showExportError: false,
+            modificationChainExportSelection: false,
+            addChangeEntry: {team: "Network", team_group: "", submitted_by: "{{auth['user_id']}}", site: "", change_log: "", affected_systems: "", environment: 0, crq: ""},
+            modifyChangeEntry: {team: "", team_group: "", submitted_by: "", site: "", change_log: "", affected_systems: "", environment: 0, crq: "", modification_reason: "", modified_by: ""},
+            viewChangeEntry: {team: "", team_group: "", submitted_by: "", site: "", change_log: "", affected_systems: "", environment: 0, crq: "", modification_reason: "", modified_by: ""},
+            deleteEntryData: {id: "", archived_by: "{{auth['user_id']}}", archived_reason: ""},
+            filter: {entryID: "", entryCreatedTime: "", entrySubmittedBy: "", entryTeam: "", entryTeamGroup: "", entryEnvironment: "", entrySite: "", entryChangeLog: "", entryCRQ: ""},
+            quick_entry_template: "",
+            network_groups: ["Cloud", "Datacenter", "F5", "IaC", "IPAM", "Planner", "SDWAN", "Switch", "Telecom", "Wireless"],
+            platform_groups: ["None"],
+            noFilterMatch: {created_time: "No filter match"},
+            filteredEntryCount: 0,
+            totalEntryCount: 0,
+            currentPage: 1,
+            itemsPerPage: 25, //valid options [25, 50, 100, 0 for All ]
+
+            get addChangeEntryTeamGroups() {
+                if (this.addChangeEntry.team == "Network") {
+                    return this.network_groups;
+                } else if (this.addChangeEntry.team == "Platform") {
+                    return this.platform_groups;
+                } else {
+                    return [];
+                }
+            }, //This can be made into one function later
+            get modifyChangeEntryTeamGroups() {
+                if (this.modifyChangeEntry.team == "Network") {
+                    return this.network_groups;
+                } else if (this.modifyChangeEntry.team == "Platform") {
+                    return this.platform_groups;
+                } else {
+                    return [];
+                }
+            },
+            get entryTeamGroups () {
+                if (this.modifyChangeEntry.team == "Network" || this.addChangeEntry.team == "Network") {
+                    return this.network_groups;
+                } else if (this.modifyChangeEntry.team == "Platform" || this.addChangeEntry.team == "Platform") {
+                    return this.platform_groups;
+                } else {
+                    return [];
+                }
+            },
+            are_you_sure(action,id){
+                this.areYouSure.displayed=true
+                var el = document.getElementById('modalAreYouSure');
+                var bel = new bootstrap.Modal(el);
+                bel.show();
+                this.areYouSure.active = bel;
+                this.areYouSure.action=action
+                this.areYouSure.id=id
+            },
+            dismiss_are_you_sure(value){
+                if (this.areYouSure.displayed) {
+                    this.areYouSure.result = value;
+                    if (value) {
+                        this.areYouSure.action(this.areYouSure.id)
+                    }
+                    this.areYouSure.displayed=false;
+                    this.areYouSure.active.hide();
+                }
+            },
+            activate_modal_alert(title, message, button, action){
+                this.modalAlert.title = title;
+                this.modalAlert.displayed = true;
+                this.modalAlert.button = button;
+                var el = document.getElementById('modalAlert');
+                var bel = new bootstrap.Modal(el);
+                bel.show();
+                this.modalAlert.active = bel;
+                var modalBody = document.getElementById('modalBody');
+                modalBody.innerHTML = message;
+            },
+            dismiss_modal_alert(){
+                if (this.modalAlert.displayed) {
+                    this.modalAlert.displayed=false;
+                    this.modalAlert.active.hide();
+                }
+            },
+            reset_addChangeEntry_data() {
+                this.addChangeEntry = {team: "Network", team_group: "", submitted_by: "{{auth['user_id']}}", site: "",
+                                       change_log: "", affected_systems: "", environment: 0, crq: ""}
+                //clear validation from the form
+                this.$refs.entryForm.classList.remove("was-validated");
+            },
+            add_change_entry(payload) {
+                const path = change_log_update_entry_endpoint;
+                axios.post(path, payload).then((response) => {
+                    this.get_data();
+                }).catch((error) => {
+                    console.error(error.response.data);
+                    this.get_data();
+                })
+            },
+            edit_change_entry(payload) {
+                const path = change_log_update_entry_endpoint+"/"+payload.id;
+                axios.put(path, payload).then((response) => {
+                    this.get_data();
+                }).catch((error) => {
+                    console.error(error.response.data);
+                    this.get_data();
+                })
+            },
+            delete_change_entry(payload) {
+                const path = change_log_delete_entry_endpoint+"/"+payload.id;
+                axios.put(path, payload).then((response) => {
+                    this.get_data();
+                }).catch((error) => {
+                    console.error(error.response.data);
+                })
+            },
+            get_modification_change_data(id) {
+                const path = change_log_get_mod_chain_endpoint+"/"+id;
+                axios.get(path).then((response) => {
+                    this.entry_mod_chain_list = response.data;
+                }).catch((error) => {
+                    console.error(error.response.data);
+                })
+            },
+            get_export_modification_change_data(id) {
+                const path = change_log_get_mod_chain_endpoint + "/" + id;
+                return axios.get(path)
+                    .then((response) => {
+                        return response.data; // Return the data for use in the calling function
+                    })
+                    .catch((error) => {
+                        console.error(error.response.data);
+                        return []; // Return an empty array if there's an error, to avoid breaking the export process
+                    });
+            },
+            get_export_archived_change_data() {
+                const sort_path = "?sort=desc"
+                const modifier = "/archived"
+                const path = change_log_get_entry_endpoint + modifier + sort_path;
+                
+                return axios.get(path).then((response) => {
+                    return response.data;
+                }).catch((error) => {
+                    console.error(error.response.data);
+                    return [];
+                })
+            },
+            get_export_all_change_data() {
+                const sort_path = "?sort=desc"
+                const modifier = "/all"
+                const path = change_log_get_entry_endpoint + modifier + sort_path;
+                
+                return axios.get(path).then((response) => {
+                    return response.data;
+                }).catch((error) => {
+                    console.error(error.response.data);
+                    return [];
+                })
+            },
+            get_change_entry_data() {
+                const sort_path = "?sort=desc"
+                const path = change_log_get_entry_endpoint + sort_path;
+                axios.get(path).then((response) => {
+                    this.change_log_entry_list = response.data;
+                }).catch((error) => {
+                    console.error(error.response.data);
+                })
+            },
+            get_gmiSites_data(){
+                const path = gmi_sites_endpoint;
+                axios.get(path).then((response) => {
+                    this.site_list = response.data;
+                }).catch((error) => {
+                    console.error(error.response.data);
+                })
+            },
+            get_data() {
+                this.get_change_entry_data();
+                this.get_gmiSites_data();
+            },
+            resetFilter() {
+                this.filter.entryID="";
+                this.filter.entryCraetedTime="";
+                this.filter.entrySubmittedBy="";
+                this.filter.entryTeam="";
+                this.filter.entryTeamGroup="";
+                this.filter.entryEnvironment="";
+                this.filter.entrySite="";
+                this.filter.entryChangeLog="";
+                this.filter.entryCRQ="";
+            },
+            toggle_view_mod_details_button() {
+                this.viewModButtonState = !this.viewModButtonState;
+                if (this.viewModButtonState == false) {
+                    this.viewModButtonLable = this.hideModButtonLable;
+                } else {
+                    this.viewModButtonLable = this.showModButtonLable;
+                }
+            },
+            handleModifyEntryCancel() {
+                this.$refs.modifyForm.classList.remove("was-validated");
+
+                this.get_data();
+                this.toggleModifyEntry();
+            },
+            handleDeleteEntryCancel() {
+                this.$refs.deleteForm.classList.remove("was-validated");
+
+                this.get_data();
+                this.toggleDeleteEntry();
+            },
+            handleViewEntryCancel() {
+                this.get_data();
+                this.toggleViewEntry();
+            },
+            handleModifyEntrySubmit() {
+                const payload = {
+                    id: this.modifyChangeEntry.id,
+                    submitted_by: this.modifyChangeEntry.submitted_by,
+                    team: this.modifyChangeEntry.team,
+                    team_group: this.modifyChangeEntry.team_group,
+                    environment: this.modifyChangeEntry.environment,
+                    site: this.modifyChangeEntry.site,
+                    crq: this.modifyChangeEntry.crq.trim(),
+                    change_log: this.modifyChangeEntry.change_log.trim(),
+                    affected_systems: this.modifyChangeEntry.affected_systems.trim(),
+                    modified_by: this.modifyChangeEntry.modified_by,
+                    modification_reason: this.modifyChangeEntry.modification_reason.trim()
+                }
+                const form=this.$refs.modifyForm;
+                if (form.checkValidity()) {
+                    this.edit_change_entry(payload);
+                    this.toggleModifyEntry();
+                } else {
+                    form.classList.add("was-validated");
+                }            
+            },
+            handleChangeEntrySubmit() {
+                const payload = {
+                    submitted_by: this.addChangeEntry.submitted_by,
+                    team: this.addChangeEntry.team, //must be 'network' or 'platform'
+                    team_group: this.addChangeEntry.team_group,
+                    environment: this.addChangeEntry.environment, //must be 0 or 1
+                    site: this.addChangeEntry.site,
+                    crq: this.addChangeEntry.crq.trim(),
+                    change_log: this.addChangeEntry.change_log.trim(),
+                    affected_systems: this.addChangeEntry.affected_systems.trim()
+                }
+                //This validation is done using bootstrap custom validation
+                //See: https://getbootstrap.com/docs/5.0/forms/validation/
+                const form=this.$refs.entryForm;
+                if (form.checkValidity()) {
+                    this.add_change_entry(payload);
+                    this.reset_addChangeEntry_data();
+                } else {
+                    form.classList.add("was-validated");
+                }
+            },
+            handleDeleteEntrySubmit() {
+                const payload = {
+                    id: this.deleteEntryData.id,
+                    archived_by: this.deleteEntryData.archived_by,
+                    archived_reason: this.deleteEntryData.archived_reason.trim()
+                } 
+                const form=this.$refs.deleteForm;
+                if (form.checkValidity()) {
+                    this.delete_change_entry(payload);
+                    this.toggleDeleteEntry();
+                } else {
+                    form.classList.add("was-validated");
+                }
+            },
+            toggleDeleteEntry(row) {
+                if (row) {
+                    this.deleteEntryData = row;
+                    this.deleteEntryData.archived_by = "{{auth['user_id']}}";
+                }
+                this.$refs.deleteForm.classList.remove("was-validated");
+                const body = document.querySelector('body');
+                this.activeDeleteEntryData = !this.activeDeleteEntryData;
+                if (this.activeDeleteEntryData) {
+                        body.classList.add('modal-open');
+                } else {
+                        body.classList.remove('modal-open');
+                }
+            },
+            toggleModifyEntry(row) {
+                if (row) {
+                    this.modifyChangeEntry = row;
+                    this.modifyChangeEntry.modified_by = "{{auth['user_id']}}";
+                }
+                const body = document.querySelector('body');
+                this.activeModifyEntryData = !this.activeModifyEntryData;
+                if (this.activeModifyEntryData) {
+                        body.classList.add('modal-open');
+                } else {
+                        body.classList.remove('modal-open');
+                }
+            },
+            toggleExport() {
+                const body = document.querySelector('body');
+                this.activeExportData = !this.activeExportData;
+                if (this.activeExportData) {
+                        body.classList.add('modal-open');
+                } else {
+                        body.classList.remove('modal-open');
+                }
+            },
+            handleExport() {
+                this.showExportError = false;
+                let temp_entry_list = [];
+                let export_list = [];
+                const export_type = 'excel'; //only exporting to excel at this point
+
+                if (this.exportChoice === 'filtered_list') {
+                    export_list = this.filtered_entry_list.slice(); // clone the array
+                    //Should modification details be included or not
+                    if (this.modificationChainExportSelection == true) {
+                        let promises_list = [];
+                        this.filtered_entry_list.forEach(entry => {
+                            if (entry.original_id) {
+                                // Make API call to get modification chain and store the promise
+                                let promise = this.get_export_modification_change_data(entry.id)
+                                    .then((response) => {
+                                        // Add modification chain data to the mod entry list
+                                        temp_entry_list = temp_entry_list.concat(response);
+                                    });
+                                //Put the promise in the list
+                                promises_list.push(promise);
+                            }
+                        })
+                        // Wait for all modification chains to be fetched before exporting
+                        Promise.all(promises_list).then(() => {
+                            export_list = export_list.concat(temp_entry_list);
+                            this.normalizeAndExport(export_type, export_list);
+                        });
+
+                    } else {
+                        this.normalizeAndExport(export_type, export_list);
+                    }      
+                } else if (this.exportChoice === 'deleted_items') {
+                    this.get_export_archived_change_data().then((response) => {
+                        //console.log("get archived response: ", response)
+                        this.normalizeAndExport(export_type, response);
+                    }).catch(error => {
+                        console.error("Error fetching archived data:", error);
+                    });
+                    
+                } else if (this.exportChoice === 'all_items') {
+                    this.get_export_all_change_data().then((response) => {
+                        //console.log("get all response: ", response)
+                        this.normalizeAndExport(export_type, response);
+                    }).catch(error => {
+                        console.error("Error fetching all data:", error);
+                    });
+                }
+            },
+            normalizeAndExport(export_type, export_list) {
+                // Normalize the output
+                if (Array.isArray(export_list) && export_list.length > 0) {
+                    export_list.forEach(entry => {
+                        entry.modified = this.normalizeModifiedOrDeleted(entry.modified);
+                        entry.archived = this.normalizeModifiedOrDeleted(entry.archived);
+                        entry.environment = this.normalizeEnvironment(entry.environment);
+                    });
+                    // Finally export the finished list
+                    this.exportToFile(export_type, export_list);
+                } else {
+                    console.error("Nothing to export.");
+                    this.showExportError = true;
+                }
+            },
+            handleExportClose() {
+                this.toggleExport();
+                this.showExportError = false;
+            },
+            normalizeEnvironment(input_data) {
+                //console.log("environment", input_data);
+                if (input_data == 0) {
+                    return "Prod";
+                } else if (input_data == 1) {
+                    return "Non-Prod";
+                } else {
+                    return input_data;
+                }
+            },
+            normalizeModifiedOrDeleted(input_data) {
+                //console.log("mod or delete", input_data);
+                if (input_data == 0) {
+                    return "No";
+                } else if (input_data == 1) {
+                    return "Yes";
+                } else {
+                    return input_data;
+                }
+            },
+            handleViewEntry(row) {
+                this.viewChangeEntry = row;
+
+                //Convert environment from 0/1 to String
+                if (this.viewChangeEntry.environment == 0) {
+                    this.viewChangeEntry.environment = "Prod";
+                } else {
+                    this.viewChangeEntry.environment = "Non-Prod";
+                }
+
+                //Get modification chain if needed
+                if (this.viewChangeEntry.original_id != null) {
+                    this.get_modification_change_data(this.viewChangeEntry.id);                    
+                }
+                this.toggleViewEntry();
+            },
+            toggleViewEntry() {
+                const body = document.querySelector('body');
+                this.activeViewEntryData = !this.activeViewEntryData;
+                if (this.activeViewEntryData) {
+                    body.classList.add('modal-open');
+                } else {
+                    body.classList.remove('modal-open');
+                }
+            },
+            goToPreviousPage() {
+                if (this.currentPage > 1) {
+                    this.currentPage--;
+                }
+            },
+            goToSpecificPage(pageToGoTo) {
+                this.currentPage = pageToGoTo;
+            },
+            goToNextPage() {
+                this.currentPage++;
+            },
+            makeExternalLink(row) {
+                const chgRegex = /^[cC][hH][gG]\d{7}$/;
+                const incRegex = /^[iI][nN][cC]\d{7}$/;
+                const reqRegex = /^[rR][eE][qQ]\d{7}$/;
+                const sctaskRegex = /^[sS][cC][tT][aA][sS][kK]\d{7}$/;
+                const docrouteRegex = /^[dD][rR][tT]\d{7}$/;
+                
+                let crqTest = row.crq;
+
+                if (chgRegex.test(crqTest) || incRegex.test(crqTest) || reqRegex.test(crqTest) || sctaskRegex.test(crqTest) || docrouteRegex.test(crqTest)) {
+                    //console.log("It is a ServiceNow request");
+                    return true;
+                } else {
+                    //console.log("it is not a service now request")
+                    return false
+                }
+            },
+            getExternalLink(row) {
+                //Only called if makeExternalLink is true
+                return `https://genmills.service-now.com/task.do?sysparm_query=number=${row.crq}`;
+            },   
+            exportToFile(type='excel', input) {
+                if (type === 'excel') {
+                    const xlsx = new fileExport(input, 'Change Log Export');
+                    //this will cause the user to get a file save prompt
+                    xlsx.exportToXLSX('change-log-export.xlsx')
+                }
+                else {
+                    console.error("Export file type not supported")
+                }
+            },      
+            get paginatedEntries() {
+                //Pulls out a "page" worth of entries from the filtered list
+                //If 0 is selected for itemsPerPage return all of the items
+                if (this.itemsPerPage > 0) {
+                    let start = (this.currentPage - 1) * this.itemsPerPage;
+                    let end = start + this.itemsPerPage;
+                    return this.filtered_entry_list.slice(start, end);
+                } else {
+                    return this.filtered_entry_list;
+                }
+                //console.log(" currentPage: ", this.currentPage)
+                //console.log("itemsPerPage: ", this.itemsPerPage)
+                //console.log("start record: ", typeof start);
+                //console.log("start record: ", start);
+                //console.log("  end record: ", typeof end);
+                //console.log("  end record: ", end);
+                //console.log("slice", this.filtered_entry_list.slice(start, end))
+            },
+            get totalPages() {
+                //Rounds up to the next full page
+                let pages = Math.ceil(this.filtered_entry_list.length / this.itemsPerPage);
+                if (pages === Infinity) {
+                    return 1;
+                } else {
+                    return pages
+                }
+              },
+            get filtered_entry_list() {
+                let filtered_list = this.change_log_entry_list;
+                this.totalEntryCount = filtered_list.length;
+                if (filtered_list && filtered_list.length > 0) {
+                    if (this.filter.entryID !== "") {
+                        const entryIDSearchTerm = this.filter.entryID.toLowerCase();
+                        filtered_list = filtered_list.filter(row => {
+                            const entryID = row.id.toString().toLowerCase();
+                            return entryID.includes(entryIDSearchTerm)
+                        });
+                    }
+                    if (this.filter.entryCreatedTime !== "") {
+                        const entryCreatedTimeSearchTerm = this.filter.entryCreatedTime.toLowerCase();
+                        filtered_list = filtered_list.filter(row => {
+                            const entryCreatedTime = row.created_time.toString().toLowerCase();
+                            return entryCreatedTime.includes(entryCreatedTimeSearchTerm)
+                        });
+                    }
+                    if (this.filter.entrySubmittedBy !== "") {
+                        const entrySubmittedBySearchTerm = this.filter.entrySubmittedBy.toLowerCase();
+                        filtered_list = filtered_list.filter(row => {
+                            const entrySubmittedBy = row.submitted_by.toString().toLowerCase();
+                            return entrySubmittedBy.includes(entrySubmittedBySearchTerm)
+                        });
+                    }
+                    if (this.filter.entryTeam !== "") {
+                        const entryTeamSearchTerm = this.filter.entryTeam.toLowerCase();
+                        filtered_list = filtered_list.filter(row => {
+                            const entryTeam = row.team.toString().toLowerCase();
+                            return entryTeam === entryTeamSearchTerm
+                        });
+                    }
+                    if (this.filter.entryTeamGroup !== "") {
+                        const entryTeamGroupSearchTerm = this.filter.entryTeamGroup.toLowerCase();
+                        filtered_list = filtered_list.filter(row => {
+                            const entryTeamGroup = row.team_group.toString().toLowerCase();
+                            return entryTeamGroup.includes(entryTeamGroupSearchTerm)
+                        });
+                    }
+                    if (this.filter.entryEnvironment !== "") {
+                        const entryEnvironmentSearchTerm = this.filter.entryEnvironment;                        
+                        filtered_list = filtered_list.filter(row => {
+                            //Match only "PROD" or "NON-PROD"
+                            const entryEnvironment = row.environment.toString();
+                            return entryEnvironment === entryEnvironmentSearchTerm;
+                        });
+                    }
+                    if (this.filter.entrySite !== "") {
+                        const entrySiteSearchTerm = this.filter.entrySite.toLowerCase();
+                        filtered_list = filtered_list.filter(row => {
+                            const entrySite = row.site.toString().toLowerCase();
+                            return entrySite.includes(entrySiteSearchTerm)
+                        });
+                    }
+                    if (this.filter.entryChangeLog !== "") {
+                        const entryChangeLogSearchTerm = this.filter.entryChangeLog.toLowerCase();
+                        filtered_list = filtered_list.filter(row => {
+                            const entryChangeLog = row.change_log.toString().toLowerCase();
+                            return entryChangeLog.includes(entryChangeLogSearchTerm)
+                        });
+                    }
+                    if (this.filter.entryCRQ !== "") {
+                        const entryCRQSearchTerm = this.filter.entryCRQ.toLowerCase();
+                        filtered_list = filtered_list.filter(row => {
+                            const entryCRQ = row.crq.toString().toLowerCase();
+                            return entryCRQ.includes(entryCRQSearchTerm)
+                        });
+                    }
+                } 
+                if (filtered_list.length != 0) {
+                    this.filteredEntryCount = filtered_list.length
+                    return filtered_list;
+                } else { // if nothing matches the filter give this output
+                    this.filteredEntryCount = filtered_list.length
+                    filtered_list = [this.noFilterMatch];                    
+                    return filtered_list;
+                }
+            },
+            mounted() {
+                this.get_data();
+                }
+            }
+        }
+createApp({app}).mount()
+</script>
+<div v-scope="app()" @vue:mounted="mounted"></div>
+{% endblock %}

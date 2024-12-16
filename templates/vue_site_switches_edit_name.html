@@ -1,0 +1,53 @@
+<!-- edit switch name modal -->
+<div
+ref="switch_editNameData"
+class="modal fade"
+:class="{ show: switch_activeEditNameData, 'd-block': switch_activeEditNameData }"
+tabindex="-1"
+role="dialog">
+<div class="modal-dialog" role="document">
+<div class="modal-content">
+  <div class="modal-header">
+	<h5 class="modal-title">Change Switch Name</h5>
+	<button
+	  type="button"
+	  class="close"
+	  data-dismiss="modal"
+	  aria-label="Close"
+	  @click="switch_toggleEditName">
+	  <span aria-hidden="true">&times;</span>
+	</button>
+  </div>
+  <div class="modal-body">
+	<form>
+	  <div class="mb-3">
+		<label for="editName" class="form-label">Switch Name:</label>
+        <input
+          type="text"
+		  maxlength="32"
+          class="form-control"
+          id="editName"
+          v-model="switch_editName.name"
+          placeholder="Enter a new name for this switch"/>
+	  </div>
+
+	  <div class="btn-group" role="group">
+		<button
+		  type="button"
+		  class="btn btn-primary btn-sm"
+		  @click="switch_handleEditNameSubmit">
+		  Submit
+		</button>
+		<button
+		  type="button"
+		  class="btn btn-danger btn-sm"
+		  @click="switch_toggleEditName">
+		  Cancel
+		</button>
+	  </div>
+	</form>
+  </div>
+</div>
+</div>
+</div>
+<div v-if="switch_activeEditNameData" class="modal-backdrop fade show"></div>

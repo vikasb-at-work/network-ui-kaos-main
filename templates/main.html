@@ -1,0 +1,58 @@
+{% block content %}
+
+		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1">
+
+		<link href="https://unpkg.com/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet" type="text/css" /> 
+		<link href="/css/control.css" rel="stylesheet" type="text/css" />
+		<link href="/css/popup.css" rel="stylesheet" type="text/css" />
+
+		<!-- <script src="js/cytoscape/cytoscape.js"></script> -->
+		<script src="https://kit.fontawesome.com/5e617ba044.js"></script>
+		<script src="http://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+		<script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+		<script src="/js/cytoscape/cytoscape-cxtmenu.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.10/lodash.js"></script>
+		<script src="/js/cytoscape/cytoscape-edgehandles.js"></script>
+		<script src="/js/neo4j-web.js"></script>
+		<script src="/js/control.js"></script>
+		<script src="/js/cyto.js"></script>
+		<script src="/js/rest.js"></script>
+		<script src="/js/utils.js"></script>
+		<script src="/js/samurai.js"></script>
+
+		<style>
+			body {
+				font-family: helvetica;
+				font-size: 14px;
+				overflow: hidden;
+			}
+
+		      #buttons {
+			        position: absolute;
+			        right: 0;
+			        bottom: 0;
+			        z-index: 99999;
+		      }
+
+
+			/* you can set the disabled style how you like on the text/icon */
+			.cxtmenu-disabled {
+				opacity: 0.333;
+			}
+		</style>
+		<div class="hover_bkgr_fricc">
+			<span class="helper"></span>
+			<div>
+				<div class="popupCloseButton">X</div>
+				<div id="#popup"> stuff </div>
+			</div>
+		</div>
+		<div id="cy"></div>
+
+    <div id="buttons">
+      <button id="Inventory">Inventory View</button>
+      <button id="Samurai">Samurai View</button>
+      <button id="Map">Map View</button>
+    </div>
+
+{% endblock %}

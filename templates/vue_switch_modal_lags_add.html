@@ -1,0 +1,115 @@
+<!--add data modal - add or edit lag from list-->
+<div
+ref="switch_ModalLagAddData"
+class="modal fade"
+:class="{ show: switch_activeModalLagAddData, 'd-block': switch_activeModalLagAddData }"
+tabindex="-1"
+role="dialog">
+<div class="modal-dialog" role="document">
+<div class="modal-content">
+  <div class="modal-header">
+	<h5 class="modal-title">LAG</h5>
+	<button
+	  type="button"
+	  class="close"
+	  data-dismiss="modal"
+	  aria-label="Close"
+	  @click="switch_toggleModalLagAdd">
+	  <span aria-hidden="true">&times;</span>
+	</button>
+  </div>
+  <div class="modal-body">
+	<form>
+
+      <div class="mb-3">
+		<div class="btn-group" role="group">
+			<div class="mb-3" style="border-left: 1px dashed #333; margin-left: 20px; padding-left: 10px;">
+		        <label for="addLagNumber" class="form-label">New LAG Number</label>
+	    	    <input type="text" :disabled="switch_LagTrunkData.entity_id" class="form-control" id="addLagNumber" v-model="switch_LagTrunkData.entity_id_input" placeholder="LAG Number 1-256" style="width: 250"/>
+			</div>
+		</div>
+      </div>
+
+      <div class="mb-3">
+        <label for="addLagTrunkSub" class="form-label">LAG Sub-Interface</label>
+        <input
+          type="text"
+          class="form-control"
+          id="addLagTrunkSub"
+          v-model="switch_LagTrunkData.entity_id_sub"
+          placeholder="Enter a number from 0-4096 (0 or blank=no sub-interface)"/>
+      </div>
+
+      <div class="mb-3">
+        <label for="addDescription" class="form-label">LAG Description</label>
+        <input
+          type="text"
+          class="form-control"
+          id="addDescription"
+          v-model="switch_LagTrunkData.description"
+          placeholder="Enter a description for this interface"/>
+      </div>
+
+      <div class="mb-3">
+	     <div class="btn-group" role="group">
+        <label for="addModel" class="form-label">Native VLAN</label>
+         <select type="text" class="form-select" id="addModel" v-model="switch_LagTrunkData.native_vlan" placeholder="Select a native VLAN" style="width: 190px">
+              <option disabled value="">Required - select a native VLAN</option>
+              <option v-for="v in switch_vlans" v-bind:value="v.value">{%raw%}{{v.name}}{%endraw%}</option>
+        </select>
+		<div class="mb-3" style="border-left: 1px dashed #333; margin-left: 20px; padding-left: 10px;">
+			<label class="switch">
+			  <input type="checkbox" @click="toggleCheckbox" id="nativeTagged" v-model="switch_LagTrunkData.native_tag">
+	          <div class="slider round"></div>
+    			  </label><label for="nativeTagged">Tagged ({%raw%}{{switch_LagTrunkData.native_tag}}{%endraw%})</label>
+			</div>
+	  </div>
+      </div>
+
+      <div class="mb-3">
+	     <div class="btn-group" role="group">
+        <label for="addModel" class="form-label">Allowed VLANs</label>
+         <select type="text" class="form-select" id="addModel" v-model="switch_LagTrunkData.allowed" placeholder="Select all allowed VLANs" multiple="multiple" style="width: 250px">
+              <option disabled>Select allowed VLANs</option>
+              <option v-for="v in switch_vlans" v-bind:value="v.value">{%raw%}{{v.name}}{%endraw%}</option>
+        </select>
+		  </div>
+      </div>
+
+        <div class="btn-group" role="group">
+          <div class="mb-3">
+              <label for="lagLACP" class="form-label">LACP Mode</label>
+                <select type="text" class="form-select" id="addModel" v-model="switch_LagTrunkData.lacp" placeholder="LACP Mode" style="width: 200px">
+                  <option disabled>Select LACP Mode</option>
+                  <option v-for="v in LACP_modes" v-bind:value="v.value">{%raw%}{{v.name}}{%endraw%}</option>
+                </select>
+          </div>
+          <div class="mb-3" style="border-left: 1px dashed #333; margin-left: 20px; padding-left: 10px;">
+                <label class="switch">
+                <input type="checkbox" @click="toggleCheckbox" id="LACPRateFast" v-model="switch_LagTrunkData.lacp_rate">
+                  <div class="slider round"></div>
+                    </label><label for="LACPRateFast">LACP Rate Fast ({%raw%}{{switch_LagTrunkData.lacp_rate}}{%endraw%})</label>
+                  </div>
+          </div>
+      </div>
+
+	  <div class="btn-group" role="group">
+		<button
+		  type="button"
+		  class="btn btn-primary btn-sm"
+		  @click="switch_handleModalLagsAddSubmit">
+		  Submit
+		</button>
+		<button
+		  type="button"
+		  class="btn btn-danger btn-sm"
+		  @click="switch_toggleModalLagAdd">
+		  Cancel
+		</button>
+	  </div>
+	</form>
+  </div>
+</div>
+</div>
+</div>
+<div v-if="switch_activeModalLagAddData" class="modal-backdrop fade show"></div>

@@ -1,0 +1,20 @@
+{{- if .Values.ingress.enabled -}}
+{{- $fullName := include "kaos.fullname" . -}}
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: {{ $fullName }}
+  labels:
+{{ include "kaos.labels" . | indent 4 }}
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  host: {{ (index .Values.ingress.hosts 0).host }}
+  to:
+    kind: Service
+    name: {{ $fullName }}
+  tls:
+    termination: edge
+{{- end }}

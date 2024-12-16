@@ -1,0 +1,104 @@
+<!--add data modal - switchmgmt-->
+<div
+ref="switch_mgmtdata"
+class="modal fade"
+:class="{ show: switch_activeSwitchMgmtAddData, 'd-block': switch_activeSwitchMgmtAddData }"
+tabindex="-1"
+role="dialog">
+<div class="modal-dialog" role="document">
+<div class="modal-content">
+  <div class="modal-header">
+	<h5 class="modal-title">Switch MGMT Interface</h5>
+	<button
+	  type="button"
+	  class="close"
+	  data-dismiss="modal"
+	  aria-label="Close"
+	  @click="switch_toggleSwitchMgmtAddData">
+	  <span aria-hidden="true">&times;</span>
+	</button>
+  </div>
+  <div class="modal-body">
+	<form>
+
+      <div class="mb-3">
+      <div class="btn-group" role="group">
+        <label for="addIP" class="form-label">MGMT IP Address</label>
+      <div class="mb-3" style="border-left: 1px dashed #333; margin-left: 20px; padding-left: 10px;">
+          <label class="switch">
+          <input type="checkbox" @click="toggleCheckbox" id="addMgmtDHCP" v-model="switch_mgmt.ip_dhcp">
+          <div class="slider round"></div>
+      </label><label for="addMgmtDHCP">IP DHCP ({%raw%}{{ switch_mgmt.ip_dhcp }}{%endraw%})</label>
+      </div>
+      </div>
+        <input :class="switch_mgmt.ip_dhcp && invisible" :disabled="switch_mgmt.ip_dhcp" type="text" class="form-control" id="addIP" v-model="switch_mgmt.ip_static" placeholder="Enter a static IP for MGMT" width="200px"/>
+      </div>
+
+	<div role="group" :class="switch_mgmt.ip_dhcp && invisible">	
+      <div class="mb-3">
+        <label for="addDefaultGW" class="form-label">Default Gateway</label>
+        <input :disabled="switch_mgmt.ip_dhcp" type="text" class="form-control" id="addIP" v-model="switch_mgmt.default_gateway" placeholder="e.g. 1.1.1.1" width="200px"/>
+	  </div>
+
+      <div class="mb-3">
+        <label for="addNS1" class="form-label">Nameserver 1</label>
+        <input :disabled="switch_mgmt.ip_dhcp" type="text" class="form-control" id="addIP" v-model="switch_mgmt.nameserver1" placeholder="e.g. 2.1.1.1" width="200px"/>
+	  </div>
+
+      <div class="mb-3">
+        <label for="addNS1" class="form-label">Nameserver 2</label>
+        <input :disabled="switch_mgmt.ip_dhcp" type="text" class="form-control" id="addIP" v-model="switch_mgmt.nameserver2" placeholder="e.g. 2.1.1.2" width="200px"/>
+	  </div>
+
+    <!-- 
+      Per Dean we don't want to be able to ever actually shutdown the mgmt port of a switch.
+      Leaving this in here so we can turn it back on easily if needed.
+
+      <div class="mb-3">
+          <label class="switch">
+          <input type="checkbox" @click="toggleCheckbox" id="addShutdown" v-model="switch_mgmt.shutdown">
+          <div class="slider round"></div>
+      </label><label for="addShutdown">Shutdown ({%raw%}{{ switch_mgmt.shutdown }}{%endraw%})</label>
+      </div>
+    -->
+
+      <div class="mb-3">
+          <label class="switch">
+          <input type="checkbox" @click="toggleCheckbox" id="addShutdown" v-model="switch_mgmt.lldp_transmit">
+          <div class="slider round"></div>
+      </label><label for="addShutdown">LLDP Transmit ({%raw%}{{ switch_mgmt.lldp_transmit }}{%endraw%})</label>
+      </div>
+      <div class="mb-3">
+          <label class="switch">
+          <input type="checkbox" @click="toggleCheckbox" id="addShutdown" v-model="switch_mgmt.lldp_receive">
+          <div class="slider round"></div>
+      </label><label for="addShutdown">LLDP Receive ({%raw%}{{ switch_mgmt.lldp_receive }}{%endraw%})</label>
+      </div>
+      <div class="mb-3">
+          <label class="switch">
+          <input type="checkbox" @click="toggleCheckbox" id="addShutdown" v-model="switch_mgmt.lldp_trap">
+          <div class="slider round"></div>
+      </label><label for="addShutdown">LLDP Traps Enabled ({%raw%}{{ switch_mgmt.lldp_trap }}{%endraw%})</label>
+      </div>
+	</div>
+
+	  <div class="btn-group" role="group">
+		<button
+		  type="button"
+		  class="btn btn-primary btn-sm"
+		  @click="switch_handleSwitchMgmtAddSubmit">
+		  Submit
+		</button>
+		<button
+		  type="button"
+		  class="btn btn-danger btn-sm"
+		  @click="switch_toggleSwitchMgmtAddData">
+		  Cancel
+		</button>
+	  </div>
+	</form>
+  </div>
+</div>
+</div>
+</div>
+<div v-if="switch_activeSwitchMgmtAddData" class="modal-backdrop fade show"></div>

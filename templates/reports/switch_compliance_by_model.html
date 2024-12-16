@@ -1,0 +1,155 @@
+{% extends 'menu.html' %}
+{% block content %}
+<link href="/css/samurai.css" rel="stylesheet" type="text/css" media="all">
+<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.3/css/jquery.dataTables.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css">
+<STYLE>
+	.ui-buttonset {
+		color: inherit;
+		float: right;
+		text-align: right;
+		padding-top: 0.25em;
+		margin: 0;
+		padding: 0;
+		display: block;
+		font-weight: normal;
+		-webkit-font-smoothing: inherit;
+	}
+	.ui-button, a.ui-button, a:link.ui-button {
+		color: black;
+		line-height: normal;
+		margin-right: 0.1em;
+		veritcal-align: middle;
+		user-select: none;
+		overflow: visible;
+		-webkit-font-smoothing: inherit;
+	}
+	.my-chart {
+		height: 20px;
+		width: 100px;
+		color: white;
+		padding-top: 10px;
+		padding-right: 5px;
+		text-align: right;
+		font-weight: bold;
+	}
+	.hidden {
+		display: none;
+	}
+	.group {
+		border: solid 1px !important;
+		border-color: blue !important;
+		color: blue !important;
+	}
+</STYLE>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<h3 align="left">Switch Compliance Summary</h3>
+     <div id="content_1" class="inv">
+      <table id="switches" class="display" style="width:60%">
+         <thead>
+            <td>
+               <b>Switch Model/Family</b>
+            </td>
+			<td data-orderable="false">
+				<b>Version</b>
+			</td>
+            <td data-orderable="false">
+               <b>Non-Compliant</b>
+            </td>
+			<td data-orderable="false">
+				<b>Total</b>
+			</td>
+			<td data-orderable="false">
+				<b>Compliance Chart</b>
+			</td>
+         </thead>
+         <tbody>
+         {% for switch in all_switches %}
+		 <tr data-id="{{ switch.product }}/{{ switch.version }}">
+            <td id="{{ switch.product }}-product"> {{ switch.product }}</td>
+			<td id="{{ switch.product }}-version">{{ switch.version }}</td>
+		    <td id="{{ switch.product }}-noncompliant"> {{switch.noncompliant}}</td>
+			<td id="{{ switch.product }}-count"> {{ switch.total }}</td>
+			<td id="{{ switch.product }}-chart">
+				<div class=my-chart id="{{switch.product}}-chart-id" style="background: linear-gradient(to right,blue 0%, blue {{ ((1-(switch.noncompliant/switch.total))*100)|round|int}}%, orange 0%, orange {{ (((switch.noncompliant/switch.total))*100)|round|int}}%)">{{ ((1-(switch.noncompliant/switch.total))*100)|round|int }}%</div>
+			</td>
+         </tr>
+         {% endfor %}
+         </tbody>
+		 <tfoot>
+			 <tr><td colspan=2>TOTAL</td><td></td><td></td><td></td></tr>
+		 </tfoot>
+      </table>
+
+   </div>
+
+
+<script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/rowgroup/1.3.1/js/dataTables.rowGroup.min.js"></script>
+<script>
+$(document).ready(function() {
+	var collapsedGroups = {};
+	var groupC = {};
+	var groupNC = {};
+	var table=$('table.display').DataTable({
+				        lengthMenu: [
+				            [-1, 10, 25, 50],
+				            ["All", 10, 25, 50],
+				        ],
+						order: [[0, 'asc']],
+						columnDefs: [
+						    {"type" : "html", "targets" : 0},
+							{"type" : "html", "targets" : 1},
+							{"type" : "html-num", "targets" : 2},
+							{"type" : "html-num", "targets" : 3},
+							{"type" : "html-num-fmt", "targets" : 4},
+						],
+						rowGroup: {
+							dataSrc: 0,
+							startRender: function (rows, group) {
+								var collapsed = !!collapsedGroups[group];
+								var nc=0;
+								var c=0;
+								rows.nodes().each(function(r){
+										r.style.display = collapsed ? 'none' : '';
+								});
+								return $('<tr class=group>').append('<td colspan="2">'+group+' ('+rows.count() + ')</td><td>'+groupNC[group]+'</td><td>'+groupC[group]+'</td><td>'+'<div class=my-chart id="'+group+'-chart-id" style="background: linear-gradient(to right,blue 0%, blue '+((1-groupNC[group]/groupC[group])*100)+'%, orange 0%, orange '+(groupNC[group]/groupC[group])*100+'%)">'+Math.round((1-(groupNC[group]/groupC[group]))*100)+'%</div>'+'</td></tr>').attr('data-name',group).toggleClass('collapsed',collapsed)
+							},
+						},
+						footerCallback: function () {
+							var api = this.api();
+				            totalNC = api.column(2).data().reduce(function (a, b) {return parseInt(a) + parseInt(b); }, 0);
+				            totalC = api.column(3).data().reduce(function (a, b) {return parseInt(a) + parseInt(b); }, 0);
+							$(api.column(2).footer()).html(totalNC);
+							$(api.column(3).footer()).html(totalC);
+							$(api.column(4).footer()).html('<div class=my-chart id="total-chart-id" style="background: linear-gradient(to right,blue 0%, blue '+((1-totalNC/totalC)*100)+'%, orange 0%, orange '+(totalNC/totalC)*100+'%)">'+Math.round((1-(totalNC/totalC))*100)+'%</div>');
+						}
+				    });
+
+	var allData = table.data();
+	totalC=0;
+	totalNC=0;
+	for (var i=0; i<allData.length; i++) {
+		var rowData = allData[i];
+		groupC[rowData[0]]=(groupC[rowData[0]]||0)+(parseInt(rowData[3])||0);
+		groupNC[rowData[0]]=(groupNC[rowData[0]]||0)+(parseInt(rowData[2])||0);
+	}
+	$('#switches').find("tr.group").each(function(tr){
+				collapsedGroups[$(this).data('name')] = !collapsedGroups[$(this).data('name')];
+			});
+	table.draw(true);
+	$('#switches tbody').on('click', 'tr.group', function() {
+			var name = $(this).data('name');
+			collapsedGroups[name]= !collapsedGroups[name];
+			table.draw(true);
+			});
+	$('#switches tbody').on('click', 'tr', function() {
+		var data=$(this).attr('data-id');
+		[switchType, version] = data.split("/");
+		window.open("/samurai?exact=True&deviceModel="+encodeURIComponent(switchType)+"&version="+encodeURIComponent(version), "_blank")
+	});
+} );
+</script>
+{% endblock %}

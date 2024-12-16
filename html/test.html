@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<script>
+const transformType = {Route:1, SNAT:2, NAT:3, Magic:4};
+const projects = {networkhub-prod:"network-hub-prd-d45348",networkhub-nonprod:"network-hub-nonprod-91060f"}
+const transformTag = {Central:"us-central1", East:"us-east4"};
+const deviceType = {Firewall:"Firewall",VPC:"VPC",Compute:"Compute",LoadBalancer:"Load Balancer"};
+
+function flow (src, dst, src_port, dst_port, tags) {
+	this.src=src;
+	this.dst=dst;
+	this.src_port=src_port;
+	this.dst_port=dst_port;
+	if (Array.isArray(tags)) { this.tags=tags; } else { this.tags = [tags]; }
+}
+function transformer (type, name, id, ip, display, transformStack) {
+	this.type = type;
+	this.name = name;
+    this.id = id;
+	this.ip = ip;
+    this.display = display;
+	this.transformStack = transformStack;
+	this.transform = function (flow) {
+		this.flow=flow;
+		transformStack.forEach((transformAction) => {
+			switch (transformAction.type) {
+				case transformType.Route:
+//					this.flow.tags.push(transformAction.information);
+					this.flow.tags = transformAction.information;
+					break;
+				case transformType.SNAT:
+					this.flow.src_ip = transformAction.information;
+					break;
+				case transformType.NAT:
+					this.flow.dst_ip = transformAction.information;
+					break;
+				case transformType.MAGIC:
+					break;
+			}
+		});
+		return (this.flow);
+	}
+}
+function transformAction (type, information) {
+	this.type = type;
+	this.information = information;
+}
+
+palo_fw_uscentral1_devhub_a = new transformer(deviceType.Firewall, project, "palo_fw_uscentral1_a","6550629581276968485","10.62.4.28",1,[new transformAction(transformType.Route, transformTag.Central)]);
+palo_fw_uscentral1_devhub_b = new transformer(deviceType.Firewall, project, "palo_fw_uscentral1_b","928083088015041812","10.62.4.29",1,[new transformAction(transformType.Route, transformTag.Central)]);
+vpc_gmi-devhub = new transformer(deviceType.VPC, project, "gmi-devhub", "network-hub-nonprod", 
+userFlow = new flow("10.1.1.2", "10.2.1.2", "80", "80", "East");
+flows = palo_central_prod_1.transform(userFlow);
+alert(flows.tags);
+
+</script>
+
+</body>
+</html>

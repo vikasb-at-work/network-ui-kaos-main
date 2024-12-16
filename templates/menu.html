@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+</head>
+<body>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+<script src="https://kit.fontawesome.com/5e617ba044.js" crossorigin="anonymous"></script>
+<script src="/js/ipv4.js"></script>
+<script src="/js/xlsx.full.min.js"></script>
+<script src="/js/fileExport.js"></script>
+
+<div class="fixed-top">
+{% if auth.env != "Production" %}
+    <DIV class="text-center" style="background: {% if auth.env == "Development" %}DarkBlue{%else%}green{%endif%}; color: white;">
+        *** You are in the {{auth.env|lower}} database environment ***
+    </DIV>
+{% endif %}
+<nav id="navbar" class="navbar navbar-custom navbar-expand-lg navbar-light text-white nav-pills nav-justified" style="background-color: #0054a6;">
+<a class="navbar-brand" href="/"><img src="/images/GlobalNetworkServices-small.png" width=50px height=50px></a>
+
+<STYLE>
+.dropdown-menu {
+	/* margin-left: 100px; */
+    /* transform: translateX(-50%); */
+    position: absolute;
+    top: 100%;
+    left: 40%;
+	z-index: 1060;
+}
+.dropdown-item {
+	font-family: Arial, Helvecta, sans-serif;
+	font-size: 14px !important;
+	z-index: 1060;
+}
+.dropdown:hover>.dropdown-menu {
+	  display: block;
+}
+
+.dropdown>.dropdown-toggle:active {
+	  /*Without this, clicking will make it sticky*/
+	    pointer-events: none;
+}
+nav {
+	text-transform: uppercase;
+	font-family: Arial, Helvecta, sans-serif;
+	font-size: 14px;
+	font-weight: bolder;
+}
+.navbar-custom {
+	height: 50px;
+}
+.custom-indent {
+    /*This is the amount of indent for the submenu titles*/
+    padding-left: 20px;
+}
+.empty-line {
+    /* makes space between menu items */
+    height: 10px;
+}
+</STYLE>
+<!-- Change log Button -->
+{% if auth['authenticated_user'] %}
+    <div class="nav-item">
+        <a class="nav-link link-light" href="/change_log">Change Audit Log</a>
+    </div>
+{% endif %}
+
+<!-- Samurai Menu -->
+{% if auth['authenticated_user'] %}
+    <div class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle link-light" href="#" role="button" id="samuraiDropdown" data-hover-toggle="dropdown" aria-expanded="false">Samurai</a>
+        <ul class="dropdown-menu" aria-labelledby="samuraiDropdown">
+            <li><a class="dropdown-item" href="/samurai">Samurai Main</a></li>
+            <li><a class="dropdown-item" href="/samurai/products">Products</a></li>
+            <li class="dropdown dropend">
+                <a class="dropdown-item dropdown-toggle" href="#" id="samuraiMgmtDropdown" data-hover-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Samurai Management</a>
+                <ul class="dropdown-menu" aria-labelledby="samuraiMgmtDropdown">
+                    <li><a class="dropdown-item" href="/samurai/samurai_sites">Sites</a></li>
+                    <li><a class="dropdown-item" href="/samurai/vendors">Vendors</a></li>
+                    <li><a class="dropdown-item" href="/samurai/device_types">Device Types</a></li>
+                    <li><a class="dropdown-item" href="/samurai/manage_products">Custom Products</a></li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+{% endif %}
+<!-- modify -->
+{% if auth['authenticated_user'] %}
+    <div class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle link-light" href="#" role="button" id="modifyDropdown" data-hover-toggle="dropdown" aria-expanded="false">Configure</a>
+        <ul class="dropdown-menu" aria-labelledby="modifyDropdown">
+            {% if auth['switches'] %}
+            <li><a class="dropdown-item" href="/config/site/switches">CX Switch Configuration Tool</a></li>
+            <li class="dropdown dropend custom-indent">
+                <a class="dropdown-item dropdown-toggle" href="#" id="modifyDropdown1" data-hover-toggle="dropdown" aria-haspopup="true" aria-expanded="false">CX Global Tables</a>
+                <ul class="dropdown-menu" aria-labelledby="modifyDropdown2">
+                    <li><a class="dropdown-item" href="/config/global/multi">Variables</a></li>
+                    <li><a class="dropdown-item" href="/config/global/vlan">L2 VLANs</a></li>
+                    <li><a class="dropdown-item" href="/config/global/dns">DNS</a></li>
+                    <li><a class="dropdown-item" href="/config/global/ntp">NTP</a></li>
+                    <li><a class="dropdown-item" href="/config/global/helpers">Helpers</a></li>
+                    <li class="dropdown dropend">
+                        <a class="dropdown-item dropdown-toggle" href="#" id="modifyDropdown4" data-hover-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Dynamic Segmentation</a>
+                        <ul class="dropdown-menu" aria-labeledby="modifyDropdown4">
+                            <li><a class="dropdown-item" href="/config/global/par">Port-Access Roles</a></li>
+                            <li><a class="dropdown-item" href="/config/global/irp">Interface Profiles</a></li>
+                        </ul>
+                    </li>
+                    <li class="dropdown dropend">
+                        <a class="dropdown-item dropdown-toggle" href="#" id="modifyDropdown4" data-hover-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Interface Policies</a>
+                        <ul class="dropdown-menu" aria-labeledby="modifyDropdown4">
+                            <li><a class="dropdown-item" href="/config/global/istp">Spanning Tree</a></li>
+                            <li><a class="dropdown-item" href="/config/global/illdpp">LLDP</a></li>                		            
+                            <li><a class="dropdown-item" href="/config/global/iap">ACL</a></li>
+                            <li><a class="dropdown-item" href="/config/global/ipsp">Port Security</a></li>
+                            <li><a class="dropdown-item" href="/config/global/iqp">QOS</a></li>
+                            <li><a class="dropdown-item" href="/config/global/iigmpp">IGMP</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+            <li class="dropdown dropend custom-indent">
+                <a class="dropdown-item dropdown-toggle" href="#" id="modifyDropdown1" data-hover-toggle="dropdown" aria-haspopup="true" aria-expanded="false">CX Site Tables</a>
+                <ul class="dropdown-menu" aria-labelledby="modifyDropdown2">
+                    <li><a class="dropdown-item" href="/config/site/multi">Variables</a></li>
+                    <li><a class="dropdown-item" href="/config/site/vlan">L2 VLANs</a></li>
+                </ul>
+            </li>
+            <li class="empty-line"></li>
+            <li><a class="dropdown-item" href="/dynamic-segmentation-ui">OS-Switch Dynamic Segmentation</a></li>
+			<hr class="dropdown-divider">
+            {% endif %}
+            <li class="dropdown dropend">
+                <a class="dropdown-item dropdown-toggle" href="#" id="modifyDropdownConfGen" data-hover-toggle="dropdown" aria-haspopup="true" aria-expanded="false">General</a>
+                <ul class="dropdown-menu" aria-labelledby="modifyDropdownConfGen">
+                    <li><a class="dropdown-item" href="/config/global/gmiSites">GMI Sites</a></li>
+                    <li><a class="dropdown-item" href="/config/global/coreAS">Core AS#</a></li>
+                    <li><a class="dropdown-item" href="/config/global/cpregion">ClearPass Regional Servers</a></li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+{% endif %}
+
+<!-- reports -->
+    <div class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle link-light" href="#" role="button" id="modifyDropdown" data-hover-toggle="dropdown" aria-expanded="false">Reports</a>
+        <ul class="dropdown-menu" aria-labelledby="reportsDropdown">
+            {% if auth['authenticated_user'] %}
+            <li class="dropdown dropend">
+                <a class="dropdown-item dropdown-toggle" href="#" id="reportsDropdown3" data-hover-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Outage Reports</a>
+                <ul class="dropdown-menu" aria-labelledby="reportsDropdown3">
+                	<li><a class="dropdown-item" href="/reports/outageBusinessImpact">Business Impact</a></li>
+                </ul>
+            </li>
+            <li class="dropdown dropend">
+                <a class="dropdown-item dropdown-toggle" href="#" id="reportsDropdown1" data-hover-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Switch Compliance</a>
+                <ul class="dropdown-menu" aria-labelledby="reportsDropdown1">
+                	<li><a class="dropdown-item" href="/reports/switchCompliance">By Model</a></li>
+                    <li><a class="dropdown-item" href="/reports/switchCompliance/bySite">By Site</a></li>
+                </ul>
+            </li>
+            <li class="dropdown dropend">
+                <a class="dropdown-item dropdown-toggle" href="#" id="reportsDropdown4" data-hover-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Wireless Compliance</a>
+                <ul class="dropdown-menu" aria-labelledby="reportsDropdown4">
+                	<li><a class="dropdown-item" href="/reports/wirelessVersionCompliance">Deployment Compliance</a></li>
+                </ul>
+            </li>
+            <li class="dropdown dropend">
+                <a class="dropdown-item dropdown-toggle" href="#" id="reportsDropdown2" data-hover-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Samurai Cleanup</a>
+                <ul class="dropdown-menu" aria-labelledby="reportsDropdown2">
+                	<li><a class="dropdown-item" href="/reports/duplicateMacs">Duplicate MAC Addresses</a></li>
+                </ul>
+            </li>
+            {%endif%}
+		    <li><a class="dropdown-item" href="/crp" >Cradlepoint Data Usage</a></li>
+            <li><a class="dropdown-item" href="/gmi-latency">Network Latency</a></li>
+        </ul>
+    </div>
+
+<!-- links -->
+    <div class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle link-light" href="#" role="button" id="modifyDropdown" data-hover-toggle="dropdown" aria-expanded="false">Links</a>
+        <ul class="dropdown-menu" aria-labelledby="reportsDropdown">
+        	<li><a class="dropdown-item" href="https://go/gcp">Google Cloud</a></li>
+        	<li><a class="dropdown-item" href="https://go/infoblox">Infoblox</a></li>
+        	<li><a class="dropdown-item" href="https://go/airwave">Airwave</a></li>
+        	<li><a class="dropdown-item" href="https://go/clearpass">Clearpass</a></li>
+        	<li><a class="dropdown-item" href="https://go/inmon">Inmon</a></li>
+        	<li><a class="dropdown-item" href="https://go/zabbix">Zabbix</a></li>
+        	<li><a class="dropdown-item" href="https://go/networkgrafana">Grafana</a></li>
+        	<li><a class="dropdown-item" href="https://go/datadog">DataDog</a></li>
+        	<li><a class="dropdown-item" href="https://go/f5">F5</a></li>
+        	<li><a class="dropdown-item" href="https://go/cradlepoint">Cradlepoint</a></li>
+        </ul>
+    </div>
+
+    {% if auth['authenticated_user'] %}
+        <div class="nav-item" id=authenticatedUser>{{ auth['authenticated_user'] }} 
+            <a class="nav-link link-light" href="/logout">LOGOUT</a>
+        </div>
+    {% endif %}
+</nav>
+</div>
+
+<div class="mainContent" style="margin-top: 90px">
+{% block content %}{% endblock %}
+</div>
+
+<SCRIPT language=JavaScript>
+let dropdowns = document.querySelectorAll('.dropdown-toggle')
+dropdowns.forEach((dd)=>{
+    dd.addEventListener('click', function (e) {
+        var el = this.nextElementSibling
+        el.style.display = el.style.display==='block'?'none':'block'
+    })
+})
+
+String.prototype.format = function () {
+  var i = 0, args = arguments;
+  return this.replace(/{}/g, function () {
+    return typeof args[i] != 'undefined' ? args[i++] : '';
+  });
+};
+
+function arrayEquals(a, b) {
+	return Array.isArray(a) && Array.isArray(b) && a.length == b.length && a.every((val, index) => val == b[index]);
+}
+
+var host_version="{{auth['host_version']}}";
+
+function return_result(record) {
+	if (host_version==2) {
+		return (record[0]);
+	} else {
+        if (Array.isArray(record) && record.length == 2 && JSON.stringify(record[1]) == '{}' && JSON.stringify(record[0] != '{}')) {
+            // console.log(record);
+            // console.log(record[1]);
+            record = record[0];
+        }
+        // console.log(record);
+        // console.log(record.length);
+        // console.log(record[1]);
+        // console.log(record[0]);
+		return (record);
+	}
+}
+
+</SCRIPT>
+</body>
+</html>
+

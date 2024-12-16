@@ -1,0 +1,45 @@
+<!--top modal for data is loading-->
+<STYLE>
+.modal-backdrop
+{
+	    opacity:0.2 !important;
+}
+      @keyframes spinner {
+        0% {
+          transform: translate3d(-50%, -50%, 0) rotate(0deg);
+        }
+        100% {
+          transform: translate3d(-50%, -50%, 0) rotate(360deg);
+        }
+      }
+      .spin::before {
+        animation: 1.5s linear infinite spinner;
+        animation-play-state: inherit;
+        border: solid 5px #cfd0d1;
+        border-bottom-color: #1c87c9;
+        border-radius: 50%;
+        content: "";
+        height: 80px;
+        width: 80px;
+        position: absolute;
+        top: 10%;
+        left: 10%;
+        transform: translate3d(-50%, -50%, 0);
+        will-change: transform;
+		margin: auto;
+		padding: 20px;
+      }
+	  .spin {
+			margin-top: 50px;
+		}
+</STYLE>
+<div ref="data_is_loading" class="modal fade" :class="{ show: data_is_loading, 'd-block': data_is_loading }" tabindex="-1" role="dialog">
+<div class="modal-dialog" role="document">
+<div class="modal-content">
+  <div class="modal-body">
+	  <div class="spin">Please wait while loading data...</div>
+  </div>
+</div>
+</div>
+</div>
+<div v-if="data_is_loading" class="modal-backdrop fade show"></div>

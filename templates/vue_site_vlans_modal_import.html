@@ -1,0 +1,69 @@
+<!--add data modal - import VLANs-->
+<div ref="site_vlans_activeImport" class="modal fade" :class="{ show: site_vlans_activeImport, 'd-block': site_vlans_activeImport }" tabindex="-1" role="dialog">
+<div class="modal-dialog" role="document">
+<div class="modal-content">
+  <div class="modal-header">
+        <h5 class="modal-title">Import VLANs</h5>
+	    <button type="button" class="close" data-dismiss="modal" aria-label="Close" @click="site_vlans_toggleModalImport">
+    	  <span aria-hidden="true">&times;</span>
+	    </button>
+  </div>
+  <div class="modal-body">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+			  <th v-for="(c, index) in importCols" :key=index scope="col">
+					<div>{%raw%}{{c.text}}{%endraw%}
+					  <template v-if="sort.column === c.name && sort.by === 'asc'">
+						<i class="fa-solid fa-sort-up" @click="sort={column: c.name, by: 'desc'}"></i>
+					  </template>
+					  <template v-else-if="sort.column === c.name && sort.by === 'desc'">
+						<i class="fa-solid fa-sort-down" @click="sort={column: c.name, by: ''}"></i>
+					  </template>
+					  <template v-else>
+						<i class="fa-solid fa-sort" @click="sort={column: c.name, by: 'asc'}"></i>
+					  </template>
+					</div>
+				   </div>
+				  </div>
+				</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody class="text-nowrap">
+		  <style>
+				.r-1 { background-color: #cce0ff; }
+				.r-2 { background-color: #c7ffdb; }
+				.r-3 { background-color: #99afff; }
+				.r-4 { background-color: #ffd599; }
+				.r-5 { background-color: #ff6600; }
+				.r-6 { background-color: #ffd7d4; }
+		  </style>
+		  <tr v-for="(row, index) in filtered_import_data" :key="index" :class="'r-' + row.type">
+			  <td>{%raw%}{{row.vlan_id}}{%endraw%}</td>
+			  <td>{%raw%}{{row.name}}{%endraw%}</td>
+			  <td>{%raw%}
+        <select
+          type="text"
+          class="form-control"
+          id="editType"
+          v-model="row.type"
+          placeholder="Select the type of VLAN it is.">
+          <option value=2>Enterprise</option>
+          <option value=1>Default/All</option>
+          <option value=3>ESX TOR</option>
+          <option value=4>Manufacturing</option>
+          <option value=5>FW Stack</option>
+          <option value=6>WAN POD</option>
+      </select>
+<!--				  {{zoneText[row.type]}}-->{%endraw%}</td>
+		</tr>
+	  </tbody>
+	</table>
+	<button class="btn btn-primary btn-sm"  @click="site_vlans_handleSave">Save</button>
+  </div>
+</div>
+</div>
+</div>
+<div v-if="site_vlans_activeImport" class="modal-backdrop fade show"></div>
+ 

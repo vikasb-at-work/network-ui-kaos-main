@@ -1,0 +1,3260 @@
+{% extends 'menu.html' %}
+{% block content %}
+<script src="/js/switch.js"></script>
+<link href="/css/switch.css" rel="stylesheet" type="text/css" media="all">
+<link href="/css/vue.css" rel="stylesheet" type="text/css" media="all">
+{% include "symbols.svg" %}
+{% include "switch.svg" %}
+
+<template id="gridTemplate">
+	<div id="alert" class="alert fixed-top" style="margin-top: 50px; padding: 10px; z-index: 1" role="alert">
+		  <svg id="message_box_icon" class="bi flex-shrink-0 me-2" width="24" height="24" role="img"><use xlink:href=""></svg>{%raw%}{{message}}{%endraw%}
+	</div>
+<!-- fix zindex here --> 
+	<div id=switchContent class="container col-sm-10">
+		<div class="row" style="position: relative;">
+			<div class="col-sm-12 col-md-6">
+				<h1>{%raw%}{{switchName}}{%endraw%}</h1>
+			</div>
+			<div class="col-sm-12 col-md-6 d-flex align-items-end justify-content-end">
+				<p class="mb-0"><strong>Switch Zone: {%raw%}{{zone_name}}{%endraw%}</strong></p>
+			</div>
+		</div>
+		<div id="contextMenu" style="display: flex; align-items: center; flex-wrap: wrap;">
+			<div v-show="multiselect==true" class="btn btn-success btn-sm ltGrey select is-rounded" style="color: black; margin-bottom: 5px; height: 45px; width: 120px; display: flex; align-items: center;" @click="switch_toggleMultiSelect">
+				<div style="display: flex; flex-direction: column; margin-right: 10px;">
+					<span>MULTI</span>
+					<span>SELECT</span>
+				</div>
+				<select style="height: 32px; font-size: 8px; color: black;" multiple="multiple" @change="reselect" v-model="msPort">
+					<option v-for="port in all_interfaces">{% raw %}{{ port.name }}{% endraw %}</option>
+				</select>
+			</div>
+			<div v-show="multiselect==true" style="display: flex; flex-direction: column; margin-left: 5px;">
+				<div class="btn-group" role="group">
+					<button v-if="numberOfSwitches < 2" type="button" class="btn btn-sm btn-success ltGrey mb-1" @click="switch_toggleCopperSelect(0)" style="color: black; border-color:hsl(100, 29%, 38%); padding: 2px 5px; font-size: 10px; height: 20px; margin-top: -2px; width: 45px; border-radius: .25rem;">Copper</button>
+					<button v-else type="button" class="btn btn-sm btn-success ltGrey mb-1" @click="switch_toggleCopperSelect(0)" style="color: black; border-color:hsl(100, 29%, 38%); padding: 2px 5px; font-size: 10px; height: 20px; margin-top: -2px; width: 45px;">Copper</button>
+					<button v-show="numberOfSwitches > 1" type="button" class="btn btn-sm btn-success ltGrey mb-1 dropdown-toggle" data-bs-toggle="dropdown" style="color: black; border-color:hsl(100, 29%, 38%); padding: 2px 5px; font-size: 10px; height: 20px; margin-top: -2px;"></button>
+					<ul class="dropdown-menu" v-show="numberOfSwitches > 1">
+						<li v-for="i in numberOfSwitches" :key="i"><a class="dropdown-item" @click="switch_toggleCopperSelect(i)">Switch {% raw %}{{ i }}{% endraw %}</a></li>
+					</ul>
+				</div>
+				<div class="btn-group" role="group">
+					<button v-if="numberOfSwitches < 2" type="button" class="btn btn-sm btn-success ltGrey mb-1" @click="switch_toggleSFPSelect(0)" style="color: black; border-color: hsl(100, 29%, 38%); padding: 2px 5px; font-size: 10px; height: 20px; margin-top: -2px; width: 45px; border-radius: .25rem;">SFP</button>
+					<button v-else type="button" class="btn btn-sm btn-success ltGrey mb-1" @click="switch_toggleSFPSelect(0)" style="color: black; border-color: hsl(100, 29%, 38%); padding: 2px 5px; font-size: 10px; height: 20px; margin-top: -2px; width: 45px;">SFP</button>
+					<button v-show="numberOfSwitches > 1" type="button" class="btn btn-sm btn-success ltGrey mb-1 dropdown-toggle" data-bs-toggle="dropdown" style="color: black; border-color: hsl(100, 29%, 38%); padding: 2px 5px; font-size: 10px; height: 20px; margin-top: -2px;"></button>
+					<ul class="dropdown-menu" v-show="numberOfSwitches > 1">
+						<li v-for="i in numberOfSwitches" :key="i"><a class="dropdown-item" @click="switch_toggleSFPSelect(i)">Switch {% raw %}{{ i }}{% endraw %}</a></li>
+					</ul>
+				</div>
+			</div>
+			<div v-for="(item, i) in buttons" :key="i" style="display: inline; margin-left: 5px;">
+				<button v-if="typeof(item.action)!='function'" type="button" class="btn btn-success btn-sm" :class="item.addClass" @click.native="window.switchApp.route(item.text)">{% raw %}{{ item.text }}{% endraw %}</button>
+				<button v-else-if="item.other!=false" type="button" class="btn btn-success btn-sm" :class="item.addClass" @click.native="item.action(item.other, 0)">{% raw %}{{ item.text }}{% endraw %}</button>
+				<button v-else type="button" class="btn btn-success btn-sm" :class="item.addClass" @click.native="item.action()">{% raw %}{{ item.text }}{% endraw %}</button>
+			</div>
+		</div>
+		<div id='grid'>
+			<div id="switches" style="height: 100%">
+			</div>
+			<div id="deviceContextMenu">
+			</div>
+			<div id=selectedDetail>
+			</div>
+			<div hidden id="registeredCards" style="display: none">[]</div>
+<!-- import modals -->
+{% include 'vue_switch_modal_add_newSwitch.html' %}
+{% include 'vue_switch_modal_add_assignVlans.html' %}
+{% include 'vue_switch_modal_add_L3Vlan.html' %}
+{% include 'vue_switch_modal_edit_L3Vlan.html' %}
+{% include 'vue_switch_modal_add_insertSFP.html' %}
+{% include 'vue_switch_modal_add_stackPorts.html' %}
+{% include 'vue_switch_modal_add_makeLagTrunk.html' %}
+{% include 'vue_switch_modal_trunks.html' %}
+{% include 'vue_switch_modal_lags.html' %}
+{% include 'vue_switch_modal_add_portProperties.html' %}
+{% include 'vue_switch_modal_routes.html' %}
+{% include 'vue_switch_modal_add_switchmgmt.html' %}
+{% include 'vue_switch_modal_multi.html' %}
+{% include 'vue_switch_modal_mirror_session.html' %}
+{% include 'vue_switch_modal_mirror_endpoint.html' %}
+{% include 'vue_switch_modal_add_switch_bgp.html' %}
+{% include 'vue_switch_modal_edit_switch.html' %}
+{% include 'vue_switch_modal_edit_switch_model.html' %}
+{% include 'vue_switch_modal_add_newSwitchCard.html' %}
+{% include 'vue_utility_modal_are_you_sure.html' %}
+{% include 'vue_utility_modal_alert.html' %}
+{% include 'vue_loading.html' %}
+{% include 'vue_switch_modal_add_default_route.html' %}
+<!-- end modals -->
+	</div>
+</template>
+
+<script src="/js/switch_selector.js"></script>
+
+<script type="module">
+
+import { createApp } from 'https://unpkg.com/petite-vue?module'
+import 'https://unpkg.com/axios/dist/axios.min.js'
+const switchEndpoint = "/rest/v1/config/siteSwitches";
+const switchVlansEndpoint = "/rest/v1/config/siteSwitchesVlans";
+const switchVlansBySwitchEndpoint = "/rest/v1/config/siteSwitchesVlans/{}/{}/{}";
+const switchL3Endpoint = "/rest/v1/config/switchDeviceL3Vlan";
+const switchPortEndpoint = "/rest/v1/config/switchinterface";
+const switchTrunkLagEndpoint = "/rest/v1/config/ip/trunklag";
+const switchRouteEndpoint = "/rest/v1/config/switchroutes";
+const switchMgmtEndpoint = "/rest/v1/config/switchmgmt";
+const switchVarsEndpoint = "/rest/v1/config/switchDeviceMultiVar";
+const switchMirrorSessionEndpoint = "/rest/v1/config/switchMirrorSession";
+const switchMirrorEndpointEndpoint = "/rest/v1/config/switchMirrorEndpoint";
+const switchBgpEndpoint = "/rest/v1/config/switch/bgp";
+const siteASEndpoint = "/rest/v1/config/coreAS";
+const switchBgpNeighborEndpoint = "/rest/v1/config/switch/neighbor/bgp";
+const switchIPv4AddressesDeleteEndpoint = "/rest/v1/config/switch/{}/address/ipv4/vlan/{}/addrtype/{}";
+const switchIPv4AddressesEndpoint = "/rest/v1/config/switch/{}/address/ipv4";
+const switchModelEndpoint = "/rest/v1/config/switchModels";
+const switchReorderEndpoint = "/rest/v1/config/switchReorder/{}";
+const switchRemodelEndpoint = "/rest/v1/config/switchRemodel/{}/{}";
+const switchSpantreePolicyEndpoint = "/rest/v1/config/ip/spantree";
+const switchFamilyEndpoint = "/rest/v1/config/switchFamily/{}";
+let interfaceProfileEndpoint = "/api/v1/config/ip/switch-port-role-profile"; //Get only, anything else would require the auth token
+const dhcpServersEndpoint = "/rest/v1/global-dhcp/"; // /bySite/<site> or /byType/<type #>
+
+function app() {
+return {
+	$template: '#gridTemplate',
+	buttons: [],
+	defaultButtons: [
+		//{text: "Add Switch", addClass: "gmiDkBlue", action:"switch_toggleAddData"},
+		{text: "Mgmt", addClass: "gmiDkBlue", action:"switch_toggleSwitchMgmtAddData"},
+		{text: "Mirror Endpoint", addClass: "gmiDkBlue", action:"switch_toggleMirrorEndpoints"},
+		{text: "Mirror Session", addClass: "gmiDkBlue", action:"switch_toggleMirrorSession"},
+		{text: "VLANs", addClass: "gmiDkBlue", action:"switch_toggleAddVlans"},
+		{text: "Static Routes", addClass: "gmiDkBlue", action:"switch_toggleRoutes"},
+		{text: "LAGs", addClass: "gmiDkBlue", action:"switch_toggleLAGs"},
+		{text: "Trunks", addClass: "gmiDkBlue", action:"switch_toggleTrunks"},
+		{text: "Variables", addClass: "gmiDkBlue", action:"switch_toggleVars"}
+	],
+	cols: {
+		"trunk":[
+		    {name: 'entity_id', text: 'Trunk Number'},
+			{name: 'description', text: 'Description'},
+		    {name: 'native_vlan', text: 'Native VLAN'},
+		    {name: 'native_tagged', text: 'Native Tagged'},
+			{name: 'allowed', text: 'Allowed VLANs'}
+    	],
+		"lag":[
+			{name: 'entity_id', text: 'LAG Number'},
+			{name: 'description', text: 'Description'},
+			{name: 'native_vlan', text: 'Native VLAN'},
+			{name: 'native_tagged', text: 'Native Tagged'},
+			{name: 'allowed', text: 'Allowed VLANs'},
+			{name: 'lacp', text: 'LACP Mode'},
+			{name: 'lacp_rate', text: 'LACP Rate'}
+		],
+	    "routes":[
+            {name: 'ip_route', text: 'Route'},
+            {name: 'ip_nexthop', text: 'Next Hop'},
+            {name: 'outgoing_interface', text: 'Interface'},
+            {name: 'vrf', text: 'VRF'},
+            {name: 'tag', text: 'Tag'},
+            {name: 'distance', text: 'Distance'},
+            {name: 'description', text: 'Description'},
+            {name: 'blackhole', text: 'Blackhole'},
+            {name: 'reject', text: 'Reject'},
+            {name: 'bfd', text: 'BFD'}
+		],
+		"vars":[
+			{name: 'name', text: 'Name'},
+			{name: 'value', text: 'Value'},
+			{name: 'description', text: 'Description'}
+		],
+		"mirrorSession":[
+			{name: 'session', text: 'Session'},
+			{name: 'comment', text: 'Comment'},
+			{name: 'enable', text: 'Enable'},
+			{name: 'source_interface', text: 'Source'},
+			{name: 'destination', text: 'Destination'} // dest interface, cpu, or tunnel
+		],
+		"mirrorEndpoint":[
+			{name: 'endpoint', text: 'Endpoint'},
+			{name: 'mirror_source_ip', text: 'Source IP'},
+			{name: 'mirror_dest_ip', text: 'Dest IP'},
+			{name: 'enable', text: 'Enable'},
+			{name: 'destination', text: 'Dest Ports'},
+			{name: 'comment', text: 'Comment'}
+		],
+		"bgpNeighbors":[
+			{name: 'enable', text: 'Enabled'},
+			{name: 'neighbor_ip', text: 'Neighbor'},
+			{name: 'remote_as', text: 'Remote AS'},
+			{name: 'description', text: 'Description'},
+			{name: 'rm_inbound', text: 'Route Map - In'},
+			{name: 'rm_outbound', text: 'Route Map - Out'}
+		]
+	},
+	sort: {
+      column: 'id',
+      by: 'asc'
+	},
+	msPort: [],
+	slot_selected: 0,
+	areYouSure: {title: 'WARNING - DATA WILL BE REMOVED', body: 'This action will delete data.  Are you sure?', button:'Yes, proceed.', action:undefined},
+	areYouSureDefault: {title: 'WARNING - DATA WILL BE REMOVED', body: 'This action will delete data.  Are you sure?', button:'Yes, proceed.', action:undefined},
+	areYouSureUserVlan: {title: 'Change user_vlan value', body: 'Are you sure you want to change the user_vlan variable to the current vlan?', button:'Yes, proceed.', action:undefined},
+	areYouSureModify: {title: 'WARNING - IMPORTANT DATA WILL BE MODIFIED', body: 'This action will change important data that affects how Aruba Central sees this device.  Are you sure?', button:'Yes, proceed.', action:undefined},
+	areYouSureChangePort: {title: 'WARNING - PORT DATA WILL BE OVERWRITTEN', body: 'This action will overwrite the port data for all ports selected with whatever data elements you have checked.  Are you sure?', button:'Yes, proceed.', action:undefined},
+	tag_status: ["", " tag"],
+	desc_true_false: ["False", "True"],
+	desc_lacp_mode: ["Not Specified", "LACP Active", "LACP Passive"],
+	desc_lacp_ratefast: ["Not Specified", "Fast", "Slow"], //The two vaild options from the db are 0 and 1 so "slow" will never be used
+	caller: {},
+	//buttons_registered: ["PADDING", "Add Switch","Stack","LAG","VLANs","Trunks","Variables"],
+	buttons_registered: ["PADDING", "Stack","LAG","VLANs","Trunks","Variables"],
+	message_class: "none",
+	message: "",
+	message_icon: "",
+	switchName: "",
+	site: "",
+	zone: 0,
+	zone_name: "",
+	sw: [],
+	vlan: "",
+	base_menu: "",
+	switch_data: [],
+	//This array holds the helper ips for each L3 vlan
+	internal_ip_helpers: [],
+	internal_secondary_ips_compare: [],
+	internal_ip_helpers_compare: [],
+	internal_ip_selected: 0,
+	internal_secondary_ip_selected: 0,
+	//This array holds the secondary ips for each L3 vlan
+	internal_secondary_ips: [],
+	ip_helpers: [],
+	ip_helper_input: "",
+	secondary_ip: [],
+	secondary_ip_input: "",
+	vlanOn: [],
+	multiselect: true,
+	data_is_loading: true,
+	switch_offset: 1,
+	//Default Route modal
+	switch_addDefaultRoute: false,
+	switch_toggleaddDefaultRoute: false,
+	//Default Route variables
+	switch_addDefaultRoute_route: "0.0.0.0/0",
+	switch_addDefaultRoute_nexthop: "",
+	switch_addDefaultRoute_description: "Default Route",
+	switch_activeSFPAddData: false,
+	switch_activeMirrorSession: false,
+	switch_activePortAddData: false,
+	switch_activeRouteData: false,
+	switch_activeModalRouteAddData: false,
+	switch_activeModalMirrorSessionAddData: false,
+	switch_activeMirrorSessionData: false,
+	switch_activeSwitchMgmtAddData: false,
+	switch_activeModalDeviceVarsAddData: false,
+	switch_activeVarsData: false,
+	switch_activeModalMirrorSessionAddData: false,
+	switch_activeMirrorEndpointData: false,
+	switch_activeModalMirrorEndpointAddData: false,
+	switch_activeMultiSelect: false,
+	switch_activeModalAddNeighborData: false,
+	switch_activeAddBgp: false,
+	switch_activeModalSwitchSerialMAC: false,
+	switch_activeModelEditData: false,
+	switch_activeAddCardData: false,
+	switch_editData: {model: ''},
+	switch_reorder_mode: false,
+	switch_routes: [],
+	switch_routes_list: [],
+	switch_replace: {serial: '', MAC: ''},
+	default_switch_route: {ip_route: '', ip_nexthop: '', outgoing_interface: '', blackhole: false, reject: false, tag: '', bfd: false, distance: 1, vrf: '', description: '', edit:0},
+	switch_route: {},
+	default_switch_mgmt: {ip_dhcp: true, ip_static: '', default_gateway: '', nameserver1: '', nameserver2: '', shutdown: false, lldp_transmit: true, lldp_receive: true, lldp_trap: false, edit:0},
+	switch_bgp: {bgp_timer_keepalive: 3, bgp_timer_hold: 10, maximum_paths: 4, enable: true, asNum: '',redist_connected: true, redist_connected_rm: '', redist_static: false, redist_static_rm: '', edit:0},
+	switch_bgp_default: {bgp_timer_keepalive: 3, bgp_timer_hold: 10, maximum_paths: 4, enable: false, asNum: '', redist_connected: true, redist_connected_rm: '', redist_static: false, redist_static_rm: '', edit:0},
+	switch_bgp_neighbor: {enabled: true, neighbor_ip: '', remote_as:'', local_as:'', vrf: '', description: '', password: '', update_source: '', update_source_type: 0, address_family: 1, rm_outbound: '', rm_inbound: '', local_as_prepend: true, local_as_replace: false, remove_private_as: false, fast_external_failover: false, fallover_bfd: false, bgp_passive: false, bgp_timer_neighbor: false, bgp_timer_keepalive: 30, bgp_timer_hold: 180, edit:0},
+	switch_bgp_neighbor_default: {enabled: true, neighbor_ip: '', remote_as:'', local_as:'', vrf: '', description: '', password: '', update_source: '', update_source_type: 0, address_family: 1, rm_outbound: '', rm_inbound: '', local_as_prepend: true, local_as_replace: false, remove_private_as: false, fast_external_failover: false, fallover_bfd: false, bgp_passive: false, bgp_timer_neighbor: false, bgp_timer_keepalive: 30, bgp_timer_hold: 180, edit:0},
+	switch_bgp_neighbor_data: [],
+	switch_bgp_update_sources: [
+		{name:"IP Address", value: 1},
+		{name:"Loopback", value: 2},
+		{name:"LAG", value: 3},
+		{name:"VLAN", value: 4}
+	],
+	switch_bgp_address_family: [
+		{name:"IPv4", value: 1}
+		//,{name:"IPv6", value: 2}
+	],
+	switch_Spantree_Policies: [],
+	switch_mgmt: {},
+	switch_vars_user_vlan: {name: "", description: "", value: ""},
+	switch_vars_data: {},
+	switch_user_vlan_exists: false,
+	switch_mirror_sessions_data: [],
+	switch_sessionData: {},
+	switch_endpointData: {endpoint: '', enable: true, comment: '', mirror_source_ip: '', mirror_dest_ip: '', vrf: '', destination: []},
+	default_switch_vars_data: {name: '', value: '', description: '', edit: 0},
+	sfp_types: [{name: "None", value: 0}, {name: "Fiber", value: 1}, {name:"Copper", value: 2}],
+	switch_PortData: {"shutdown":false, "poe":false, "ip_routing":false, description:"", access:0, speed:0, vrf:'', ip:'', mtu:1500, trunk:0, lag:0, selected_port_type:0, toggleShutdown:false, togglePOE: false, toggleVRF: false, toggleIPRoutingIP: false, toggleSpeedDuplex: false, toggleDescription: false, toggleMTU: false, togglePortType: false, toggleAll: false, toggleIntProfile: false, IntProfile: 1},
+	switch_porttypes: [{name:"Access",value:0},{name:"Trunk",value:1},{name:"LAG",value:2}],
+	switch_destinationtypes: [{name:"Interface(s)",value:0},{name:"Tunnel",value:1},{name:"CPU",value:2}], 
+	ltGrey: "ltGrey",
+	mdGrey: "mdGrey",
+	divDisabled: "divDisabled",
+	invisible: "invisible",
+	switch_port_speed_duplex_types: [
+		{name:"Not Set", value: 0},
+		{name:"10m-Full", value: 1},
+		{name:"10m-Half", value: 2},
+		{name:"100m-Full", value: 3},
+		{name:"100m-Half", value: 4},
+		{name:"1g-Full", value: 5},
+		{name:"10m-Auto", value: 6},
+		{name:"100m-Auto", value: 7},
+		{name:"1g-Auto", value: 8},
+		{name:"2.5g-Auto", value: 9},
+		{name:"5g-Auto", value: 10},
+		{name:"10g-Auto", value: 11},
+		{name:"25g-Auto", value: 12},
+		{name:"40g-Auto", value: 13},
+		{name:"50g-Auto", value: 14},
+		{name:"100g-Auto", value: 15}
+	],
+	interfaceProfiles: [],
+	interfaceProfiles_filtered: [],
+	sfpTypeSelected: 0,	
+	stackPortsTypeSelected: 0,
+	switch_ports: [],
+	default_port: {"acl_policy":1,"arp_inspection":false,"arp_ip_local_proxy":false,"arp_proxy":false,"arp_timeout":30,"bfd":0,"client_track_ip":0,"client_track_ip_interval":0,"description":"","dhcpv4_snooping":0,"flow_control":false,"igmp_policy":1,"ip":"","ip_directed_broadcast":false,"ip_mtu":1500,"ip_urpf_check":0,"ipv4_source_lockdown":false,"l3_counters":0,"lag":0,"lldp_policy":1,"loop_protect":false,"loop_protect_action":0,"mac_notify":0,"mtu":1500,"nd_snooping":false,"poe":false,"poe_allocateby":0,"poe_class":0,"poe_pdoverride":false,"poe_pre_std":false,"poe_priority":0,"port":0,"port_security":false,"port_security_profile":1,"qos_policy":1,"routing":false,"sflow":false,"shutdown":false,"spantree_profile":1,"speed":0,"sub_interface":0,"switch_name":"","switch_number":1,"switch_port_policy":1,"track":0,"trunk":0,"udld":false,"vlan_access":0,"vrf":"","vrrp":0},
+	switch_activeStackPortsAddData: false,
+	stack_port_types: [{name: "None", value: 0}, {name: "link_1 Outbound (Even)", value: 1}, {name: "link_2 Inbound (Odd)", value: 2}],
+	lagOrTrunkDesc: ["Trunk","LAG"],
+	LACP_modes: [{name: "None", value: 0}, {name: "Active", value: 1}, {name: "Passive", value: 2}],
+	switch_vlans: [],
+	switch_trunksAndLags: [],
+	switch_lags: [{value: 0, name:"<CREATE NEW>"},{value: 1, name:"Test Lag"}],
+	switch_trunks: [{value: 1, name:"Test Trunk"}],
+	switch_activeLagTrunkAddData: false,
+    switch_activeAddData: false,
+	switch_addData: {model: '', serial: '', MAC: ''},
+	switch_activeAddVlans: false,
+	switch_L3activeAddData: false,
+	switch_L3activeEditData: false,
+	switch_activeTrunkData: false,
+	switch_activeLagData: false,
+	switch_L3: {clearpass_name:"", primary_dhcp_name:"", secondary_dhcp_name:""},
+	switch_L3data: {},
+	switch_activeModalTrunkAddData: false,
+	switch_activeModalLagAddData: false,
+	trunks_data: [],
+	switch_models_data: [],
+	get_dhcp_server_function_ran_once: false,
+	modalAlert: { title: '', body: '', button:'OK'},
+	//example switch_list_with_port_types: [{switch: 1, port: '1/1/1', type: 'copper'}], //type = 'copper' or 'sfp'
+	switch_list_with_port_types: [], 
+	activate_modal_alert(title, message, button, action){
+		this.modalAlert.title = title;
+		this.modalAlert.displayed = true;
+		this.modalAlert.button = button;
+		var el = document.getElementById('modalAlert');
+		var bel = new bootstrap.Modal(el);
+		bel.show();
+		this.modalAlert.active = bel;
+		var modalBody = document.getElementById('modalBody');
+		modalBody.innerHTML = message;
+	},
+	dismiss_modal_alert(){
+		if (this.modalAlert.displayed) {
+			this.modalAlert.displayed=false;
+			this.modalAlert.active.hide();
+		}
+	},
+	makePretty(x) {
+		if (x>0) {
+			return (x + "-");
+		} else {
+			return ("");
+		}
+	},
+	switch_L3editData: {},
+	switch_L3addData: {vlan: '', switch_name: '', ip: '', description: '', shutdown: false, ip_mtu: 1500, l3_counters: true, 
+					   ip_directed_broadcast: true, ip_neighbor_flood: false, ip_enable_helpers: false, ip_dhcp: false,
+					   ip_igmp_querier: false, vrf: '', ip_proxy_arp: false, arp_timeout: 30, track: 0, vrrp: 0, ip_igmp: 0,
+					   ip_acl_in:'', ip_acl_out:'', ip_policy_in:'', primary_dhcp_name: "", primary_dhcp_ip: "",
+					   secondary_dhcp_name: "", secondary_dhcp_ip: "", clearpass_dhcp_name: "", clearpass_dhcp_ip: "",
+					   ip_helpers_use_defaults: true, },
+	switch_LagTrunkData: {is_lag: false, entity_id: '', entity_id_sub: '', description: '', native_vlan:'', native_tag:false, allowed: [], lacp: 0, lacp_rate: false, entity_id_input:''},
+	default_switch_LagTrunkData: {is_lag: false, entity_id: '', entity_id_sub: '', description: '', native_vlan:'', native_tag:false, allowed: [], lacp: 0, lacp_rate: false, entity_id_input:'',edit:0},
+	message_alert(message_class, message){
+		  this.message_class=message_class;
+		  this.message=message;
+		  switch (message_class) {
+			case 'alert-success': this.message_icon = "#check-circle-fill"; break;
+			case 'alert-info' : this.message_icon = "#info-fill"; break;
+			case 'alert-warning': this.message_icon = "#exclamation-triangle-fill"; break;
+		    case 'alert-danger' : this.message_icon = "#exclamation-triangle-fill"; break;
+		  }
+		  this.alert_box = document.getElementById("alert");
+		  this.message_box_icon = document.getElementById("message_box_icon");
+		  this.message_box_icon.getElementsByTagName("use")[0].setAttributeNS('http://www.w3.org/1999/xlink', 'href', this.message_icon);
+		  this.alert_box.classList = ("alert fixed-top");
+		  this.alert_box.classList.add(this.message_class);
+	},
+    prepare_interface_profiles_list() {
+        //filter the interface profile list based on the switch zone
+        
+		//initialize interfaceProfiles_filtered each time this is run to make
+		//sure it only has the most current data
+		this.interfaceProfiles_filtered = []
+		
+		//console.log("zone number",this.zone);
+		switch (this.zone) {
+			case 4:
+				for (let i = 0; i < this.interfaceProfiles.length; i++) {					
+					if ((this.interfaceProfiles[i].name.substring(0,4) == "MFG-") || (this.interfaceProfiles[i].name.substring(0,4) == "ALL-")) {
+						//console.log("this.interfaceProfiles[i] MFG", this.interfaceProfiles[i].name);
+						this.interfaceProfiles_filtered.push(this.interfaceProfiles[i]);
+					}
+				}
+				//console.log("MFG filter", this.interfaceProfiles_filtered)
+				break;
+			case 2:
+				for (let i = 0; i < this.interfaceProfiles.length; i++) {
+					if ((this.interfaceProfiles[i].name.substring(0,4) == "ENT-") || (this.interfaceProfiles[i].name.substring(0,4) == "ALL-")) {
+						//console.log("this.interfaceProfiles[i] ENT", this.interfaceProfiles[i].name);
+						this.interfaceProfiles_filtered.push(this.interfaceProfiles[i]);
+					}
+				}
+				//console.log("ENT filter", this.interfaceProfiles_filtered)
+				break;
+			default:
+				for (let i = 0; i < this.interfaceProfiles.length; i++) {
+					if (this.interfaceProfiles[i].name.substring(0,4) == "ALL-") {
+						//console.log("this.interfaceProfiles[i] default", this.interfaceProfiles[i].name);
+						this.interfaceProfiles_filtered.push(this.interfaceProfiles[i]);
+					}
+				}
+				//console.log("Default filter", this.interfaceProfiles_filtered)
+				break;				
+		}
+    },
+    clear_display_stack() {
+		document.getElementById("switches").innerHTML = "";
+		document.getElementById("deviceContextMenu").innerHTML = "";
+	},
+	reselect() {
+		//console.error("msPort: ",this.msPort);
+		//console.error("selected: ",selected);
+		clearSelected();
+		this.msPort.forEach((e) =>{
+			var parts = e.split("/");
+			//selected.push({id:this.switchName+"_"+parts[0]+"_port_"+parts[2],cls:"blink-blue-white"});
+//			selectHandler(this.switchName+"_"+parts[0]+"_port_"+parts[2],"blink-blue-white");
+			if (this.switch_family==6400) {
+				console.error(parts);
+				selectHandler("{}_{}_sw_{}_port_{}".format(this.switchName, parts[1], parts[1], parts[2]),"blink-blue-white");
+			} else {
+				selectHandler("{}_{}_sw_{}_port_{}".format(this.switchName, parts[0], parts[0], parts[2]),"blink-blue-white");
+			}
+		});
+		//selected.forEach((e) => document.getElementById(e.id).classList.add(e.cls));
+		//document.getAnimations().forEach(anim => anim.currentTime=0)
+		//document.getElementById("selectedDetail").innerHTML = selected.map(e => e.id);
+	},
+	switch_try_load() {
+			this.switch_get_InitialPortLoad();
+//			this.switch_get_Port_data();
+//			this.switch_get_data();
+	},
+	switch_get_InitialPortLoad(){
+		const path = switchEndpoint + "/" + this.switchName;
+		//console.error("Calling", path);
+		axios.get(path).then((res) => {
+			//console.log("get Inital Port Load: ", res)
+			this.switch_count = 0;
+			let switch_count_data = return_result(res.data);
+			//console.log("switch_count_data: ", switch_count_data)
+			for (let x =0; x<switch_count_data.length; x++) {
+				if (switch_count_data[x].switch_number > this.switch_count) { 
+					this.switch_count = switch_count_data[x].switch_number; 
+				}
+			}
+			//if (this.switch_count>1) {
+        	//	this.vue_register_button("Stack Order","gmiDkBlue",this.switch_reorder_stack);
+			//}
+			//console.error("this.switch_count", this.switch_count);
+		}).then(() =>{
+			//console.error("Calling this.switch_get_Port_data()");
+			this.switch_get_Port_data();
+			//console.error("this.switch_ports",this.switch_ports)
+		}).then(() =>{
+			//console.error("Calling this.switch_get_data() in switch_get_initialPortLoad");
+			this.switch_get_data();
+			//console.error("this.sw",this.sw);
+		}).then(() => {
+			//console.error("Calling this.switch_get_models() in switch_get_initialPortLoad");
+			this.switch_get_models();
+		}).catch((error)=>{this.switch_count=0; console.error(error);})
+	},
+	init_switches(count) {
+				this.data_is_loading = true;
+				var instance="";
+				if (this.switch_data[0].family=="6400") {
+					this.sw = [,,,,,,,,];
+				}
+				this.switch_name_whole = this.switch_data[0].switch_name;
+                for (var x=0;x<count;x++) {
+                    var row = this.switch_data[x];
+					//If the switch is a chassis, we need to adjust the switch number to match the array
+					if (row.family==="6400") {
+						var i = row.switch_number;
+					} else {
+						//If the switch is not a chassis then we need to adjust the switch number to match the array
+						var i = row.switch_number-1;
+					}
+					//if row is a line card, the instance should be the chassis
+					if (row.switch_number>0 && row.family=="6400") {
+						instance = this.sw[0].instance;
+					}
+                    //Build the switch object based on the class in switch.js
+					this.sw[i] = new Switch(row.id, this.switch_name_whole, row.switch_number, row.model, row.family, row.serial, row.MAC, row.stack_link1, row.stack_link2, this.switch_ports[row.switch_number], row.portTypes.split(",").map(Number),instance);
+					//console.log(`this.sw[${i}] total ports`, this.sw[i].totalPorts);
+					//console.log(`this.sw[${i}] banks`, this.sw[i].banks);
+					//caculate total ports and port types
+					for (let bank=0; bank < this.sw[i].banks.length; bank++) {
+						let port_type = this.sw[i].banks[bank].port_type;
+						let port_start = this.sw[i].banks[bank].portStart+1;
+						let port_end = port_start + this.sw[i].banks[bank].ports-1;
+						//i is already adjusted if it is a Chassis switch
+						let switch_number = i+1;						
+						//console.log("switch bank", bank)
+						//console.log("port type", port_type)
+						//console.log(`this.sw[${i}] bank[${bank}] portStart`, port_start);
+						//console.log(`this.sw[${i}] bank[${bank}] portEnd`, port_end);
+						let port_name;
+						for (let port_number=port_start; port_number <= port_end; port_number++) {
+							//console.log(`this.sw[${i}] bank[${bank}] port[${port_number}] portType[${port_type}]`);
+							//this will be wrong for a chassis switch
+							if (this.switch_data[0].family==="6400") {
+								port_name = 1 + "/" + switch_number + "/" + port_number;
+							} else {
+								port_name = switch_number + "/" + 1 + "/" + port_number;
+							}
+							//console.log ("port_name", port_name);
+							this.switch_list_with_port_types.push({switch: switch_number, port: port_name, type: port_type});
+						}
+					}
+					//console.log("this.switch_list_with_port_types", this.switch_list_with_port_types);
+					if (this.switch_family==="6400" && i==0) {
+						//maybe add this back in and handle if we add 6410s.  For now only 6405s.
+						//this.sw[i].registerButton("Change Model","gmiDkBlue","window.switchApp.change_switch_model("+i+")");
+                    	this.sw[i].registerButton("Change Serial/MAC","gmiDkBlue","window.switchApp.switch_toggleModalSwitchSerialMAC("+i+")");
+					} else if (this.switch_family != "6400") {
+						if (i>0) { 
+							this.sw[i].registerButton("Remove Switch","gmiRed","window.switchApp.are_you_sure(window.switchApp.remove_switch,"+i+")");}
+							this.sw[i].registerButton("Change Model","gmiDkBlue","window.switchApp.change_switch_model("+i+")");
+                    		this.sw[i].registerButton("Change Serial/MAC","gmiDkBlue","window.switchApp.switch_toggleModalSwitchSerialMAC("+i+")");
+						}
+                	}
+				if (this.switch_family==="6400") {
+					this.sw[0].chassisButtons(); 
+				} else { 
+					this.sw[0].enableDragDrop();
+				}
+				this.data_is_loading = false;
+	},
+	switch_get_data() {
+		const path = switchEndpoint + "/" + this.switchName;
+		axios.get(path).then((res) => { 
+			this.switch_data = return_result(res.data);
+			//console.log("switch_get_data: ", this.switch_data)
+			var count=0;
+			var count = this.switch_data.length;
+			this.clear_display_stack();
+			this.switch_count = count;
+			if (this.switch_ports.length>0) {
+					this.init_switches(count);
+			}
+			// otherwise we have to wait for this to get re-called later by the get_Port_data finishing
+			this.site = this.switch_data[0].site;
+			this.zone = this.switch_data[0].type;
+			this.get_zone_name();
+			this.switch_get_vlans_data();
+			this.switch_get_models();
+			if (this.switch_count<=1) { this.vue_deregister_button("Stack Order"); }
+		}).catch((error) => {console.error(error);})
+    },
+    switch_get_trunks_data() {
+        const path = switchTrunkLagEndpoint + "/" + this.switchName
+        axios.get(path).then((res) => {
+            this.trunks_data = return_result(res.data);
+			//console.log("trunks_data: ", this.trunks_data);
+        }).catch((error) => {console.error(error);})
+    },
+	switch_get_mirror_endpoint_data() {
+		const path = switchMirrorEndpointEndpoint + "/" + this.switchName
+		axios.get(path).then((res) => {
+			this.switch_mirror_endpoints_data = return_result(res.data);
+		}).catch((error) => {console.error(error);})
+	},
+	switch_get_mirror_session_data() {
+		const path = switchMirrorSessionEndpoint + "/" + this.switchName
+		axios.get(path).then((res) => {
+			this.switch_mirror_sessions_data = return_result(res.data);
+		}).catch((error) => {console.error(error);})
+	},
+	handle_user_vlan_change_button_click(current_vlan) {
+		//On button click sets the user_vlan switch variable to the current vlan
+		var payload = {
+			switch_name: this.switchName,
+			name: "user_vlan",
+			value: current_vlan,
+			description: "user VLAN"
+		}
+		if (this.switch_user_vlan_exists) {
+			// update existing user_vlan
+			// pass this.switch_vars_user_vlan.id to the update function
+			var method=axios.put;
+			var path=switchVarsEndpoint + "/" + this.switch_vars_user_vlan.id;
+		} else {
+			// create new user_vlan
+			// pass this.switch_vars_user_vlan to the create function
+			var method=axios.post;
+			var path=switchVarsEndpoint + "/" + this.switchName + "/" + "user_vlan";
+		}
+		method(path, payload).then((response) => {
+			this.switch_get_switch_vars_data(); 
+		}).catch((error) => {
+			console.log(error);
+			this.switch_get_switch_vars_data();
+		});
+	},
+	switch_get_vars_user_vlan() {
+		//Grabs the user_vlan from switch_vars_data and puts it in its own variable so we can work with it
+		for (let i = 0; i < this.switch_vars_data.length; i++) {
+			if (this.switch_vars_data[i].name == "user_vlan") {
+				this.switch_vars_user_vlan = this.switch_vars_data[i];
+				this.switch_user_vlan_exists = true;
+			} else {
+				this.switch_vars_user_vlan = {name: "", description: "", value: ""};
+				this.switch_user_vlan_exists = false;
+			}
+
+		}
+	},
+	switch_get_switch_vars_data() {
+		const path = switchVarsEndpoint + "/" + this.switchName
+		axios.get(path).then((res) => {
+			this.switch_vars_data = return_result(res.data);
+			this.switch_get_vars_user_vlan()
+		}).catch((error) => {console.error(error);})
+	},
+	switch_get_bgp_data() {
+		const path1 = switchBgpEndpoint + "/" + this.switchName
+		const path2 = siteASEndpoint + "/" + this.switchName
+		axios.get(path1).then((res) => {
+			if (return_result(res.data).length>0) {
+				this.switch_bgp = return_result(res.data[0]);
+				this.switch_bgp.edit=1;
+				//console.error("this.switch_bgp is set to ",this.switch_bgp);
+			}
+			axios.get(path2).then((res) => {
+			if (return_result(res.data).length>0) {
+				this.switch_bgp.asNum = return_result(res.data[0]).asNum;
+				this.switch_bgp.id2 = return_result(res.data[0]).id;
+				this.switch_bgp.edit2=1;
+			} else {
+				this.switch_bgp.asNum='';
+				this.switch_bgp.edit2=0;
+			}
+			this.switch_get_bgp_neighbor_data();
+			}).catch((error) => {
+				console.error(error);
+				this.switch_bgp.asNum='';
+				this.switch_bgp.edit2=0;
+			});
+		}).catch((error) => {
+			this.switch_bgp = this.switch_bgp_default;
+			this.switch_get_bgp_neighbor_data();
+			console.error(error);
+		});
+	},
+	switch_get_bgp_neighbor_data() {
+		const path = switchBgpNeighborEndpoint + "/bySwitch/" + this.switchName
+		axios.get(path).then((res) => {
+			this.switch_bgp_neighbor_data = return_result(res.data);
+		}).catch((error) => {
+			console.error(error);
+		});
+	},
+	switch_get_models() {
+		const path = switchModelEndpoint
+		axios.get(path).then((res) => {
+			this.switch_models_data = return_result(res.data);
+	        if (this.switch_family >= 6300) {
+	            this.vue_register_button("BGP", "gmiDkBlue", this.switch_toggleAddBgp);
+	        }
+			if (6200 <= this.switch_family && this.switch_family <= 6300) {
+				// console.log(this.switch_family);
+				this.vue_register_button("Add Switch", "gmiDkBlue", this.switch_toggleAddData)
+			}
+		}).catch((error) => {
+			console.error(error);
+		});
+	},
+	get switch_spantree_policies_filtered_data() {
+		var new_data = [];
+		if (this.switch_Spantree_Policies.length>0) {
+			for (var i=0; i<this.switch_Spantree_Policies.length; i++) {
+				new_data.push(this.switch_Spantree_Policies[i])
+			}
+		}
+		return new_data;
+	},
+	get switch_models_filtered_data() {
+		var new_data = [];
+		if (typeof this.switch_models_data[0] != "undefined") {
+			for (var i=0; i<this.switch_models_data.length; i++) {
+				if (this.switch_models_data[i].family==this.switch_family) {
+					new_data.push(this.switch_models_data[i])
+				}
+			}
+		}
+		return new_data;
+	},
+	get switch_card_models_filtered_data() {
+		var new_data = [];
+		if (typeof this.switch_models_data[0] != "undefined") {
+			for (var i=0; i<this.switch_models_data.length; i++) {
+				if (this.switch_models_data[i].family==this.switch_family && this.switch_models_data[i].slot_limit.split(",").includes(this.slot_selected)) {
+					new_data.push(this.switch_models_data[i])
+				}
+			}
+		}
+		return new_data;
+	},
+//	get switch_family() {
+//		var result = "unknown";
+//		if (typeof this.sw[0] != "undefined") {
+//			for (var i=0; i<this.switch_models_data.length; i++){
+//				if (this.sw[0].model == this.switch_models_data[i].model) { 
+//					result = this.switch_models_data[i].family; 
+//					break;
+//				}
+//			}
+//		}
+//		return result;
+//	},
+	get numberOfSwitches() {
+		//contains the number of switches in the stack
+		return this.switch_data.length;
+	},
+	get bgp_neighbor_filtered_data() {
+        let new_data = this.switch_bgp_neighbor_data;
+        if (typeof new_data[0] != "undefined") {
+        if (this.sort.by == 'asc') {
+            for (const[k,v] of Object.entries(new_data[0])){
+                if (this.sort.column == k) {
+                    new_data.sort ( (a,b) => (a[k] > b[k]) ? 1: -1);
+                }
+            }
+        } else {
+            for (const[k,v] of Object.entries(new_data[0])){
+                if (this.sort.column == k) {
+                    new_data.sort ( (a,b) => (a[k] < b[k]) ? 1: -1);
+                }
+            }
+        }
+        }
+        return new_data;
+    },
+	get all_interfaces() {
+		var new_data=[]
+		if (this.sw != "undefined") {
+			var switches = this.sw.length;
+			try {
+				for (var i=0; i<switches; i++) {
+					try {
+		            	for (var j=1;j<=this.sw[i].totalPorts;j++) {
+							if (this.switch_family == 6400) {
+								new_data.push(
+									{
+									name :"1/"+this.sw[i].switch_number+"/"+j,
+									value:this.sw[i].switch_number+":"+j
+									}
+								);
+							} else {
+								new_data.push(
+									{
+									name :this.sw[i].switch_number+"/1/"+j,
+									value:this.sw[i].switch_number+":"+j
+									}
+								);
+							}
+						}
+					} catch {}
+				}
+				new_data.push({});
+				return new_data;
+			} catch (error) {console.error(error)}
+		}
+	},
+	get switch_interfaces() {
+		var new_data=[];
+		if (this.sw != "undefined") {
+			var switches = this.sw.length;
+			try {
+				for (var i=0; i<switches; i++) {
+					for (var j=1;j<this.sw[i].ports.length;j++) {
+						if (typeof this.sw[i].ports[j]['switch_name'] != "undefined") {
+							if (this.switch_family === "6400") {
+								new_data.push(
+									{
+									name:"1/"+(this.sw[i].switch_number)+"/"+j,
+									value:(this.sw[i].switch_number)+":"+j
+									}
+								);
+							} else {
+								new_data.push(
+									{
+									name:(this.sw[i].switch_number)+"/1/"+j,
+									value:(this.sw[i].switch_number)+":"+j
+									}
+								);
+							}
+						}
+					}
+				}
+			} catch {}
+		}
+		new_data.push({})
+		return new_data;
+	},
+	get switch_interfaces_rxtx() {
+		var new_data=[];
+		if (typeof this.switch_interfaces != "undefined" && this.switch_interfaces.length-1>0) {
+			for (var i=0; i<this.switch_interfaces.length-1; i++){
+				new_data.push({name:"[ rx ] "+this.switch_interfaces[i].name,value:this.switch_interfaces[i].value+":1"})
+				new_data.push({name:"[ tx ] "+this.switch_interfaces[i].name,value:this.switch_interfaces[i].value+":2"})
+				new_data.push({name:"[both] "+this.switch_interfaces[i].name,value:this.switch_interfaces[i].value+":0"})
+			}
+			new_data.push({});
+		}
+		//console.error(new_data);
+		return new_data;
+	},
+	get switch_lags_rxtx() {
+		var new_data=[];
+		if (typeof this.lags_filtered_data != "undefined" && this.lags_filtered_data.length>0) {
+			for (var i=0; i<this.lags_filtered_data.length; i++){
+				new_data.push({name:"[ rx ] "+this.lags_filtered_data[i].entity_id+"-"+this.lags_filtered_data[i].description,value:this.lags_filtered_data[i].entity_id+":1"})
+				new_data.push({name:"[ tx ] "+this.lags_filtered_data[i].entity_id+"-"+this.lags_filtered_data[i].description,value:this.lags_filtered_data[i].entity_id+":2"})
+				new_data.push({name:"[both] "+this.lags_filtered_data[i].entity_id+"-"+this.lags_filtered_data[i].description,value:this.lags_filtered_data[i].entity_id+":0"})
+			}
+			new_data.push({});
+		}
+		return new_data;
+	},
+	get switch_vlans_rxtx() {
+		var new_data=[];
+		if (typeof this.switch_vlans != "undefined" && this.switch_vlans.length>0) {
+			for (var i=0; i<this.switch_vlans.length-1; i++){
+				new_data.push({name:"[ rx ] "+this.switch_vlans[i].name,value:this.switch_vlans[i].value+":1"})
+				new_data.push({name:"[ tx ] "+this.switch_vlans[i].name,value:this.switch_vlans[i].value+":2"})
+				new_data.push({name:"[both] "+this.switch_vlans[i].name,value:this.switch_vlans[i].value+":0"})
+			}
+			new_data.push({});
+		}
+		return new_data;
+	},
+	get switch_vars_filtered_data() {
+        let new_data = this.switch_vars_data;
+        //new_data = new_data.filter(row => row.is_lag == false);
+        if (typeof new_data[0] != "undefined") {
+		//console.error(new_data);
+        if (this.sort.by == 'asc') {
+            for (const[k,v] of Object.entries(new_data[0])){
+                if (this.sort.column == k) {
+                    new_data.sort ( (a,b) => (a[k] > b[k]) ? 1: -1);
+                }
+            }
+        } else {
+            for (const[k,v] of Object.entries(new_data[0])){
+                if (this.sort.column == k) {
+                    new_data.sort ( (a,b) => (a[k] < b[k]) ? 1: -1);
+                }
+            }
+        }
+        }
+        return new_data;
+    },
+    get trunks_filtered_data() {
+        let new_data = this.trunks_data;
+        new_data = new_data.filter(row => row.is_lag == false);
+        if (typeof new_data[0] != "undefined") {
+		//console.error(new_data);
+        if (this.sort.by == 'asc') {
+            for (const[k,v] of Object.entries(new_data[0])){
+                if (this.sort.column == k) {
+                    new_data.sort ( (a,b) => (a[k] > b[k]) ? 1: -1);
+                }
+            }
+        } else {
+            for (const[k,v] of Object.entries(new_data[0])){
+                if (this.sort.column == k) {
+                    new_data.sort ( (a,b) => (a[k] < b[k]) ? 1: -1);
+                }
+            }
+        }
+        }
+        return new_data;
+    },
+	get routes_filtered_data() {
+        let new_data = this.switch_routes;
+        //new_data = new_data.filter(row => row.is_lag == false);
+        if (typeof new_data[0] != "undefined") {
+			//console.error(new_data);
+			if (this.sort.by == 'asc') {
+				for (const[k,v] of Object.entries(new_data[0])){
+					if (this.sort.column == k) {
+						new_data.sort ( (a,b) => (a[k] > b[k]) ? 1: -1);
+					}
+				}
+			} else {
+				for (const[k,v] of Object.entries(new_data[0])){
+					if (this.sort.column == k) {
+						new_data.sort ( (a,b) => (a[k] < b[k]) ? 1: -1);
+					}
+				}
+			}
+        }
+        return new_data;
+	},
+    get lags_filtered_data() {
+        let new_data = this.trunks_data;
+        new_data = new_data.filter(row => row.is_lag == true);
+        if (typeof new_data[0] != "undefined") {
+		//console.error(new_data);
+        if (this.sort.by == 'asc') {
+            for (const[k,v] of Object.entries(new_data[0])){
+                if (this.sort.column == k) {
+                    new_data.sort ( (a,b) => (a[k] > b[k]) ? 1: -1);
+                }
+            }
+        } else {
+            for (const[k,v] of Object.entries(new_data[0])){
+                if (this.sort.column == k) {
+                    new_data.sort ( (a,b) => (a[k] < b[k]) ? 1: -1);
+                }
+            }
+        }
+        }
+        return new_data;
+    },
+	get mirror_endpoint_filtered_data() {
+		let new_data = this.switch_mirror_endpoints_data;
+		return new_data;
+	},
+    get mirror_session_filtered_data() {
+//        let new_data = this.switch_mirror_sessions_data;
+		var new_data = []
+		var si = 0;
+		for (var i=0; i<4; i++) {
+			new_data.push({session:i+1,comment:'empty',enable:false, src: '', dest: ''})
+		} 
+		for (i=0; i<this.switch_mirror_sessions_data.length; i++) {
+			si = this.switch_mirror_sessions_data[i].session-1
+			new_data[si] = this.switch_mirror_sessions_data[i];
+			new_data[si].source = "";
+			if (this.switch_mirror_sessions_data[i].source_interface) { new_data[si].source = " int "+this.switch_mirror_sessions_data[i].source_interface.join(","); }
+			if (this.switch_mirror_sessions_data[i].source_lag) { new_data[si].source = new_data[si].source + " lags "+this.switch_mirror_sessions_data[i].source_lag.join(","); }
+			if (this.switch_mirror_sessions_data[i].source_vlan) { new_data[si].source = new_data[si].source + " vlans "+this.switch_mirror_sessions_data[i].source_vlan.join(","); }
+			if (this.switch_mirror_sessions_data[i].cpu) {
+				new_data[si].dest = "CPU";
+			} else { 
+				if (this.switch_mirror_sessions_data[i].destination_tunnel_ip) {
+					new_data[si].dest = "Tunnel "+this.switch_mirror_sessions_data[i].destination_tunnel_ip+" src "+this.switch_mirror_sessions_data[i].destination_tunnel_source;
+				} else {
+					if (this.switch_mirror_sessions_data[i].destination) {
+						new_data[si].dest = "int "+this.switch_mirror_sessions_data[i].destination.join(",");
+					} else { 
+						new_data[si].dest = "";
+					}
+				}
+			}
+		}
+        if (typeof new_data[0] != "undefined") {
+		//console.error(new_data);
+		if (this.sort.column == 'id') { this.sort.column = 'Session'; this.sort.by='asc'; }
+        if (this.sort.by == 'asc') {
+            for (const[k,v] of Object.entries(new_data[0])){
+                if (this.sort.column == k) {
+                    new_data.sort ( (a,b) => (a[k] > b[k]) ? 1: -1);
+                }
+            }
+        } else {
+            for (const[k,v] of Object.entries(new_data[0])){
+                if (this.sort.column == k) {
+                    new_data.sort ( (a,b) => (a[k] < b[k]) ? 1: -1);
+                }
+            }
+        }
+        }
+        return new_data;
+    },
+	findSpecificPorts(sw=0, type="copper") {
+		//pulls the ports of the requested type from the switch_list_with_port_types array
+		//valid types are "copper" and "sfp"
+		//if sw is 0, it will pull all ports of the requested type
+		//if sw is a number, it will pull all ports of the requested type from that switch
+		//console.log(`findSpecificPorts called with sw: ${sw} type: ${type}`);
+		let specific_ports = [];
+		for(let i=0; i<this.switch_list_with_port_types.length; i++) {
+			if (sw == 0) {
+				//console.log("type and port type: ", type, this.switch_list_with_port_types[i].type);
+				if (this.switch_list_with_port_types[i].type.toUpperCase() === type.toUpperCase()) {
+					specific_ports.push(this.switch_list_with_port_types[i].port);
+				}
+			} else
+			if (this.switch_list_with_port_types[i].switch == sw) {
+				if (this.switch_list_with_port_types[i].type.toUpperCase() === type.toUpperCase()) {
+					specific_ports.push(this.switch_list_with_port_types[i].port);
+				}
+			}
+		}
+		//console.log("specific_ports found: ", specific_ports);
+		
+		//specific_ports is a list of ports in the format "switch_number/bank/port" example: ["1/1/1","1/1/2","1/1/3"]
+		return specific_ports;		
+	},
+	switch_port_selector(port_list) {
+		/*
+		Takes in an array of ports like ["1/1/1","1/1/2","1/1/3"] and adds each port to the selected array.
+		Then it calls the selectHandler function with the first item from the array to active the selection class ("blink-blue-white")
+		on each port in the array.
+		*/				
+		clearSelected(); //clearSelected is a function from switch_selector.js
+		port_list.forEach((e) =>{
+			var parts = e.split("/");
+			if (this.switch_family==6400) {
+				//selected.push({ id: elem, cls: cl });
+				selected.push({id: "{}_{}_sw_{}_port_{}".format(this.switchName, parts[1], parts[1], parts[2]), cls: "blink-blue-white"});
+			} else {
+				selected.push({id: "{}_{}_sw_{}_port_{}".format(this.switchName, parts[0], parts[0], parts[2]), cls: "blink-blue-white"});
+			}
+		});
+		var part = port_list[0].split("/");
+		if (this.switch_family==6400) {
+			//selectHandler(port,css class)
+			selectHandler("{}_{}_sw_{}_port_{}".format(this.switchName, part[1], part[1], part[2]),"blink-blue-white");
+		} else {
+			selectHandler("{}_{}_sw_{}_port_{}".format(this.switchName, part[0], part[0], part[2]),"blink-blue-white");
+		}
+	},
+	switch_toggleCopperSelect(switch_number=0) {		
+		//grabs all copper ports from the switch stack
+		let copper_ports = [];
+		copper_ports = this.findSpecificPorts(switch_number, "copper");
+		this.switch_port_selector(copper_ports);	
+	},
+	switch_toggleSFPSelect(switch_number=0) {
+		//grabs all SFP ports from the switch stack
+		let sfp_ports = [];		
+		sfp_ports = this.findSpecificPorts(switch_number, "sfp");
+		this.switch_port_selector(sfp_ports);
+	},
+	switch_get_LagTrunk_data() {
+		const path = switchTrunkLagEndpoint+"/"+this.switchName;
+		axios.get(path).then((res) => {
+			this.switch_trunksAndLags = return_result(res.data);
+			//console.error(this.switch_trunksAndLags)
+			var count = this.switch_trunksAndLags.length;
+//			this.switch_trunks = [{value:0,name:"<CREATE NEW>"}]
+//			this.switch_lags = [{value:0,name:"<CREATE NEW>"}]
+			this.switch_trunks = [];
+			this.switch_lags = [];
+			for (var i=0;i<count;i++) {
+				if (this.switch_trunksAndLags[i].is_lag) {
+					this.switch_lags.push({"name":this.switch_trunksAndLags[i].description,"value":this.switch_trunksAndLags[i].entity_id,"allowed":this.switch_trunksAndLags[i].allowed,"native_vlan":this.switch_trunksAndLags[i].native_vlan,"native_tag":this.switch_trunksAndLags[i].native_tag,"description":this.switch_trunksAndLags[i].description});
+				} else {
+					this.switch_trunks.push({"name":this.switch_trunksAndLags[i].description,"value":this.switch_trunksAndLags[i].entity_id,"allowed":this.switch_trunksAndLags[i].allowed,"native_vlan":this.switch_trunksAndLags[i].native_vlan,"native_tag":this.switch_trunksAndLags[i].native_tag,"description":this.switch_trunksAndLags[i].description});
+				}
+			}
+			this.switch_lags.push({})
+			this.switch_trunks.push({})
+		}).catch((error) => {console.error(error);})
+	},
+	switch_reorder_stack() {
+		var payload = {newOrder: this.sw[0].returnSwitchOrder()};
+		var path = switchReorderEndpoint.format(this.switchName);
+		axios.put(path, payload).then((res) => {
+			location.reload();
+		}).catch((error) => { console.error(error); });
+	},
+	switch_get_routes_data() {
+		const path = switchRouteEndpoint + "/"+this.switchName;
+		//console.error(path);
+		axios.get(path).then((res) => {
+			this.switch_routes = return_result(res.data);
+			//console.error(this.switch_routes);
+		}).catch((error) => {console.error(error);
+		});
+	},
+	switch_get_Port_data(){
+		const path = switchPortEndpoint+"/"+this.switchName;
+		axios.get(switchFamilyEndpoint.format(this.switchName)).then((res)=> {
+			this.switch_family = res.data.family.toString();
+			let offset=1;
+			if (this.switch_family == "6400") { offset=0; this.switch_offset=0; }
+		axios.get(path).then((res) => {
+			//console.error(this.switch_family);
+			this.switch_ports=[""];
+			this.default_port["switch_name"] = this.switch_name;
+			// create all ports as array of default ports
+			// Brian changed 8 to 7
+			let init_count = (this.switch_family==="6400") ? 7 : this.switch_count;
+			for (var switch_number=0; switch_number<=init_count; switch_number++){
+				// switchPortMaps are 1 based indexed
+				var switchPortMap = [""];
+				// don't have totalPorts yet - make all switches 54 ports in memory
+				for (var port=1; port<= 54; port++){
+					let tempPort = JSON.parse(JSON.stringify(this.default_port));
+					tempPort.switch_number=switch_number;					
+					//console.log("tempPort.switch_number: ", tempPort.switch_number)
+					tempPort.port=port;
+					//console.log("tempPort.port: ", tempPort.port)
+					switchPortMap.push(tempPort);
+					switchPortMap[port]["port"] = port;
+				}
+				this.switch_ports.push(switchPortMap);				
+			}			
+			//console.error(this.switch_ports); // this is the before state should all be blank
+
+			// overlay the data from database
+			var ports_in_db = return_result(res.data)
+			//console.log("ports_in_db: ", ports_in_db)
+			var count = ports_in_db.length-1;
+
+			//console.error ("count ", count, "ports_in_db ", ports_in_db, "offset ", offset)
+			for (var i=0; i<=count; i++) {
+				//console.error(ports_in_db[i].switch_number);
+				//console.error ("count ", count, "ports_in_db ", ports_in_db, "offset ", offset)
+				//console.error(ports_in_db[i].port);
+				//console.log("get_port_Data offset: ", offset)
+				if (parseInt(ports_in_db[i].switch_number)+offset<=this.switch_count){
+					//console.log("ports_in_db[i]: ", ports_in_db[i])
+					//Why do we end with this.switch_ports being 9 items long instead of 8?
+					this.switch_ports[parseInt(ports_in_db[i].switch_number)+offset][parseInt(ports_in_db[i].port)] = ports_in_db[i]; 
+				}
+			}
+			//console.log("this.switch_ports: ", this.switch_ports)
+			//console.error("Actually this.switch_ports",this.switch_ports);
+			this.switch_get_data();
+			//console.error ("switch ports ", this.switch_ports);
+		}).catch((error) => {console.error(error);})
+		}).catch((error) => {console.error(error);})
+	},
+	switch_get_vlans_data() {
+		//const path = "/rest/v1/config/siteSwitchesVlans/" + this.site + "/" + this.zone + "/" + this.switchName;
+		const path = switchVlansBySwitchEndpoint.format(this.site, this.zone, this.switchName); 
+		//console.error(path);
+        axios.get(path).then((res) => {
+			//this one is different because the API response fakes a marshmallow 2.0 output so the output didn't change when we went to 3
+			this.switch_vlans_data = res.data[0];
+			//this.switch_vlans_data = [];
+			//console.log(this.switch_vlans_data);
+			var count = this.switch_vlans_data.length;
+			this.switch_vlans=[];
+			for (var i=0;i<count;i++){
+				this.switch_vlans.push({"name":this.switch_vlans_data[i].vlan+"-"+this.switch_vlans_data[i].name,"value":this.switch_vlans_data[i].vlan});
+			}
+			//this.switch_vlans.push({})
+			//console.log("this is the final vlan", this.switch_vlans);
+		}).catch((error) => {console.error(error);})
+	},
+	switch_get_L3data(switch_name="",vlan="") {
+		//console.error("switch_get_L3data");
+		var path = switchL3Endpoint
+		if (switch_name != "" && vlan != "") {
+			path = path + "/" + switch_name + "/" + vlan
+		}
+		axios.get(path).then((res) => {
+			this.switch_L3data = return_result(res.data);
+			this.switch_L3editData = return_result(res.data[0]);
+			var path2 = switchIPv4AddressesDeleteEndpoint.format(this.switchName, this.vlan, "3");
+			var path3 = switchIPv4AddressesDeleteEndpoint.format(this.switchName, this.vlan, "2");
+			axios.get(path2).then((result) => {
+				this.internal_ip_helpers = [];
+				this.internal_ip_helpers_compare = [];
+				for (var i =0; i<return_result(result.data).length; i++) {
+					this.internal_ip_helpers.push(return_result(result.data)[i].ip_addr);
+					this.internal_ip_helpers_compare.push(return_result(result.data)[i].ip_addr);
+				}
+			}).catch((error)=>{console.error(error);})
+			axios.get(path3).then((result) => {
+				this.internal_secondary_ips = [];
+				for (let j=0; j<return_result(result.data).length; j++) {
+					this.internal_secondary_ips.push(return_result(result.data)[j].ip_addr);
+					this.internal_secondary_ips_compare.push(return_result(result.data)[j].ip_addr);
+				}
+			}).catch((error)=>{
+				console.error(error);
+			})
+		}).catch((error) => {console.error(error);})
+	},
+	register_button_depricated(buttonText, buttonClass, buttonAction){
+        var palette = document.getElementById("contextMenu");
+        if (palette) {
+            palette.innerHTML = palette.innerHTML + "<button type='button' onClick='"+buttonAction+"; return false;' style='margin-left: 5px;' class='btn btn-success btn-sm "+buttonClass+"'>"+buttonText+"</button>";
+        }
+	},
+	vue_register_button(buttonText, buttonClass, buttonAction, jsScope="in", areYouSureAction=false){
+		if (this.buttons_registered.indexOf(buttonText)>0) {
+		} else {
+			var button = {text: buttonText, addClass: buttonClass, action: buttonAction, js: jsScope, other:areYouSureAction};
+			if (buttonText == "Add Switch") {
+				this.buttons.splice(0, 0, button);
+			} else {
+				this.buttons.push(button);
+			}
+			this.buttons_registered.push(buttonText);
+		}
+	},
+	vue_deregister_button(button) {
+		this.vue_deregister_buttons([button]);
+	},
+	vue_deregister_buttons(buttonList) {
+		var total = buttonList.length;
+		for (var i=0;i<total;i++){
+			var buttonText = buttonList[i];
+			if (this.buttons_registered.indexOf(buttonText)>0) {
+				this.buttons_registered.splice(this.buttons_registered.indexOf(buttonText),1);
+				var index = this.buttons.findIndex(( {text, addClass, action} ) => text===buttonText);
+				if (index > 0) { this.buttons.splice(index,1); }
+			}
+		}
+	},
+	vue_deregister_all_buttons(){
+		this.multiselect = false;
+		this.buttons_registered=["PADDING"];
+		this.buttons=[];
+	},
+	switch_zeroize_ports(){
+		//console.error(window.objList);
+		var count = window.objList.length;
+		var promises=[]
+		//loop through all ports selected
+		var newPortTypes=[]
+		for (var sw=0; sw<this.sw.length; sw++){
+			newPortTypes[sw] = this.sw[sw].portTypes.map((x) => x); // make a copy
+		}
+		for (var i=0; i<count; i++) {
+			var path = switchPortEndpoint + "/" + this.switchName + "/" + (window.objList[i].switch_number-this.switch_offset) + "/" + window.objList[i].port+"/0";
+			promises.push({"path":path,"type":axios.delete, "payload":{}});
+			//to-do remove SFP
+			//modify newPortTypes here but push to stack if modified only, in next loop
+			newPortTypes[window.objList[i].switch_number-1][window.objList[i].port] =0;
+			//to-do remove from stack in/stack out
+		}
+		for (var sw=0; sw<this.sw.length; sw++){
+			var path = switchEndpoint + "/" + this.sw[sw].switch_id;
+			if (newPortTypes[sw] != this.sw[sw].portTypes) { promises.push({"path":path,"type":axios.put, "payload":{portTypes: newPortTypes[sw]}}); }
+		}
+		console.error(promises);
+		Promise.all(promises.map((p)=> p.type(p.path, p.payload))).then((response) => {
+			location.reload(); 
+		}).catch((error) => {console.log(error); 
+			location.reload(); 
+		});
+	},
+	switch_disable_ports(){
+		//console.error(window.objList);
+		var count = window.objList.length;
+		var promises=[];
+		for (var i=0; i<count; i++) {
+			var path = switchPortEndpoint + "/" + this.switchName + "/" + (window.objList[i].switch_number-this.switch_offset) + "/" + window.objList[i].port +"/0";
+			promises.push({"path":path, "payload":{"shutdown":!this.switch_ports[parseInt(window.objList[i].switch_number)][parseInt(window.objList[i].port)].shutdown}});
+		}
+		//console.error(promises);
+		//apply all promises
+		Promise.all(promises.map((p)=> axios.put(p.path, p.payload))).then((response) => { location.reload(); }).catch((error) => {console.log(error); location.reload(); });
+	},
+	switch_disable_power(){
+		//console.error(window.objList);
+		var count = window.objList.length;
+		var promises=[];
+		for (var i=0; i<count; i++) {
+			var path = switchPortEndpoint + "/" + this.switchName + "/" + (window.objList[i].switch_number-this.switch_offset) + "/" + window.objList[i].port +"/0";
+			promises.push({"path":path, "payload":{"poe":!this.switch_ports[parseInt(window.objList[i].switch_number)][parseInt(window.objList[i].port)].poe}});
+		}
+		//console.error(promises);
+		//apply all promises
+		Promise.all(promises.map((p)=> axios.put(p.path, p.payload))).then((response) => { 
+			location.reload();
+		}).catch((error) => {console.log(error); 
+			location.reload();
+		});
+	},
+	switch_add_data(payload){
+		const path = switchEndpoint;
+		axios.post(path, payload).then(() => { this.switch_get_data(); location.reload(); }).catch((error) => {console.log(error); this.switch_get_data(); });
+    },
+	switch_add_card_data(payload) {
+		const path = switchEndpoint;
+		axios.post(path, payload).then(() => { location.reload(); }).catch((error) => {console.log(error); this.switch_get_data(); });
+	},
+	switch_add_L3data(payload){
+		const path = switchL3Endpoint
+		axios.post(path, payload).then(() => { 
+			this.switch_get_L3data(); 
+		}).catch((error) => {console.log(error); this.switch_get_L3data(); });
+	},
+	switch_edit_L3data(payload){
+		const path = switchL3Endpoint + "/" + payload.switch_name + "/" + payload.vlan
+		axios.put(path, payload).then(() => { this.switch_get_L3data(); }).catch((error) => {console.log(error); this.switch_get_L3data(); });
+	},
+	switch_remove_L3data(payload) {
+		const path = switchL3Endpoint + "/" + payload.switch_name + "/" + payload.vlan
+		axios.delete(path, payload).then(() => { 
+			this.switch_get_L3data(); 
+		}).catch((error) => {console.log(error); this.switch_get_L3data(); });
+	},
+    switch_handleAddReset() {
+		this.switch_initForm()
+	},
+	switch_L3handleAddReset() {
+		//This doesn't seem to actually do anything yet
+	},
+	switch_handleDeleteMirrorSessionData(id) {
+		if (id.id) {
+			const path = switchMirrorSessionEndpoint + "/"+id.id;
+			axios.delete(path).then(() => {this.switch_get_mirror_session_data(); }).catch((error)=>{console.log(error); this.switch_get_mirror_session_data();})
+		}
+	},
+	switch_handleDeleteMirrorEndpointData(id) {
+		if (id.id) {
+			const path = switchMirrorEndpointEndpoint + "/"+id.id;
+			axios.delete(path).then(() => {this.switch_get_mirror_endpoint_data(); }).catch((error)=>{console.log(error); this.switch_get_mirror_endpoint_data();})
+		}
+	},
+	switch_handleDeleteLagData(id) {
+		const path = switchTrunkLagEndpoint + "/" + id.id;
+		axios.delete(path).then(() => {this.switch_get_trunks_data(); }).catch((error)=>{console.log(error); this.switch_get_trunks_data();})
+	},
+	switch_handleDeleteVarsData(id) {
+		const path = switchVarsEndpoint + "/" + id.id;
+		axios.delete(path).then(() => {this.switch_get_switch_vars_data(); }).catch((error)=>{console.log(error); this.switch_get_switch_vars_data();})
+	},
+	switch_handleDeleteTrunkData(id) {
+		const path = switchTrunkLagEndpoint + "/" + id.id;
+		axios.delete(path).then(() => {this.switch_get_trunks_data(); }).catch((error)=>{console.log(error); this.switch_get_trunks_data();})
+	},
+	switch_handleDeleteRouteData(id) {
+		const path = switchRouteEndpoint + "/"+id.id
+		axios.delete(path).then(() => {this.switch_get_routes_data(); }).catch((error)=>{console.log(error); this.switch_get_routes_data();})
+	},
+	switch_handleDeleteBgpNeighbor(id) {
+		const path = switchBgpNeighborEndpoint + "/" + id.id;
+		axios.delete(path).then(() => {this.switch_get_bgp_neighbor_data(); }).catch((error)=>{console.log(error); this.switch_get_bgp_neighbor_data();})
+	},
+    switch_handleAddSubmit() {		
+		const payload = {
+			site: this.switch_data[0].site,
+			model: this.switch_addData.model,
+			switch_name: this.switch_data[0].switch_name,
+			switch_number: this.switch_data.length+1,
+			serial: this.switch_addData.serial,
+			MAC: this.switch_addData.MAC,
+			zone_type: this.switch_data[0].type,
+			stack_link1: 0,
+			stack_link2: 0
+		}
+		if (payload.serial == "" || payload.MAC == "") {
+			this.activate_modal_alert("Data missing", "Serial and MAC are required fields and must not be empty.", "OK");
+		} else {
+			this.switch_add_data(payload);
+			this.switch_initForm();
+			this.switch_toggleAddData();
+			this.message_alert("alert-success","You have added a new record to the database.");
+		}
+	},
+	switch_handleAddCardSubmit() {
+		this.switch_toggleAddCardData();
+		const payload = {
+			site: this.switch_data[0].site,
+			model: this.switch_addData.model,
+			switch_name: this.switch_data[0].switch_name,
+			switch_number: this.slot_selected,
+			serial: this.switch_addData.serial,
+			MAC: this.switch_addData.MAC,
+			zone_type: this.switch_data[0].type,
+			stack_link1: 0,
+			stack_link2: 0
+		};
+		console.error(payload);
+		this.switch_add_card_data(payload);
+	},
+	switch_handleEditModelDataSubmit() {
+		const path = switchRemodelEndpoint.format(this.switch_editData.id, this.switch_editData.model);
+		axios.put(path).then((res) => {
+			location.reload();		
+		}).catch((error)=>{
+			console.error(error);
+		});
+	},
+	switch_L3handleUpdateSecondaries(edit=false){ 
+		const path2 = switchIPv4AddressesDeleteEndpoint.format(this.switchName, (edit ? this.switch_L3editData.vlan : this.switch_L3addData.vlan), "2");
+		const path = switchIPv4AddressesEndpoint.format(this.switchName);
+		if (!arrayEquals(this.internal_secondary_ips.sort(), this.internal_secondary_ips_compare.sort())) {
+		axios.delete(path2).then(() => {
+			var promises = [];
+			for (var i = 0; i<this.internal_secondary_ips.length; i++) {
+				var payload = {
+					switch_name: this.switchName,
+					vlan: edit ? this.switch_L3editData.vlan : this.switch_L3addData.vlan,
+					ip_addr: this.internal_secondary_ips[i],
+					addr_type: 2,
+					ip_addr_extra: 1
+				}
+				promises.push ({path:path, type:axios.post, payload: payload})
+			}
+			//console.error(promises);
+			Promise.all(promises.map((p)=> p.type(p.path, p.payload))).then((response) => {
+			}).catch((error)=>{console.log(error);
+			});
+		}).catch((error)=>{console.log(error);
+		});
+		}
+	},
+	switch_L3handleUpdateHelpers(edit=false){ 
+		const path2 = switchIPv4AddressesDeleteEndpoint.format(this.switchName, (edit ? this.switch_L3editData.vlan : this.switch_L3addData.vlan), "3");
+		const path = switchIPv4AddressesEndpoint.format(this.switchName);
+		if (!arrayEquals(this.internal_ip_helpers.sort(), this.internal_ip_helpers_compare.sort())) {
+		axios.delete(path2).then(() => {
+			var promises = [];
+			for (var i = 0; i<this.internal_ip_helpers.length; i++) {
+				var payload = {
+					switch_name: this.switchName,
+					vlan: edit ? this.switch_L3editData.vlan : this.switch_L3addData.vlan,
+					ip_addr: this.internal_ip_helpers[i],
+					addr_type: 3,
+					ip_addr_extra: 4
+				}
+				promises.push ({path:path, type:axios.post, payload: payload})
+			}
+			//console.error(promises);
+			Promise.all(promises.map((p)=> p.type(p.path, p.payload))).then((response) => {
+			}).catch((error)=>{console.log(error);
+			});
+		}).catch((error)=>{console.log(error);
+		});
+		}
+	},
+	switch_L3handleAddSubmit(){
+
+		const ipv4_validation = new ipv4(this.switch_L3addData.ip, true);
+
+        if (ipv4_validation.isvalid || this.switch_L3addData.ip_dhcp) {
+
+			this.switch_toggleAddModalL3(true);
+			const payload = {
+				switch_name:this.switch_L3addData.switch_name,
+				ip:this.switch_L3addData.ip,
+				vlan:this.switch_L3addData.vlan,
+				track:this.switch_L3addData.track,
+				vrrp:this.switch_L3addData.vrrp,
+				vrf:this.switch_L3addData.vrf,
+				description:this.switch_L3addData.description,
+				shutdown:this.switch_L3addData.shutdown,
+				arp_timeout:this.switch_L3addData.arp_timeout,
+				ip_mtu:this.switch_L3addData.ip_mtu,
+				l3_counters:this.switch_L3addData.l3_counters,
+				ip_directed_broadcast:this.switch_L3addData.ip_directed_broadcast,
+				ip_neighbor_flood:this.switch_L3addData.ip_neighbor_flood,
+				ip_dhcp:this.switch_L3addData.ip_dhcp,
+				ip_proxy_arp:this.switch_L3addData.ip_proxy_arp,
+				ip_policy_in:this.switch_L3addData.ip_policy_in,
+				ip_acl_in:this.switch_L3addData.ip_acl_in,
+				ip_acl_out:this.switch_L3addData.ip_acl_out,
+				ip_igmp:this.switch_L3addData.ip_igmp,
+				ip_igmp_querier:this.switch_L3addData.ip_igmp_querier,
+				ip_enable_helpers:this.switch_L3addData.ip_enable_helpers,
+				ip_helpers_use_defaults:this.switch_L3addData.ip_helpers_use_defaults
+			}	
+			this.switch_add_L3data(payload);
+			this.switch_L3handleUpdateSecondaries();
+			this.switch_L3handleUpdateHelpers();
+			this.caller.classList.add('btn-primary');
+			this.caller.onclick = function(){window.switchApp.switch_toggleEditModalL3(this)};
+		} else {
+			alert(`There is a problem with the entered IP address.\n${ipv4_validation.response}`);
+		}
+	},
+	switch_L3handleEditSave(){
+		
+		const ipv4_validation = new ipv4(this.switch_L3editData.ip, true);
+
+		if (ipv4_validation.isvalid || this.switch_L3editData.ip_dhcp) {
+	
+			this.switch_toggleEditModalL3(true);
+			const payload = {
+				switch_name:this.switch_L3editData.switch_name,
+				ip:this.switch_L3editData.ip,
+				vlan:this.switch_L3editData.vlan,
+				track:this.switch_L3editData.track,
+				vrrp:this.switch_L3editData.vrrp,
+				vrf:this.switch_L3editData.vrf,
+				description:this.switch_L3editData.description,
+				shutdown:this.switch_L3editData.shutdown,
+				arp_timeout:this.switch_L3editData.arp_timeout,
+				ip_mtu:this.switch_L3editData.ip_mtu,
+				l3_counters:this.switch_L3editData.l3_counters,
+				ip_directed_broadcast:this.switch_L3editData.ip_directed_broadcast,
+				ip_neighbor_flood:this.switch_L3editData.ip_neighbor_flood,
+				ip_dhcp:this.switch_L3editData.ip_dhcp,
+				ip_proxy_arp:this.switch_L3editData.ip_proxy_arp,
+				ip_policy_in:this.switch_L3editData.ip_policy_in,
+				ip_acl_in:this.switch_L3editData.ip_acl_in,
+				ip_acl_out:this.switch_L3editData.ip_acl_out,
+				ip_igmp:this.switch_L3editData.ip_igmp,
+				ip_igmp_querier:this.switch_L3editData.ip_igmp_querier,
+				ip_enable_helpers:this.switch_L3editData.ip_enable_helpers,
+				ip_helpers_use_defaults:this.switch_L3editData.ip_helpers_use_defaults
+			}
+			this.switch_edit_L3data(payload);
+			this.switch_L3handleUpdateSecondaries(true);
+			this.switch_L3handleUpdateHelpers(true);
+		} else {
+			alert(`There is a problem with the entered IP address.\n${ipv4_validation.response}`);
+		}
+		
+	},
+	switch_L3handleEditRemove(){
+		this.switch_toggleEditModalL3(true);
+		const payload = {
+			switch_name:this.switch_L3editData.switch_name,
+			vlan:this.switch_L3editData.vlan
+		}
+		this.switch_remove_L3data(payload);
+		const path = switchIPv4AddressesDeleteEndpoint.format(this.switchName, this.switch_L3editData.vlan)
+		axios.delete(path).then((res)=>{
+		}).catch((error)=>{
+			console.error(error);
+		});
+		this.caller.classList.remove('btn-primary');
+		this.caller.onclick = function(){window.switchApp.switch_toggleAddModalL3(this)};
+	},
+    switch_initForm() {
+		this.switch_addData = {model: '', serial: '', MAC: ''}
+    },
+	switch_initL3Data() {
+		this.switch_L3addData = {vlan: '', switch_name: '', ip: '', description: '', shutdown: false, ip_mtu: 1500, l3_counters: true,
+		ip_directed_broadcast: true, ip_neighbor_flood: false, ip_enable_helpers: false, ip_dhcp: false, ip_igmp_querier: false, vrf: '',
+		ip_proxy_arp: false, arp_timeout: 30, track: 0, vrrp: 0, ip_igmp: 0, ip_acl_in:'', ip_acl_out:'', ip_policy_in:'', ip_helpers_use_defaults: true};
+		this.internal_ip_helpers = [];
+		this.internal_secondary_ips = [];
+	},
+	switch_toggleSFPAddData() {
+		const body = document.querySelector('body');
+		this.switch_activeSFPAddData = !this.switch_activeSFPAddData;
+		if (this.switch_activeSFPAddData) {
+			body.classList.add('modal-open');
+		} else {
+			body.classList.remove('modal-open');
+		}
+	},
+    switch_toggleAddData() {
+		this.switch_get_models();
+        const body = document.querySelector('body');
+        this.switch_activeAddData = !this.switch_activeAddData;
+        if (this.switch_activeAddData) {
+          body.classList.add('modal-open');
+		  this.switch_addData.model = this.switch_models_filtered_data[0].model;
+        } else {
+          body.classList.remove('modal-open');
+        }
+    },
+	switch_toggleDefaultRoute() {
+		const body = document.querySelector('body');
+		
+		this.switch_toggleaddDefaultRoute = !this.switch_toggleaddDefaultRoute
+		if (this.switch_toggleaddDefaultRoute) {
+			body.classList.add('modal-open');
+		} else {
+			body.classList.remove('modal-open');
+		}
+	},
+	get switch_getDefaultRoute() {
+		let result = {exists: false, nexthop: ""};
+		        for (let i = 0; i < this.switch_routes.length; i++) {
+		            if (this.switch_routes[i].ip_route === "0.0.0.0/0") {
+					result = {exists: true, nexthop: this.switch_routes[i].ip_nexthop};
+		        	}
+				}
+		return result;
+	},
+	switch_addDefaultRouteSave() {
+		const nexthop_validation = new ipv4(this.switch_addDefaultRoute_nexthop, false);
+		
+		if (nexthop_validation.ip_isvalid === true) {
+			var payload = {
+                switch_name: this.switchName,
+                ip_route: this.switch_addDefaultRoute_route,
+                ip_nexthop: this.switch_addDefaultRoute_nexthop,
+                outgoing_interface: '',
+                blackhole: false,
+                reject: false,
+                tag: '',
+                bfd: false,
+                distance: 1,
+                description: this.switch_addDefaultRoute_description,
+                vrf: ''
+            }
+			axios.post(switchRouteEndpoint, payload).then((response) => { this.switch_get_routes_data(); this.switch_toggleDefaultRoute(); }).catch((error) => { console.log(error); });
+		} else {
+			alert(`Default Route cannot be created.\nThere is a problem with the next hop.\n${nexthop_validation.response}`);
+		}
+	},
+    switch_addDefaultRouteFindNextHop() {
+        var l3_vlan_ip;
+
+		if (this.switch_L3activeEditData) {
+			l3_vlan_ip = this.switch_L3editData.ip;		
+		} else if (this.switch_L3activeAddData) {
+			l3_vlan_ip = this.switch_L3addData.ip;
+		}
+		const l3_vlan_ip_validation = new ipv4(l3_vlan_ip, true);
+	
+		this.switch_addDefaultRoute_nexthop = l3_vlan_ip_validation.firstUsableAddress
+    
+		if (l3_vlan_ip_validation.isvalid === true) {
+			return true;
+		} else {
+			alert(`Cannot create default route.\nThere is a problem with the entered IP address.\n${l3_vlan_ip_validation.response}`);
+			return false;
+		}
+	},
+	switch_toggleAddCardData(slot) {
+		const body = document.querySelector('body');
+		this.switch_activeAddCardData = !this.switch_activeAddCardData;
+		if (this.switch_activeAddCardData) {
+			this.switch_get_models();
+			this.slot_selected=slot;
+			body.classList.add('modal-open');
+			this.switch_addData.model = this.switch_models_filtered_data[0].model;
+		} else {
+			body.classList.remove('modal-open');
+		}
+	},
+	switch_toggleMirrorSession() {
+		const body = document.querySelector('body');
+		this.switch_activeMirrorSessionData = !this.switch_activeMirrorSessionData;
+		if (this.switch_activeMirrorSessionData) {
+			this.switch_get_mirror_session_data();
+			body.classList.add('modal-open');
+		} else {
+			body.classList.remove('modal-open');
+		}
+	},
+	switch_toggleModalSwitchSerialMAC(id) {
+		const body=document.querySelector('body');
+		if (typeof(id)=="object") {
+			this.switch_activeModalSwitchSerialMAC = false;
+		} else {
+			this.switch_replace.serial = this.sw[id].serial; 
+			this.switch_replace.MAC = this.sw[id].MAC;
+			this.switch_replace.id = this.sw[id].switch_id;
+			this.switch_activeModalSwitchSerialMAC = !this.switch_activeModalSwitchSerialMAC;
+		}
+		if (this.switch_activeModalSwitchSerialMAC) {
+			body.classList.add('modal-open');
+		} else {
+			body.classList.remove('modal-open');
+		}
+	},
+    switch_toggleMirrorEndpoints() {
+        const body = document.querySelector('body');
+        this.switch_activeMirrorEndpointData = !this.switch_activeMirrorEndpointData;
+        if (this.switch_activeMirrorEndpointData) {
+            this.switch_get_mirror_endpoint_data();
+            body.classList.add('modal-open');
+        } else {
+            body.classList.remove('modal-open');
+        }
+    },
+	switch_toggleMultiSelect() {
+		//This function doesn't actuall do anything.  The button it is attached to does not need to be clicked.
+		//Just clicking on the ports in the list is all that needs to be done.  I do not know why this is here.
+		const body = document.querySelector('body');
+		this.switch_activeMultiSelect = !this.switch_activeMultiSelect;
+		if (this.switch_activeMultiSelect) {
+			body.classList.add('modal-open');
+		} else {
+			body.classList.remove('modal-open');
+		}
+	},
+	switch_toggle_select_port_type(id) {
+		this.switch_PortData.selected_port_type = id.target.value;
+	},
+	switch_toggle_select_dest_type(id) {
+		this.switch_sessionData.selected_dest_type = id.target.value;
+	},
+	switch_toggleVars() {
+		const body = document.querySelector('body');
+		this.switch_activeVarsData = !this.switch_activeVarsData;
+		if (this.switch_activeVarsData) {
+			this.switch_get_switch_vars_data();
+			body.classList.add('modal-open');
+		} else {
+			body.classList.remove('modal-open');
+		}
+	},
+	switch_toggleSwitchMgmtAddData() {
+		if (!this.switch_activeSwitchMgmtAddData) {
+			const path = switchMgmtEndpoint + "/" + this.switchName
+			axios.get(path).then((res)=>{
+				var record = return_result(res.data);
+				this.switch_mgmt = Object.create(this.default_switch_mgmt);
+				if (Object.hasOwn(record, "id")) {
+					this.switch_mgmt.id = record.id;
+					this.switch_mgmt.ip_dhcp = record.ip_dhcp;
+					this.switch_mgmt.ip_static = record.ip_static;
+					this.switch_mgmt.default_gateway = record.default_gateway;
+					this.switch_mgmt.nameserver1 = record.nameserver1;
+					this.switch_mgmt.nameserver2 = record.nameserver2;
+					this.switch_mgmt.shutdown = record.shutdown;
+					this.switch_mgmt.lldp_transmit = record.lldp_transmit;
+					this.switch_mgmt.lldp_receive = record.lldp_receive;
+					this.switch_mgmt.lldp_trap = record.lldp_trap;
+					this.switch_mgmt.edit=1;
+				}
+			}).catch((error)=>{console.error(error);
+				this.switch_mgmt.edit=0;
+			});
+		}
+        const body = document.querySelector('body');
+		this.switch_activeSwitchMgmtAddData = !this.switch_activeSwitchMgmtAddData;
+		if (this.switch_activeSwitchMgmtAddData) {
+			body.classList.add('modal-open');
+		} else {
+			body.classList.remove('modal-open');
+		}
+	},
+	switch_toggleTrunks() {
+		const body = document.querySelector('body');
+		this.switch_activeTrunkData = !this.switch_activeTrunkData;
+		if (this.switch_activeTrunkData) {
+			body.classList.add('modal-open');
+		} else {
+			this.switch_get_LagTrunk_data();
+			body.classList.remove('modal-open');
+		}
+	},
+	switch_toggleModalTrunkAdd(clear=false) {
+        if (clear) {
+            this.switch_LagTrunkData = Object.create(this.default_switch_LagTrunkData);
+        }
+		const body = document.querySelector('body');
+		this.switch_activeModalTrunkAddData = !this.switch_activeModalTrunkAddData;
+		if (this.switch_activeModalTrunkAddData) {
+			body.classList.add('modal-open');
+		} else {
+			body.classList.remove('modal-open');
+		}
+	},
+	switch_toggleModalDeviceVarsAdd(clear=false) {
+		if (clear) {
+			this.switch_vars_data = Object.create(this.default_switch_vars_data);
+		}
+		const body = document.querySelector('body');
+		this.switch_activeModalDeviceVarsAddData = !this.switch_activeModalDeviceVarsAddData;
+		if (this.switch_activeModalDeviceVarsAddData) {
+			body.classList.add('modal-open');
+		} else {
+			body.classList.remove('modal-open');
+		}
+	},
+	switch_toggleModalRouteAdd(clear=false) {
+		if (clear) {
+			this.switch_route = Object.create(this.default_switch_route);
+		}
+		const body = document.querySelector('body');
+		this.switch_activeModalRouteAddData =! this.switch_activeModalRouteAddData;
+		if (this.switch_activeModalRouteAdd) {
+			body.classList.add('modal-open');
+		} else {
+			body.classList.remove('modal-open');
+		}
+	},
+	switch_toggleCloneRouteData(origin_route) {
+		//bring in the cloned values		
+		this.switch_route.ip_route = origin_route.ip_route;
+		this.switch_route.ip_nexthop = origin_route.ip_nexthop;
+		this.switch_route.outgoing_interface = origin_route.outgoing_interface;
+		this.switch_route.blackhole = origin_route.blackhole;
+		this.switch_route.reject = origin_route.reject;
+		this.switch_route.tag = origin_route.tag;
+		this.switch_route.bfd = origin_route.bfd;
+		this.switch_route.distance = origin_route.distance;
+		this.switch_route.vrf = origin_route.vrf;
+		//modify the description to show its a copy
+		this.switch_route.description = "Copy of " + origin_route.description;
+		this.switch_route.edit = 0;
+		//console.log("switch_route", this.switch_route)
+		const body = document.querySelector('body');
+		this.switch_activeModalRouteAddData =! this.switch_activeModalRouteAddData;
+		if (this.switch_activeModalRouteAdd) {
+			body.classList.add('modal-open');
+		} else {
+			body.classList.remove('modal-open');
+		}		
+	},
+	switch_toggleModalMirrorEndpointAdd(clear=false){
+		if (clear) {
+			this.switch_endpointData = {endpoint: '', enable: true, comment: '', mirror_source_ip: '', mirror_dest_ip: '', vrf: '', destination: [], edit:0};
+		}
+        const body = document.querySelector('body');
+        this.switch_activeModalMirrorEndpointAddData =! this.switch_activeModalMirrorEndpointAddData;
+        if (this.switch_activeModalMirrorEndpointAddData) {
+            body.classList.add('modal-open');
+        } else {
+            body.classList.remove('modal-open');
+        }
+	},
+	switch_toggleEditMirrorEndpointData(id){
+		this.switch_endpointData = {
+			"id": id.id,
+			"endpoint": id.endpoint,
+			"session": id.session,
+			"switch_name": this.switchName,
+			"comment": id.comment,
+			"enable": id.enable,
+			"mirror_source_ip": id.mirror_source_ip,
+			"mirror_dest_ip": id.mirror_dest_ip,
+			"vrf": id.vrf,
+			"destination": id.destination,
+			"edit": 1
+		}
+		this.switch_toggleModalMirrorEndpointAdd();
+	},
+	switch_toggleModalMirrorSessionAdd(){
+		const body = document.querySelector('body');
+		this.switch_activeModalMirrorSessionAddData =! this.switch_activeModalMirrorSessionAddData;
+		if (this.switch_activeModalMirrorSessionAddData) {
+			body.classList.add('modal-open');
+		} else {
+			body.classList.remove('modal-open');
+		}
+	},
+	switch_toggleEditMirrorSessionData(id){
+		this.switch_sessionData = {
+			"id": id.id,
+			"session": id.session,
+			"switch_name": this.switchName,
+			"enable": id.enable,
+			"comment": "",
+			"cpu": true,
+			"destination_tunnel_ip": "",
+			"destination_tunnel_source": "",
+			"destination_tunnel_vrf": "",
+			"destination_tunnel_dscp":0,
+			"dest": [],
+			"src": [],
+			"source_interface": [],
+			"source_lag": [],
+			"source_vlan": [],
+			"destination": [],
+			"selected_dest_type": 0,
+			"edit": 0
+		}
+		if (id.comment == "empty" && id.dest == "" && id.src== "") {
+			this.switch_sessionData.edit=0;
+		} else {
+			this.switch_sessionData.edit=1;
+			this.switch_sessionData.comment = id.comment;
+			this.switch_sessionData.cpu = id.cpu;
+			this.switch_sessionData.enable = id.enable;
+			this.switch_sessionData.destination_tunnel_ip = id.destination_tunnel_ip;
+			this.switch_sessionData.destination_tunnel_source = id.destination_tunnel_source;
+			this.switch_sessionData.destination_tunnel_vrf = id.destination_tunnel_vrf;
+			this.switch_sessionData.destination_tunnel_dscp = id.destination_tunnel_dscp;
+			this.switch_sessionData.source_interface = id.source_interface;
+			this.switch_sessionData.source_lag = id.source_lag;
+			this.switch_sessionData.source_vlan = id.source_vlan;
+			this.switch_sessionData.destination = id.destination;
+			if (this.switch_sessionData.tunnel_ip) { this.switch_sessionData.selected_dest_type = 1; }
+			if (this.switch_sessionData.cpu) { this.switch_sessionData.selected_dest_type = 2; }
+		}
+		this.switch_toggleModalMirrorSessionAdd();
+	},
+	switch_toggleEditVarsData(id) {
+		const path = switchVarsEndpoint + "/" + this.switchName + "/" + id.name;
+		axios.get(path).then((res)=> {
+			var record=return_result(res.data[0]);
+			this.switch_vars_data={
+				"id": id.id,
+				"switch_name": id.switch_name,
+				"name": record.name,
+				"value": record.value,
+				"description": record.description,
+				"edit": 1
+			}
+			this.switch_toggleModalDeviceVarsAdd();
+		}).catch((error)=>{console.error(error);
+			this.switch_vars_data.edit=0;
+		});
+	},
+	switch_toggleEditBgpNeighbor(id) {
+		const path = switchBgpNeighborEndpoint + "/byID/" + id.id
+		axios.get(path).then((res)=> {
+			this.switch_bgp_neighbor = return_result(res.data[0]);
+			this.switch_bgp_neighbor.edit=1;
+			this.switch_toggleModalAddBGPNeighbor();	
+		}).catch((error)=>{console.error(error);
+			this.switch_bgp_neighbor = Object.create(this.switch_bgp_neighbor_default);
+			this.switch_bgp_neighbor.edit=0;
+		});
+	},
+    switch_handleEnableDisableBgpNeighbor(id) {
+        if (id.id>0) {
+            const path = switchBgpNeighborEndpoint + "/"+id.id
+            const payload ={
+                "enabled": !id.enabled
+            }
+            const obj = {path: path, payload: payload}
+            if (id.enabled) { 
+                this.are_you_sure(this.switch_DisableBgpNeighbor, obj);
+            } else {
+                this.switch_DisableBgpNeighbor(obj);
+            }
+        }
+    },
+    switch_DisableBgpNeighbor(obj) {
+        axios.put(obj.path, obj.payload).then((res)=> {
+            this.switch_bgp_neighbor.enabled = obj.enabled;
+            this.switch_get_bgp_neighbor_data();
+        }).catch((error)=>{console.error(error);
+        });
+    },
+	switch_toggleEditTrunkData(id) {
+		const path = "{}/{}/{}".format(switchTrunkLagEndpoint, this.switchName, id.id);
+		//console.error(path);
+		axios.get(path).then((res)=> {
+			var record=return_result(res.data[0]);
+			//console.error(record);
+			this.switch_LagTrunkData={
+				"id": id.id,
+	            "entity_id_input" : record.entity_id,
+				"entity_id": record.entity_id,
+            	"switch_name": this.switchName,
+	            "is_lag": 0,
+    	        "entity_id_sub": record.entity_id_sub,
+        	    "native_vlan": record.native_vlan,
+            	"native_tag": record.native_tag,
+	            "allowed": record.allowed,
+            	"description": record.description,
+				"edit": 1
+			}
+			//console.error(this.switch_LagTrunkData);
+			this.switch_toggleModalTrunkAdd();	
+		}).catch((error)=>{console.error(error);
+			this.switch_LagTrunkData.edit=0;
+		});
+	},
+	switch_toggleEditLagData(id) {
+		const path = "{}/{}/{}".format(switchTrunkLagEndpoint, this.switchName, id.id);
+		//console.error(path);
+		axios.get(path).then((res)=> {
+			var record=return_result(res.data[0]);
+			//console.error(record);
+			this.switch_LagTrunkData={
+				"id": id.id,
+	            "entity_id_input" : record.entity_id,
+				"entity_id": record.entity_id,
+            	"switch_name": this.switchName,
+	            "is_lag": 1,
+    	        "entity_id_sub": record.entity_id_sub,
+        	    "native_vlan": record.native_vlan,
+            	"native_tag": record.native_tag,
+	            "allowed": record.allowed,
+            	"description": record.description,
+				"lacp": record.lacp,
+				"lacp_rate": record.lacp_rate === 1 ? true : false,
+				"edit": 1
+			}
+			//console.error(this.switch_LagTrunkData);
+			this.switch_toggleModalLagAdd();	
+		}).catch((error)=>{console.error(error);
+			this.switch_LagTrunkData.edit=0;
+		});
+	},
+	switch_toggleEditRouteData(id) {
+		const path = switchRouteEndpoint + "/" + this.switchName + "/" + id.id
+		//console.error(path);
+		axios.get(path).then((res)=> {
+			var record=return_result(res.data);
+			//console.error(record);
+			this.switch_route={
+				id: id.id,
+	            switch_name: record.switchName,
+	            ip_route: record.ip_route,
+    	        ip_nexthop: record.ip_nexthop,
+        	    outgoing_interface: record.outgoing_interface,
+            	blackhole: record.blackhole,
+	            reject: record.reject,
+    	        tag: record.tag,
+        	    bfd: record.bfd,
+            	distance: record.distance,
+	            description: record.description,
+    	        vrf: record.vrf,
+				edit: 1
+			}
+			this.switch_toggleModalRouteAdd();	
+		}).catch((error)=>{console.error(error);
+			this.switch_route.edit=0;
+		});
+	},
+	get_switch_family() {
+		if (this.switch_name != "") {
+			const path = switchFamilyEndpoint.format(this.switchName);
+			axios.get(path).then((res)=> {
+				this.switch_family = res.data.family.toString();
+			}).catch((error)=>{
+				this.switch_family = "6000";
+			});
+		}
+		return (true);
+	},
+	switch_toggleRoutes() {
+		const body = document.querySelector('body');
+		this.switch_activeRouteData = !this.switch_activeRouteData;
+		if (this.switch_activeRouteData) {
+			body.classList.add('modal-open');
+		} else {
+			body.classList.remove('modal-open');
+		}
+	},
+	switch_toggleModalAddBGPNeighbor(clear=false) {
+		if (clear) {
+			this.switch_bgp_neighbor = Object.assign(this.switch_bgp_neighbor, this.switch_bgp_neighbor_default)
+		}
+		const body = document.querySelector('body');
+		this.switch_activeModalAddNeighborData = !this.switch_activeModalAddNeighborData;
+		if (this.switch_activeModalAddNeighborData) {
+			body.classList.add('modal-open');
+		} else {
+			body.classList.remove('modal-open');
+		}
+	},
+	switch_toggleModalLagAdd(clear=false) {
+        if (clear) {
+            this.switch_LagTrunkData = Object.create(this.default_switch_LagTrunkData);
+        }
+		const body = document.querySelector('body');
+		this.switch_activeModalLagAddData = !this.switch_activeModalLagAddData;
+		if (this.switch_activeModalLagAddData) {
+			body.classList.add('modal-open');
+		} else {
+			body.classList.remove('modal-open');
+		}
+	},
+	switch_toggleLAGs() {
+		const body = document.querySelector('body');
+		this.switch_activeLagData = !this.switch_activeLagData;
+		if (this.switch_activeLagData) {
+			body.classList.add('modal-open');
+		} else {
+			this.switch_get_LagTrunk_data();
+			body.classList.remove('modal-open');
+		}
+	},
+	switch_toggleAddVlans() {
+		const body = document.querySelector('body');
+		this.switch_activeAddVlans = !this.switch_activeAddVlans;
+		if (this.switch_activeAddVlans) {
+			body.classList.add('modal-open');
+		} else {
+			body.classList.remove('modal-open');
+		}
+	},
+	switch_toggleStackPorts(){
+		this.switch_toggleStackPortsAddData();
+	},
+	switch_toggleMakeLag() {
+		this.switch_LagTrunkData.is_lag=true;
+		this.switch_toggleMakeLagTrunk();
+		this.switch_LagTrunkData.entity_id=0;
+	},
+	switch_toggleMakeTrunk() {
+		this.switch_LagTrunkData.is_lag=false;
+		this.switch_toggleMakeLagTrunk();
+		this.switch_LagTrunkData.entity_id=0;
+	},
+	switch_toggleMakeLagPort() {
+		this.switch_toggleAddPortProperties(2);
+	},
+	switch_toggleMakeTrunkPort() {
+		this.switch_toggleAddPortProperties(1);
+	},
+	switch_toggleMakeLagTrunk() {
+		const body = document.querySelector('body');
+		this.switch_activeLagTrunkAddData = !this.switch_activeLagTrunkAddData;
+		if (this.switch_activeLagTrunkAddData) {
+			body.classList.add('modal-open');
+		} else {
+			body.classList.remove('modal-open');
+		}
+	},
+	switch_toggleStackPortsAddData() {
+		const body = document.querySelector('body');
+		this.switch_activeStackPortsAddData = !this.switch_activeStackPortsAddData;
+		if (this.switch_activeStackPortsAddData) {
+			body.classList.add('modal-open');
+		} else {
+			body.classList.remove('modal-open');
+		}
+	},
+	switch_toggleEditModalL3(id) {
+        this.$nextTick(() => {
+    		event.preventDefault();
+	    	const body = document.querySelector('body');
+    		this.switch_L3activeEditData = !this.switch_L3activeEditData;
+	    	if (this.switch_L3activeEditData) {
+    			this.switch_L3editData.vlan = id.getAttribute('vlan');
+	    		this.vlan = id.getAttribute('vlan');
+		    	this.switch_L3editData.switch_name = id.getAttribute('switch');
+    			this.switch_get_L3data(this.switch_L3editData.switch_name, this.switch_L3editData.vlan);
+	    		this.caller = id;
+		    	//console.log("switch_L3editData", this.switch_L3editData)
+    			body.classList.add('modal-open');
+	    	} else {
+		    	body.classList.remove('modal-open');
+    		}
+        });
+	},
+	switch_PortData_load() {
+		//console.log("switch_PortData_load - this.switch_PortData: ",this.switch_PortData)
+		let r=this.switch_PortData.sourcePort.split("_");
+		let s=r[0];
+		let p=r[1];
+		let portData = {};
+		if (this.switch_family != "6400") {
+			portData=JSON.parse(JSON.stringify(this.sw[s-1].ports[p]));
+		} else {
+			//console.log("switch_family is 6400")
+			portData=JSON.parse(JSON.stringify(this.sw[s].ports[p]));
+		}
+		//console.log("switch_PortData_load - portData: ",portData)
+		this.switch_PortData.switch_stack_number = s;
+		this.switch_PortData.port_number = p;
+		this.switch_PortData.shutdown = portData.shutdown;
+		this.switch_PortData.poe = portData.poe;
+		if (portData.vrf || portData.ip) {
+			this.switch_PortData.ip_routing = true;
+		} else {
+			this.switch_PortData.ip_routing = false;
+		}
+		this.switch_PortData.vrf = portData.vrf;
+		this.switch_PortData.ip = portData.ip;
+		this.switch_PortData.description = portData.description;
+		this.switch_PortData.access = portData.vlan_access;
+		this.switch_PortData.speed = portData.speed;
+		this.switch_PortData.spantree_profile = portData.spantree_profile;
+		this.switch_PortData.mtu = portData.mtu;
+		this.switch_PortData.trunk = portData.trunk;
+		this.switch_PortData.lag = portData.lag;
+		this.switch_PortData.intProfile = portData.port_security_profile;
+		if (portData.access >0) {
+			this.switch_PortData.selected_port_type=0;
+		} else if (portData.trunk > 0) {
+			this.switch_PortData.selected_port_type=1;
+		} else if (portData.lag >0) {
+			this.switch_PortData.selected_port_type=2;
+		} else {
+			this.switch_PortData.selected_port_type=0;
+		}
+	},
+	switch_Spantree_Policy_load() {
+        const path = switchSpantreePolicyEndpoint;
+        //console.error(path);
+        axios.get(path).then((res)=> {
+            var records=return_result(res.data);
+			this.switch_Spantree_Policies = records;
+        }).catch((error)=>{console.error(error);
+            this.switch_Spantree_Policies = [];
+        });
+	},
+	switch_toggleAddPortProperties(porttype=0){
+		event.preventDefault();
+		const body = document.querySelector('body');
+		this.switch_activePortAddData =!this.switch_activePortAddData;
+		if (this.switch_activePortAddData) {
+			this.prepare_interface_profiles_list(); //filters the interfaceProfile list based on the switch zone
+			if (this.switch_Spantree_Policies.length == 0) {
+				this.switch_Spantree_Policy_load();
+			}
+			if (this.switch_PortData.selected==0) { 
+				this.switch_PortData.selected_port_type = porttype;
+			}
+			this.switch_PortData_load();
+			body.classList.add('modal-open');
+		} else {
+			body.classList.remove('modal-open');
+		}
+	},
+	switch_toggleAllCheckboxes(){
+		this.switch_PortData.toggleAll=!this.switch_PortData.toggleAll;
+		this.switch_PortData.toggleShutdown=this.switch_PortData.toggleAll;
+		this.switch_PortData.togglePOE=this.switch_PortData.toggleAll;
+		this.switch_PortData.toggleVRF=this.switch_PortData.toggleAll;
+		this.switch_PortData.toggleIPRoutingIP=this.switch_PortData.toggleAll;
+		this.switch_PortData.ip_routing=this.switch_PortData.toggleAll;
+		this.switch_PortData.toggleSpeedDuplex=this.switch_PortData.toggleAll;
+		this.switch_PortData.toggleDescription=this.switch_PortData.toggleAll;
+		this.switch_PortData.toggleMTU=this.switch_PortData.toggleAll;
+		this.switch_PortData.togglePortType=this.switch_PortData.toggleAll;
+		this.switch_PortData.toggleSpantreeProfile=this.switch_PortData.toggleAll;
+		this.switch_PortData.toggleIntProfile=this.switch_PortData.toggleAll;
+	},
+	switch_toggleAddModalL3(id) {
+		event.preventDefault()
+		const body = document.querySelector('body');
+		this.switch_L3activeAddData = !this.switch_L3activeAddData;
+		if (this.switch_L3activeAddData) {
+			this.switch_initL3Data();
+			this.switch_L3addData.vlan = id.getAttribute('vlan');
+			this.vlan = id.getAttribute('vlan');
+			this.switch_L3addData.switch_name = id.getAttribute('switch');
+            console.error(this.vlan, this.switch_L3addData.switch_name, id);
+			this.caller = id;
+			body.classList.add('modal-open');
+		} else {
+			body.classList.remove('modal-open');
+		};
+	},
+	are_you_sure(action,id,profile=this.areYouSureDefault){
+		//console.error(id)
+		this.areYouSure = Object.create(profile);
+		this.areYouSure.displayed=true
+		var el = document.getElementById('modalAreYouSure');
+		var bel = new bootstrap.Modal(el);
+		bel.show();
+		this.areYouSure.active = bel;
+		this.areYouSure.action=action
+		if (id != -1) {
+			this.areYouSure.id=id
+		}
+	},
+	dismiss_are_you_sure(value){
+		if (this.areYouSure.displayed) {
+			this.areYouSure.result = value;
+			if (value) {
+				this.areYouSure.action(this.areYouSure.id)
+			}
+			this.areYouSure.displayed=false;
+			this.areYouSure.active.hide();
+		}
+	},
+	remove_switch(id){
+		if (this.areYouSure.result == true) {
+			const path = switchEndpoint+"/"+this.switch_data[id].id;
+			axios.delete(path).then(() => { 
+				this.switch_get_data();
+				if (this.sw.length<2) { this.vue_deregister_button("Stack Order") }
+			}).catch((error) => {
+				console.log(error); this.switch_get_data(); 
+			});
+		}
+	},
+	remove_switch_card(id){
+		if (this.areYouSure.result == true) {
+			const path = switchEndpoint+"/"+this.switchName+"/"+id;
+			axios.delete(path).then(() => { 
+				location.reload();
+			}).catch((error) => {
+				console.log(error); this.switch_get_data(); 
+			});
+		}
+	},
+	switch_toggleEditModelData() {
+        const body = document.querySelector('body');
+        this.switch_activeModelEditData = !this.switch_activeModelEditData;
+        if (this.switch_activeModelEditData) {
+            body.classList.add('modal-open');
+        } else {
+            body.classList.remove('modal-open');
+        }		
+	},
+	change_switch_model(id){
+		this.switch_get_models();
+		this.switch_editData.model = this.sw[id].model;
+		this.switch_editData.id = this.sw[id].switch_id;
+		this.switch_toggleEditModelData();
+		//console.error(this.switch_editData);
+	},
+	toggle(id){
+		event.preventDefault();
+		var vlanOn = id.parentNode.getAttribute('state');
+		vlanOn ^= true;
+		id.parentNode.setAttribute('state', vlanOn);
+		id.parentNode.children[0].classList.remove('vlanOn');
+		id.parentNode.children[1].classList.remove('vlanOn');
+		id.parentNode.children[vlanOn].classList.add('vlanOn');
+		return false;
+	},
+	switch_handleAddVlanReset(){
+		location.reload();
+	},
+	helper_array_length_edit() {
+		//Used in the edit modal
+		//We can only set 8 helpers on any vlan so this function
+		//returns a length of 5 if ip_helpers_use_defaults is true, else the length is 8
+		return this.switch_L3editData.ip_helpers_use_defaults ? 5 : 8;
+	},
+	helper_array_length_add() {
+		//Used in the add modal
+		//We can only set 8 helpers on any vlan so this function
+		//returns a length of 5 if ip_helpers_use_defaults is true, else the length is 8
+		return this.switch_L3addData.ip_helpers_use_defaults ? 5 : 8;
+	},
+	switch_validateIPSendtoArray(output_array, input_address, require_cidr, array_length = 0) {
+    	const ip_validation = new ipv4(input_address, require_cidr, false);
+
+		if (array_length === 0 || output_array.length < array_length) {
+			if ((require_cidr && ip_validation.isvalid ) || (!require_cidr && ip_validation.ip_isvalid)) {
+				if (output_array.includes(input_address) === false) {
+					try {
+						output_array.push(input_address)
+						return true;
+					} catch (error) {
+						console.error(`An error occurred pushing to ${output_array}:`, error.message);
+						return false;
+					}
+				} else {
+					alert(`${input_address} is already in the list.`);
+					return false;
+				}
+			} else {
+				alert(`There is a problem with the entered IP address.\n${ip_validation.response}`);
+				return false;
+			}
+		} else {
+			alert(`Too many entries in the list.  The max is ${array_length} entries.`);	
+		}
+	},
+	switch_handleAddPortProperties(){
+//		this.switch_toggleAddPortProperties();
+		let payload;
+		const selected_length = window.objList.length;
+//		const switch_count = this.sw.length;
+		const switch_count = this.switch_count;
+//		console.error(this.switch_PortData.same);
+		var promises = [];
+		if (this.switch_PortData.multiEdit == false || (this.switch_PortData.multiEdit==true && this.switch_PortData.same == true)) {
+			payload = {
+				description: this.switch_PortData.description,
+				ip: this.switch_PortData.ip,
+				mtu: this.switch_PortData.mtu,
+				poe: this.switch_PortData.poe,
+				routing: this.switch_PortData.ip_routing,
+				shutdown: this.switch_PortData.shutdown,
+				speed: this.switch_PortData.speed,
+				spantree_profile: this.switch_PortData.spantree_profile,
+				vrf: this.switch_PortData.vrf,
+				port_security_profile: this.switch_PortData.intProfile || 1
+			}
+			switch (parseInt(this.switch_PortData.selected_port_type)) {
+				case 0:
+					payload["vlan_access"]= this.switch_PortData.access;
+					payload["trunk"]=0;
+					payload["lag"]=0;
+					break;
+				case 1:
+					payload["vlan_access"]=0;
+					payload["trunk"]=this.switch_PortData.trunk;
+					payload["lag"]=0;
+					break;
+				case 2:
+					payload["vlan_access"]=0;
+					payload["trunk"]=0;
+					if (this.switch_PortData.intProfile ==1) {
+						payload["lag"]=this.switch_PortData.lag;
+					} else {
+						payload["lag"]=0;
+					}
+					break;
+				default:
+					payload["vlan_access"]=0;
+					payload["trunk"]=0;
+					payload["lag"]=0;
+					break;
+			}
+		} else if (this.switch_PortData.multiEdit == true && this.switch_PortData.same == false) {
+			payload = {}
+			if (this.switch_PortData.toggleDescription) { payload["description"] = this.switch_PortData.description; }
+			if (this.switch_PortData.toggleMTU) { payload["mtu"] = this.switch_PortData.mtu; }
+			if (this.switch_PortData.togglePOE) { payload["poe"] = this.switch_PortData.poe; }
+			if (this.switch_PortData.toggleIP) { payload["ip"] = this.switch_PortData.ip; }
+			if (this.switch_PortData.toggleIPRoutingIP) { payload["routing"] = this.switch_PortData.ip_routing; }
+			if (this.switch_PortData.toggleShutdown) { payload["shutdown"] = this.switch_PortData.shutdown; }
+			if (this.switch_PortData.toggleSpeedDuplex) { payload["speed"] = this.switch_PortData.speed; }
+			if (this.switch_PortData.toggleVRF) { payload["vrf"] = this.switch_PortData.vrf; }
+			if (this.switch_PortData.toggleSpantreeProfile) { payload["spantree_profile"] = this.switch_PortData.spantree_profile; }
+			if (this.switch_PortData.toggleIntProfile) { payload["port_security_profile"] = this.switch_PortData.intProfile || 1}
+			if (this.switch_PortData.togglePortType) {
+				switch (parseInt(this.switch_PortData.selected_port_type)) {
+					case 0:
+						payload["vlan_access"]= this.switch_PortData.access;
+						payload["trunk"]=0;
+						payload["lag"]=0;
+						break;
+					case 1:
+						payload["vlan_access"]=0;
+						payload["trunk"]=this.switch_PortData.trunk;
+						payload["lag"]=0;
+						break;
+					case 2:
+						payload["vlan_access"]=0;
+						payload["trunk"]=0;
+						if (this.switch_PortData.intProfile ==1) {
+							payload["lag"]=this.switch_PortData.lag;
+						} else {
+							payload["lag"]=0;
+						}
+						break;
+					default:
+						payload["vlan_access"]=0;
+						payload["trunk"]=0;
+						payload["lag"]=0;
+						break;
+				}
+			}
+		} else {
+			payload = {}
+		}
+		for (var index=0;index<selected_length;index++) {
+			var realSwitch = parseInt(window.objList[index].switch_number);
+			//console.log("realSwitch before offset: ", realSwitch);
+			if (this.switch_data[0].family != '6400') {
+				realSwitch = realSwitch - this.switch_offset;
+			}
+			//if (this.switch_family == 6400) { realSwitch++; }
+			var path = switchPortEndpoint + "/" + this.switchName+"/"+realSwitch.toString()+"/"+window.objList[index].port
+			//alert(`port push path: ${path}`);
+			promises.push({"path":path,"type":axios.put,"payload":payload});
+		}
+		//console.error(promises);
+		Promise.all(promises.map((p)=> p.type(p.path, p.payload))).then((response) => { 
+			location.reload(); 
+		}).catch((error) => {console.log(error); 
+			location.reload(); 
+		});
+	},
+	switch_handleAddVlanSubmit(){
+		var vlans = document.getElementById("VLANS").children;
+		var numberOfVlans = vlans.length;
+		var vlans_on=[];
+		var vlans_off=[];
+		var vlan = vlans[0].children;
+		var state=0;
+		for (let i=0; i < numberOfVlans; i++) { 
+			vlan = vlans[i];
+			state = vlan.children[0].getAttribute('state');
+			if (state == 0) {
+				vlans_off.push(vlan.getAttribute('id'));
+			} else {
+				vlans_on.push(vlan.getAttribute('id'));
+			}
+		}
+		var payload = {
+			switch_name: this.switchName,
+			vlans_on: vlans_on,
+			vlans_off: vlans_off,
+			site: this.site 
+		}
+		var path = switchVlansEndpoint + "/"+this.switchName;
+		axios.put(path, payload).then(() => { location.reload(); }).catch((error) => {console.log(error); location.reload(); });
+		return false;
+	},
+	switch_handleSFPAddSubmit(){
+		event.preventDefault();
+		const selected_length = window.objList.length;
+//		const switch_count = this.sw.length;
+		const switch_count = this.switch_count;
+		var promises = [];
+		for (var switch_number=0; switch_number < switch_count; switch_number++){
+			//clone the array with a map
+			var newPortTypes = this.sw[switch_number].portTypes.map((x) => x);
+			for (var index=0;index<selected_length;index++) {
+				if (this.switch_family==6400 && window.objList[index].switch_number==(switch_number)) {
+					newPortTypes[window.objList[index].port] = this.sfpTypeSelected;
+				} else if (window.objList[index].switch_number==(switch_number+1)){
+					newPortTypes[window.objList[index].port] = this.sfpTypeSelected;
+				}
+			}
+			if (newPortTypes != this.sw[switch_number].portTypes) {
+				var path = switchEndpoint+"/"+this.sw[switch_number].switch_id;
+				var payload = {
+					id: this.sw[switch_number].switch_id,
+					portTypes: newPortTypes
+				};
+				promises.push({"path":path,"payload":payload})
+			}
+		}
+		console.error(promises);
+		//axios.spread??
+		Promise.all(promises.map((p)=> axios.put(p.path, p.payload))).then((responses) => {  
+			location.reload(); 
+		}).catch((error) => {
+			console.log(error); 
+			location.reload(); 
+		});
+	},
+	calculateNewStackPorts(stack_link1, stack_link2, linkType, newStack){
+		//console.error({"stack_link1":stack_link1, "stack_link2":stack_link2, "linkType":linkType, "newStack":newStack});
+		var x=BigInt(0);
+		var x1=BigInt(stack_link1);
+		var x2=BigInt(stack_link2);
+		//for (var i=0; i<64; i++) {
+		//	if (x==0) { x=1; } else { x=x*2; }
+		//	if (newStack.includes(i) && linkType==1) {
+		//		//console.error("found ",i);
+		//		// set bits on link 1, clear on link 2
+		//		stack_link1 = stack_link1 | x;
+		//		if ((stack_link2 & x)!=0 && linkType==1) { 
+		//			stack_link2 = stack_link2 ^ x; 
+		//		}
+		//		console.error(stack_link1);
+		//	} else if (newStack.includes(i) && linkType==2) {
+		//		// set bits on link 2, clear on link 1
+		//		stack_link2 = stack_link2 | x;
+		//		if ((stack_link1 & x)!=0 && linkType==2) { 
+		//			stack_link1 = stack_link1 ^ x; 
+		//		}
+		//		console.error(stack_link2);
+		//	} else if (linkType==0) {
+		//		// clear bits / link type 0 (not stack link) was selected)
+		//		if (newStack.includes(i) && (stack_link1 & x)!=0) { stack_link1 = stack_link1 ^ x; }
+		//		if (newStack.includes(i) && (stack_link2 & x)!=0) { stack_link2 = stack_link2 ^ x; }
+		//	}
+		//	//console.error({"state":"after","i":i,"x":x,"stack_link1":stack_link1, "stack_link2":stack_link2});
+		//}
+		//return ({"stack_link1":stack_link1,"stack_link2":stack_link2});
+		for (var i=0; i<64; i++) {
+			if (x==0) { x=BigInt(1); } else { x=BigInt(x*BigInt(2)); }
+			if (newStack.includes(i) && linkType==1) {
+				//console.error("found ",i);
+				// set bits on link 1, clear on link 2
+				x1 = BigInt(x1 | x);
+				if ((BigInt(x2 & x))!=0 && linkType==1) { 
+					x2 = BigInt(x2 ^ x); 
+				}
+				//console.error(x1);
+			} else if (newStack.includes(i) && linkType==2) {
+				// set bits on link 2, clear on link 1
+				x2 = BigInt(x2 | x);
+				if (BigInt((x1 & x)!=0) && linkType==2) { 
+					x1 = BigInt(x1 ^ x); 
+				}
+				//console.error(stack_link2);
+			} else if (linkType==0) {
+				// clear bits / link type 0 (not stack link) was selected)
+				if (newStack.includes(i) && BigInt((x1 & x)!=0)) { x1 = BigInt(x1 ^ x); }
+				if (newStack.includes(i) && BigInt((x2 & x)!=0)) { x2 = BigInt(x2 ^ x); }
+			}
+			//console.error({"state":"after","i":i,"x":x,"stack_link1":x1, "stack_link2":x2});
+		}
+		return ({"stack_link1":x1.toString(),"stack_link2":x2.toString()});
+	},
+	switch_handleStackPortAddSubmit(){
+		event.preventDefault();
+		const selected_length = window.objList.length;
+		//const switch_count = this.sw.length;
+		const switch_count = this.switch_count;
+		var promises = [];
+		for (var switch_number=0; switch_number < switch_count; switch_number++){
+			var path = switchEndpoint+"/"+this.sw[switch_number].switch_id;
+			if (this.stackPortsTypeSelected==1) { // outbound 
+				var currentStackPorts = this.sw[switch_number].stack_link1;
+			} else if (this.stackPortsTypeSelected==2) { //inbound
+				var currentStackPorts = this.sw[switch_number].stack_link2;
+			} else { currentStackPorts = 0; }
+			var currentSwitchStackPortsAdd = [];
+			// loop through all selected ports --if port is on current switch, add it to list of ports to push onto selected stack link type
+			for (var index=0;index<selected_length;index++) {
+				if (window.objList[index].switch_number==(switch_number+1)){
+					currentSwitchStackPortsAdd.push(parseInt(window.objList[index].port));
+				}
+			}
+			//this is stack links before
+			//console.error({"start1":this.sw[switch_number].stack_link1, "start2":this.sw[switch_number].stack_link2});
+			var payload = this.calculateNewStackPorts(
+				this.sw[switch_number].stack_link1, 
+				this.sw[switch_number].stack_link2, 
+				this.stackPortsTypeSelected, 
+				currentSwitchStackPortsAdd
+			);
+			payload["id"] = this.sw[switch_number].switch_id,
+		
+			// add promise to list of promises to execute at once
+			promises.push({"path":path,"payload":payload});
+		}
+		//console.error(promises);
+		Promise.all(promises.map((p)=> axios.put(p.path, p.payload))).then((response) => { 
+			location.reload(); 
+		}).catch((error) => {console.log(error); 
+			location.reload(); 
+		});
+	},
+	switch_handleSwitchMgmtAddSubmit(){
+    	const ipv4_validation = new ipv4(this.switch_mgmt.ip_static, true);
+	    const gateway_validation = new ipv4(this.switch_mgmt.default_gateway, false);
+    	const dns1_validation = new ipv4(this.switch_mgmt.nameserver1, false);  // optional
+	    const dns2_validation = new ipv4(this.switch_mgmt.nameserver2, false);  // optional
+    
+    	if (ipv4_validation.isvalid === true && (gateway_validation.ipaddress === "" || 
+			(gateway_validation.ipaddress != "" && gateway_validation.ip_isvalid === true)) && (dns1_validation.ipaddress === "" || 
+			(dns1_validation.ipaddress != "" && dns1_validation.ip_isvalid === true)) && (dns2_validation.ipaddress === "" || 
+			(dns2_validation.ipaddress != "" && dns2_validation.ip_isvalid === true)) || 
+			(this.switch_mgmt.ip_dhcp && this.switch_mgmt.ip_static.trim() === "") ||
+			(this.switch_mgmt.ip_dhcp && ipv4_validation.isvalid)
+			) {
+        	// all are valid
+	        this.switch_toggleSwitchMgmtAddData();
+    	    var payload = {
+        	    switch_name: this.switchName,
+            	ip_dhcp: this.switch_mgmt.ip_dhcp,
+	            ip_static: this.switch_mgmt.ip_static,
+    	        default_gateway: this.switch_mgmt.default_gateway,
+        	    nameserver1: this.switch_mgmt.nameserver1,
+            	nameserver2: this.switch_mgmt.nameserver2,
+	            shutdown: this.switch_mgmt.shutdown,
+    	        lldp_transmit: this.switch_mgmt.lldp_transmit,
+        	    lldp_receive: this.switch_mgmt.lldp_receive,
+            	lldp_trap: this.switch_mgmt.lldp_trap
+	        }	
+    	    if (this.switch_mgmt.edit == 1) {
+        	    var method = axios.put
+            	var path = switchMgmtEndpoint + "/" + this.switch_mgmt.id
+	        } else {
+    	        var method = axios.post
+        	    path = switchMgmtEndpoint
+	        }
+    	    //console.error(path);
+        	//console.error(payload);
+	        method(path, payload).then((response) => { this.switch_mgmt.edit = 0; }).catch((error) => { console.log(error); });
+    	} else { // something is invalid
+    		alert("MGMT IP address: " + ipv4_validation.response + "\nMGMT Gateway address: " + (gateway_validation.ipaddress != "" ? gateway_validation.response : "Not entered") + "\nMGMT Nameserver 1: " + (dns1_validation.ipaddress != "" ? dns1_validation.response : "Not entered") + "\nMGMT Nameserver 2: " + (dns2_validation.ipaddress != "" ? dns2_validation.response : "Not entered"));
+		}
+	},
+    switch_handleModalMirrorEndpointAddSubmit() {
+        const mirror_sourceip_validation = new ipv4(this.switch_endpointData.mirror_source_ip, false);
+        const mirror_destip_validation = new ipv4(this.switch_endpointData.mirror_dest_ip, false);
+
+        if (mirror_sourceip_validation.ip_isvalid === true && mirror_destip_validation.ip_isvalid === true) {
+            this.switch_toggleModalMirrorEndpointAdd();
+            var payload = {
+                switch_name: this.switchName,
+                endpoint: this.switch_endpointData.endpoint,
+                comment: this.switch_endpointData.comment,
+                enable: this.switch_endpointData.enable,
+                mirror_source_ip: this.switch_endpointData.mirror_source_ip,
+                mirror_dest_ip: this.switch_endpointData.mirror_dest_ip,
+                vrf: this.switch_endpointData.vrf,
+                destination: this.switch_endpointData.destination
+            }
+            if (this.switch_endpointData.edit == 1) {
+                var method = axios.put;
+                var path = switchMirrorEndpointEndpoint + "/" + this.switch_endpointData.id;
+            } else {
+                var method = axios.post;
+                var path = switchMirrorEndpointEndpoint;
+            }
+            //console.error("mirror_endpoint_path", path);
+            //console.error("mirror_endpoint_data",payload);
+            method(path, payload).then((response) => { this.switch_endpointData.edit = 0; this.switch_get_mirror_endpoint_data(); }).catch((error) => { console.log(error); this.switch_get_mirror_endpoint_data(); });
+        } else {
+            alert(`There is a problem with the information entered.\nMirror Source IP: ${mirror_sourceip_validation.response}\nMirror Destination IP: ${mirror_destip_validation.response}`);
+        }
+    },
+	switch_handleModalMirrorSessionAddSubmit() {
+		this.switch_toggleModalMirrorSessionAdd();
+		var payload = {
+			switch_name: this.switchName,
+			session: this.switch_sessionData.session,
+			comment: this.switch_sessionData.comment,
+			enable: this.switch_sessionData.enable,
+			source_interface: this.switch_sessionData.source_interface,
+			source_interface_direction: this.switch_sessionData.source_interface_direction,
+			source_lag: this.switch_sessionData.source_lag,
+			source_lag_direction: this.switch_sessionData.source_lag_direction,
+			source_vlan: this.switch_sessionData.source_vlan,
+			source_vlan_direction: this.switch_sessionData.source_vlan_direction,
+			destination: this.switch_sessionData.destination,
+			cpu: this.switch_sessionData.cpu,
+			destination_tunnel_ip: this.switch_sessionData.destination_tunnel_ip,
+			destination_tunnel_source: this.switch_sessionData.destination_tunnel_source,
+			destination_tunnel_dscp: this.switch_sessionData.destination_tunnel_dscp,
+			destination_tunnel_vrf: this.switch_sessionData.destination_tunnel_vrf
+		}
+		if (this.switch_sessionData.selected_dest_type==0) {
+			payload["cpu"] = false;
+			payload["destination_tunnel_ip"]="";
+			payload["destination_tunnel_source"]="";
+			payload["destination_tunnel_dscp"]=0;
+			payload["destination_tunnel_vrf"]="";
+		}
+		if (this.switch_sessionData.selected_dest_type==1) {
+			payload["cpu"] = false;
+			payload["destination"] = [];
+		}
+		if (this.switch_sessionData.selected_dest_type==2) { 
+			payload["destination_tunnel_ip"]="";
+			payload["destination_tunnel_source"]="";
+			payload["destination_tunnel_dscp"]=0;
+			payload["destination_tunnel_vrf"]="";
+			payload["destination"] = [];
+		}
+		console.error("mirror_session", payload);
+		if (this.switch_sessionData.edit) {
+			var method=axios.put
+			var path = switchMirrorSessionEndpoint + "/" + this.switch_sessionData.id;
+		} else {
+			var method=axios.post
+			path = switchMirrorSessionEndpoint
+		}
+		method(path,payload).then((response) => { this.switch_sessionData.edit=0; this.switch_get_mirror_session_data()}).catch((error)=>{console.log(error); this.switch_get_mirror_session_data()});
+	},
+	switch_handleModalRouteAddSubmit() {
+	    const ip_route_validation = new ipv4(this.switch_route.ip_route, true);
+	    const ip_route_nexthop_validation = new ipv4(this.switch_route.ip_nexthop, false);
+
+		let ip_route_in_list = false;
+
+		for (let i=0; i < this.switch_routes.length; i++){
+			const currentRoute = this.switch_routes[i];
+			//see if the submitted route is already in the list
+			if ((this.switch_route.ip_route === currentRoute.ip_route)
+				 && (this.switch_route.vrf === currentRoute.vrf)
+				 && (this.switch_route.ip_nexthop === currentRoute.ip_nexthop)) {
+					ip_route_in_list = true;
+					break;
+			}
+		}
+
+    	if (ip_route_validation.isvalid === true && ip_route_nexthop_validation.ip_isvalid === true) {
+        	if (!ip_route_in_list) {
+				this.switch_toggleModalRouteAdd();
+				var payload = {
+					switch_name: this.switchName,
+					ip_route: this.switch_route.ip_route,
+					ip_nexthop: this.switch_route.ip_nexthop,
+					outgoing_interface: this.switch_route.outgoing_interface,
+					blackhole: this.switch_route.blackhole,
+					reject: this.switch_route.reject,
+					tag: this.switch_route.tag,
+					bfd: this.switch_route.bfd,
+					distance: this.switch_route.distance,
+					description: this.switch_route.description,
+					vrf: this.switch_route.vrf
+				}
+				if (this.switch_route.edit == 1) {
+					var method = axios.put
+					var path = switchRouteEndpoint + "/" + this.switch_route.id
+				} else {
+					var method = axios.post
+					var path = switchRouteEndpoint;
+				}
+				//console.error(path);
+				//console.error(payload);
+				method(path, payload).then((response) => { this.switch_get_routes_data(); this.switch_route.edit = 0; }).catch((error) => { console.log(error); this.switch_get_routes_data(); });
+			} else {
+				alert(`There is a problem with the information entered.\n\nThe submitted IP route: ${this.switch_route.ip_route} already has a static route with that next hop and VRF.\n\nPlease change the route and resubmit.`);
+			}
+		} else {
+        	alert(`There is a problem with the information entered.\n\nIP Route: ${ip_route_validation.response}\nIP Next Hop: ${ip_route_nexthop_validation.response}`);
+	    }
+	},
+	switch_handleModalTrunksAddSubmit(){
+		this.switch_toggleModalTrunkAdd();
+		event.preventDefault();
+		var payload = {
+			"entity_id" : this.switch_LagTrunkData.entity_id_input,
+			"switch_name": this.switchName,
+			"is_lag": 0,
+			"entity_id_sub": this.switch_LagTrunkData.entity_id_sub,
+			"native_vlan": this.switch_LagTrunkData.native_vlan,
+			"native_tag": this.switch_LagTrunkData.native_tag,
+			"allowed": this.switch_LagTrunkData.allowed,
+			"lacp": this.switch_LagTrunkData.lacp,
+			"lacp_rate": this.switch_LagTrunkData.lacp_rate,
+			"description": this.switch_LagTrunkData.description
+		}
+		if (this.switch_LagTrunkData.edit==1) {
+			var method=axios.put;
+			var path= switchTrunkLagEndpoint + "/" + this.switch_LagTrunkData.id;
+		} else {
+			var method=axios.post;
+			var path=switchTrunkLagEndpoint;
+		}
+		let duplicated_trunk = false;
+		if (this.trunks_data.length > 0) {
+			//console.log("we are in the duplicated_lag check");
+			let trunk_data1 = this.trunks_data.filter(entity => entity.is_lag === false);
+			//console.log("lag_data", lag_data);
+			if (this.switch_LagTrunkData.edit == 1) {
+				duplicated_trunk = trunk_data1.some(entity => Number(entity.entity_id) === Number(this.switch_LagTrunkData.entity_id_input) && entity.id != this.switch_LagTrunkData.id)
+			} else {
+				//console.log("this.switch_LagTrunkData.entity_id", this.switch_LagTrunkData.entity_id_input);
+				//console.log("this.trunks_data", this.trunks_data);
+				//let lag_data = this.trunks_data.filter(entity => entity.is_lag === true);
+				//console.log("lag_data", lag_data);
+				duplicated_trunk = trunk_data1.some(entity => Number(entity.entity_id) === Number(this.switch_LagTrunkData.entity_id_input))
+			}
+		}
+		if (duplicated_trunk === false) {
+			//console.log("payload_trunks", payload);
+			//console.log("current_trunks", this.trunks_data);
+			method(path, payload)
+				.then((response) => {
+					console.log("success")
+				})
+				.catch((error) => {
+					console.log(error);
+				})
+				.finally(() => {
+					this.switch_get_trunks_data();
+				});
+		} else {
+			alert(`Trunk ID is duplicated.\nTrunk ID: ${this.switch_LagTrunkData.entity_id_input}`);
+		}
+		//method(path, payload).then((response) => {this.switch_get_trunks_data();}).catch((error)=>{console.log(error); this.switch_get_trunks_data();});
+	},
+    switch_handleModalAddBGPNeighborSubmit(){
+        //Need to validate the AS number
+		//switch_bgp_neighbor.remote_as (0 to 65535)
+        
+        const bgp_neighbor_validation = new ipv4(this.switch_bgp_neighbor.neighbor_ip, false);
+    	const asn_validation = new asn(this.switch_bgp_neighbor.remote_as);
+		let neighbor_ip_duplicated;
+		neighbor_ip_duplicated = false;
+		//This is not working currently as it fails on itself if you try to update the bgp neighbor after creation
+		//Removing it for now until it is fixed.
+		if (this.switch_bgp_neighbor_data.length > 0) {
+			if (this.switch_bgp_neighbor.edit == 1) {
+				neighbor_ip_duplicated = this.switch_bgp_neighbor_data.some(neighbor => neighbor.neighbor_ip === this.switch_bgp_neighbor.neighbor_ip && neighbor.id != this.switch_bgp_neighbor.id)
+			} else {
+				neighbor_ip_duplicated = this.switch_bgp_neighbor_data.some(neighbor => neighbor.neighbor_ip === this.switch_bgp_neighbor.neighbor_ip)
+			}
+		}
+        if (bgp_neighbor_validation.ip_isvalid === true && asn_validation.isvalid === true && neighbor_ip_duplicated === false) {
+            var payload = this.switch_bgp_neighbor;
+            payload.switch_name = this.switchName;
+            if (this.switch_bgp_neighbor.edit == 1) {
+                var method = axios.put;
+                var path = switchBgpNeighborEndpoint + "/" + this.switch_bgp_neighbor.id;
+            } else {
+                var method = axios.post;
+                var path = switchBgpNeighborEndpoint
+            }
+            //console.error(payload);
+            method(path, payload).then((response) => {
+                this.switch_get_bgp_data();
+                this.switch_toggleModalAddBGPNeighbor();
+            }).catch((error) => {
+                console.error(error);
+                this.switch_get_bgp_data();
+                this.switch_toggleModalAddBGPNeighbor();
+            })
+        } else {
+			alert(`Neighbor IP is duplicated \n or There is a problem with the information entered.\nNeighbor IP: ${bgp_neighbor_validation.response}\nAS Number: ${asn_validation.response}`);
+        }
+    },
+	switch_handleModalDeviceVarsAddSubmit(){
+		this.switch_toggleModalDeviceVarsAdd();
+		event.preventDefault();
+		var payload = {
+			switch_name: this.switchName,
+			name: this.switch_vars_data.name,
+			value: this.switch_vars_data.value,
+			description: this.switch_vars_data.description
+		}
+		if (this.switch_vars_data.edit==1) {
+			var method=axios.put;
+			var path=switchVarsEndpoint + "/" + this.switch_vars_data.id;
+		} else {
+			var method=axios.post;
+			var path=switchVarsEndpoint + "/" + this.switchName + "/" + this.switch_vars_data.name;
+		}
+		//console.error(path);
+		//console.error(payload);
+		method(path, payload).then((response) => { this.switch_get_switch_vars_data(); }).catch((error)=>{console.log(error); this.switch_get_switch_vars_data();});
+	},
+	switch_handleModalLagsAddSubmit(){
+		this.switch_toggleModalLagAdd();
+		event.preventDefault();
+		var path = switchTrunkLagEndpoint;
+		var payload = {
+			"entity_id" : this.switch_LagTrunkData.entity_id_input,
+			"switch_name": this.switchName,
+			"is_lag": 1,
+			"entity_id_sub": this.switch_LagTrunkData.entity_id_sub,
+			"native_vlan": this.switch_LagTrunkData.native_vlan,
+			"native_tag": this.switch_LagTrunkData.native_tag,
+			"allowed": this.switch_LagTrunkData.allowed,
+			"lacp": this.switch_LagTrunkData.lacp,
+			"lacp_rate": this.switch_LagTrunkData.lacp_rate,
+			"description": this.switch_LagTrunkData.description
+		}
+		//console.log("payload_lags", payload);
+		//console.log("current_lags", this.trunks_data);
+		if (this.switch_LagTrunkData.edit==1) {
+			var method=axios.put;
+			var path= switchTrunkLagEndpoint + "/" + this.switch_LagTrunkData.id;
+		} else {
+			var method=axios.post;
+			var path=switchTrunkLagEndpoint;
+		}
+		//adding the common function to finally block
+		let duplicated_lag = false;
+		if (this.trunks_data.length > 0) {
+			console.log("we are in the duplicated_lag check");
+			let lag_data = this.trunks_data.filter(entity => entity.is_lag === true);
+			//console.log("lag_data", lag_data);
+			if (this.switch_LagTrunkData.edit == 1) {
+				duplicated_lag = lag_data.some(entity => Number(entity.entity_id) === Number(this.switch_LagTrunkData.entity_id_input) && entity.id != this.switch_LagTrunkData.id)
+			} else {
+				//console.log("this.switch_LagTrunkData.entity_id", this.switch_LagTrunkData.entity_id_input);
+				//console.log("this.trunks_data", this.trunks_data);
+				//let lag_data = this.trunks_data.filter(entity => entity.is_lag === true);
+				//console.log("lag_data", lag_data);
+				duplicated_lag = lag_data.some(entity => Number(entity.entity_id) === Number(this.switch_LagTrunkData.entity_id_input))
+			}
+		}
+		//console.log("duplicated_lag", duplicated_lag);
+		//duplicated_lag = true;
+		//method(path, payload).then((response) => {this.switch_get_trunks_data();}).catch((error)=>{console.log(error); this.switch_get_trunks_data();});
+		if (!duplicated_lag) {
+			method(path, payload)
+				.then((response) => {
+					console.log("success")
+				})
+				.catch((error) => {
+					console.log(error);
+				})
+				.finally(() => {
+					this.switch_get_trunks_data();
+				});
+		} else {
+			alert("Duplicate LAG detected. Please enter a unique LAG ID.");
+		}
+	},
+	switch_bgpHandleAddSubmit() {
+		//BGP ASN = this.switch_bgp.asNum
+		
+		const asn_validation = new asn(this.switch_bgp.asNum);
+
+		if (asn_validation.isvalid === true || (asn_validation.isvalid === false && this.switch_bgp.enable === false)) {
+			var path1 = switchBgpEndpoint;
+			var path2 = siteASEndpoint;
+			var promises = [];
+			var payload = {
+				"switch_name": this.switchName,
+				"enable": this.switch_bgp.enable,
+				"bgp_timer_keepalive": this.switch_bgp.bgp_timer_keepalive,
+				"bgp_timer_hold": this.switch_bgp.bgp_timer_hold,
+				"maximum_paths": this.switch_bgp.maximum_paths,
+				"redist_connected": this.switch_bgp.redist_connected,
+				"redist_connected_rm": this.switch_bgp.redist_connected_rm,
+				"redist_static": this.switch_bgp.redist_static,
+				"redist_static_rm": this.switch_bgp.redist_static_rm
+			}
+			//console.error(payload)
+			if (this.switch_bgp.edit==1) {
+				var method=axios.put
+				var path1 = path1 + "/" + this.switch_bgp.id
+			} else {
+				var method=axios.post
+			}
+			promises.push({"path":path1,"type":method, "payload":payload});
+			if (this.switch_bgp.edit2==1) {
+				var method=axios.put
+				payload = {asNum: this.switch_bgp.asNum}
+				path2 = path2 + "/" + this.switch_bgp.id2;
+			} else {
+				var method=axios.post
+				payload = {asNum: this.switch_bgp.asNum, core: this.switchName.toUpperCase(), description: ''};
+			}
+			promises.push({"path":path2,"type":method, "payload":payload});
+			Promise.all(promises.map((p)=> p.type(p.path, p.payload))).then((response) => {
+				this.switch_toggleAddBgp();
+			}).catch((error) => {console.log(error);
+				this.switch_toggleAddBgp();
+			});
+		} else {
+			alert(`AS Number: ${asn_validation.response}`);
+		}
+	},
+	switch_handleModalSwitchSerialMAC(){
+		const path = switchEndpoint + "/" + this.switch_replace.id;
+		var payload = {
+			serial: this.switch_replace.serial,
+			MAC: this.switch_replace.MAC
+		}
+		axios.put(path, payload).then((response) => {
+			location.reload();
+		}).catch((error) => {
+			console.log(error);
+		});
+	},
+	/*
+	//
+	// Don't believe this function is used anymore
+	//	
+	switch_handleMakeLagTrunkAddSubmit(){	
+		event.preventDefault();
+		var promises = [];
+		// handle create/edit LAG or TRUNK
+		var path = switchTrunkLagEndpoint;
+		var select = false;
+		if (this.switch_LagTrunkData.entity_id > 0) { 
+			path = path + "/" + this.switchName + "/" + this.switch_LagTrunkData.entity_id + "/" + (this.switch_LagTrunkData.entity_id_sub|"0")
+			select = true;
+		}
+		//console.error(path);
+		var payload = {
+			"switch_name": this.switchName,
+			"is_lag": this.switch_LagTrunkData.is_lag,
+			"entity_id_sub": this.switch_LagTrunkData.entity_id_sub,
+			"native_vlan": this.switch_LagTrunkData.native_vlan,
+			"native_tag": this.switch_LagTrunkData.native_tag,
+			"allowed": this.switch_LagTrunkData.allowed,
+			"lacp": this.switch_LagTrunkData.lacp,
+			"lacp_rate": this.switch_LagTrunkData.lacp_rate,
+			"description": this.switch_LagTrunkData.description
+		}
+		
+		if (this.switch_LagTrunkData.entity_id>0) { 
+			payload["entity_id"] = this.switch_LagTrunkData.entity_id; 
+		} else { 
+			payload["entity_id"] = this.switch_LagTrunkData.entity_id_input; 
+		}
+		var assignment = payload["entity_id"];
+		//console.error(payload);
+		// only push onto promise stack if user is not selecting an existing LAG or TRUNK
+		if(!select) { promises.push({"path":path,"payload":payload}); } 
+		// handle assign LAG or TRUNK to ports
+		const selected_length = window.objList.length;
+		//const switch_count = this.sw.length;
+		const switch_count = this.switch_count;
+		for (var switch_number=0; switch_number<switch_count; switch_number++) {
+			for (var index=0;index<selected_length;index++) {
+				if (window.objList[index].switch_number==(switch_number+1)){
+					if (    this.switch_LagTrunkData.is_lag==true ) {
+						payload = {"lag": assignment, "trunk":0}
+					} else {
+						payload = {"trunk": assignment, "lag":0}
+					}
+					promises.push({"path":switchPortEndpoint+"/"+this.switchName+"/"+switch_number+"/"+window.objList[index].port+"/"+(this.switch_LagTrunkData.entity_id_sub|"0"), "payload":payload});
+				}
+			}
+		}
+		//apply all promises
+		//console.error(promises);
+		Promise.all(promises.map((p)=> axios.put(p.path, p.payload))).then((response) => { 
+			this.switch_get_LagTrunk_data();
+			location.reload();
+		}).catch((error) => {console.log(error); 
+			this.switch_get_LagTrunk_data();
+			location.reload();
+		});
+		//turn off modal dialog
+		this.switch_toggleMakeLagTrunk();
+	},
+	*/
+	route(item){
+		//This function is use to execute the action of the button that was clicked
+		var allButtons = this.buttons.length;
+		for (var i=0; i<allButtons; i++) {
+			if (this.buttons[i].text == item) {
+				this[this.buttons[i].action]();
+			}
+		}
+	},
+	toggleCheckbox(event) {
+		this.checkbox = !this.checkbox;
+		if (event.target.id=="addL3IPDHCP") {
+			//this.switch_L3addData.ip='';
+		}
+		if (event.target.id=="editL3IPDHCP") {
+			//this.switch_L3editData.ip='';
+		}
+	},
+	handleHelperDefaultsCheckboxClick(edit_function) {
+		//Used to validate an the helper list has 5 or fewer entries so we can add the defaults back in
+
+		//if edit_function = true then the request is coming from the edit modal so use the value of this.switch_L3editData.ip_helpers_use_defaults
+		//if edit_function = false then the request is coming from the add modal so use the value of this.switch_L3addData.ip_helpers_use_defaults 
+		let helper_use_defaults = (edit_function ? this.switch_L3editData.ip_helpers_use_defaults : this.switch_L3addData.ip_helpers_use_defaults);
+
+		//console.log("Is this from the Edit modal?", edit_function);
+		//console.log("helper_use_defaults", helper_use_defaults);
+		//console.log("internal_ip_helpers", this.internal_ip_helpers);
+
+		if (helper_use_defaults == false) {
+			//console.log("handleHelperDefaults false click");
+			//console.log("internal_ip_helpers.length", this.internal_ip_helpers.length);
+			if (this.internal_ip_helpers.length < 6){
+				if (edit_function) {
+					this.switch_L3editData.ip_helpers_use_defaults = true;
+				} else {
+					this.switch_L3addData.ip_helpers_use_defaults = true;
+				}
+			} else{
+				event.preventDefault();  //stops the checkbox from toggling
+				alert("Too many helpers assigned.\nThe maximum is five when the defaults are in use.\n\nRemove helpers until you have less than six.");
+			}
+		} else {
+			//console.log("handleHelperDefaults true click");
+			if (edit_function) {
+				this.switch_L3editData.ip_helpers_use_defaults = false;
+			} else {
+				this.switch_L3addData.ip_helpers_use_defaults = false;
+			}
+		}
+	},
+	reload_page() {
+		location.reload();
+	},
+	switch_toggleAddBgp() {
+		this.switch_get_bgp_data();
+		const body = document.querySelector('body');
+		this.switch_activeAddBgp = !this.switch_activeAddBgp;
+		if (this.switch_activeAddBgp) {
+			body.classList.add('modal-open');
+		} else {
+			body.classList.remove('modal-open');
+		}
+	},
+	switch_bgpHandleAddReset() {
+		this.switch_bgp = Object.create(this.switch_bgp_default);
+	},
+	get_interfaceProfiles() {
+		//if ("{{ auth['host_version'] }}" != 2 ) {
+		//	interfaceProfileEndpoint = "{{ auth['backend_host'] }}" + interfaceProfileEndpoint;
+		//}
+		let api_host = "";
+
+		if ('{{auth.env}}' === 'Production'){
+			api_host = "https://kaos.backend-network-api.genmills.com";
+		} else {
+			api_host = "https://network-api-kaos-nonprod.k8s.genmills.com";
+		}
+
+		let path = api_host + interfaceProfileEndpoint;
+
+		axios.get(path).then((response)=> {
+        	this.interfaceProfiles = response.data;
+		}).catch((error) => {
+			console.error(error);
+        });
+	},
+	get_dhcp_servers() {
+		//gets the DHCP server information for this switch's site
+		let dhcpPath = dhcpServersEndpoint + "/bySite/";
+		let switchNamePath = switchEndpoint + "/" + this.switchName;
+
+		axios.get(switchNamePath).then(response => { 
+			let switchData = return_result(response.data);
+			let siteName = switchData[0].site;
+			//console.log("siteName get = ", siteName);
+			dhcpPath = dhcpPath + siteName;
+			//console.log("DHCP endpoint then", dhcpPath);
+		}).then (() => {
+			axios.get(dhcpPath).then( response => {
+				let temp_dhcp_list = response.data;        
+				//console.log("temp_dhcp_list");
+				//console.log(temp_dhcp_list);
+				if (temp_dhcp_list.length > 0) {
+					this.switch_L3.primary_dhcp_name = temp_dhcp_list[0].dhcp_primary;
+					//console.log("primary DHCP: ", this.switch_L3.primary_dhcp_name);
+					this.switch_L3.secondary_dhcp_name = temp_dhcp_list[0].dhcp_secondary;
+					//console.log("secondary DHCP: ", this.switch_L3.secondary_dhcp_name);
+					this.switch_L3.clearpass_name = temp_dhcp_list[0].clearpass_primary_name.toLowerCase() + '.genmills.com';
+					//console.log("clearpass: ", this.switch_L3.clearpass_name);
+				} else {
+					this.switch_L3.primary_dhcp_name = "No data found";
+					//console.log("primary DHCP: ", this.switch_L3.primary_dhcp_name);
+					this.switch_L3.secondary_dhcp_name = "No data found";
+					//console.log("secondary DHCP: ", this.switch_L3.secondary_dhcp_name);
+					this.switch_L3.clearpass_name = "No data found";
+					//console.log("clearpass: ", this.switch_L3.clearpass_name);
+				};
+			}).catch((error) => {
+				console.log("from get_dhcp_servers(dhcpPath)", error); 
+			});
+		}).catch((error) => {
+			console.error("from get_dhcp_servers(switchNamePath)", error);
+		});
+	},		
+	get_zone_name() {
+		switch (this.zone){
+			case 1:
+				this.zone_name = "Default/All";
+				break;
+			case 2:
+				this.zone_name = "Enterprise";
+				break;
+			case 3:
+				this.zone_name = "ESX TOR";
+				break;
+			case 4:
+				this.zone_name = "Manufacturing";
+				break;
+			case 5:
+				this.zone_name = "FW Stack";
+				break;
+			case 6:
+				this.zone_name = "WAN POD";
+
+		}
+	},
+	//switch_ip_helpers_append() {
+	//	this.ip_helpers.append(this.ip_helper_input);
+	//	this.ip_helper_input='';
+	//},
+	mounted() {
+        this.switch_initForm();
+		const params = new Proxy(new URLSearchParams(window.location.search), {
+			  get: (searchParams, prop) => searchParams.get(prop),
+		});		
+		//this pulls the name of the switch out of the URL used to load the page (example: /switch/config?device=TEST_JL725B)
+		//so in this example params.device = TEST_JL725B
+		this.switchName = params.device; 
+		this.switch_name = this.switchName;
+		this.switch_try_load();
+		//This port data is ok at this point
+		window.switchApp = this;
+		this.switch_get_LagTrunk_data();
+
+		this.switch_get_routes_data();
+		this.buttons = this.defaultButtons;
+
+		this.switch_get_trunks_data();
+		this.switch_Spantree_Policy_load();
+		this.get_dhcp_servers() 
+		this.get_interfaceProfiles() //gets the interfaceProfiles
+		this.switch_get_switch_vars_data() //load the switch variables
+        
+	}
+  }
+}
+
+createApp({app}).mount();
+</script>
+<div v-scope="app()" @vue:mounted="mounted"></div>
+
+{% endblock %}
+

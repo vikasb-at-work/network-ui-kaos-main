@@ -1,0 +1,43 @@
+{% extends 'CradlepointReportingProject/base.html' %}
+
+{% block crp_content %}
+<style>
+    table {
+        width: 40%;
+        border-collapse: collapse;
+      }
+      th, td {
+        padding: 1px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+      }
+      th {
+        cursor: default;
+      }
+	  .right-align {
+		  text-align: right;
+	  }
+</style>
+
+
+<h1> System wide all time stats </h1>
+<br>    
+<div class="container">
+	<table>
+		<tr>
+			<td>Number of days data collected:</td><td class="right-align">{{ TOTAL_DAYS }}</td>
+		</tr>
+		<tr>
+			<td>Total data used (MB):</td><td class="right-align">{{ "{:,.2f}".format(TOTAL_DATA|round(2)) }}</td>
+		</tr>
+		<tr>
+			<td>All time daily average (MB):</td><td class="right-align">{{ "{:,.2f}".format((TOTAL_DATA/TOTAL_DAYS)|round(2)) }}</td>
+		</td>
+		<tr>
+			<td>100 day moving average (MB):</td><td class="right-align">{{ "{:,.2f}".format(MOVING_AVG|round(2)) }}</td>
+		</tr>
+	</table>
+</div>
+{% endblock %}
+
+

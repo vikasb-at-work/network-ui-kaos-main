@@ -1,0 +1,45 @@
+{% extends 'CradlepointReportingProject/base.html' %}
+
+
+{% block crp_content %}
+<style>
+	.adjust-pad {
+		padding-left: 40px;
+	}
+	.right-align {
+		text-align: right;
+	}
+	table {
+		border-collapse: collapse;
+	}
+	th {
+		border-bottom: 1px solid black;
+		text-align: center;
+	}
+	td {
+		border-bottom: 1px solid lightgrey;
+	}
+</style>
+
+<h1> System wide daily usage </h1>
+<br>
+					<table>
+						<thead>
+							<tr>
+				    	    	<th>Date</th>
+				            	<th style="padding-left: 20px;">Usage</th>
+					        </tr>
+						</thead>
+						<tbody>
+							{% for cp in CP_LIST %}
+        					<tr>
+					        	<td>{{ cp['date'] }}</td>   
+					        	<td class="right-align adjust-pad">{{ "{:,.2f}".format(cp['MB_used']|round(2)) }}</td>   
+					        </tr>
+					      	{% endfor %}
+						</tbody>
+					</table>
+
+{% endblock %}
+
+

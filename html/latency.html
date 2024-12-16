@@ -1,0 +1,71 @@
+<HTML>
+<HEAD>
+	<link href="/css/gmilatency.css" rel="stylesheet" type="text/css" />	
+	<SCRIPT src="/js/jquery-3.6.0.min.js"></SCRIPT>
+	<script>
+		$(document).ready(function() {
+			updateContent();
+			setInterval(updateContent, 60000); 
+		});
+
+		function updateContent() {
+
+    			$.get("/rest/v1/gmi-latency", function(data, status){
+				var gridObj = {};
+				var row = {};
+				data["result"].forEach(function(result) {
+					row[result["sla_id"]] =  {
+							"min" 	   : result["min_sample"],
+							"max" 	   : result["max_sample"],
+							"avg" 	   : result["avg_sample"],
+							"last"	   : result["last_sample"],
+							"status"   : result["status"],
+							"stamp"	   : result["stamp"],
+							"sla_name" : result["sla_name"]
+						}
+					gridObj[result["device"]]=$.extend(true,{},row);
+				});
+
+				var largest=0;
+
+				var content = "";
+
+				for (var key in gridObj) {
+					if (largest==0) {
+						for (var key2 in gridObj[key]) {
+							if (largest < parseInt(key2)) { largest = parseInt(key2); }
+						}	
+					}
+					if (content == "") {
+						content += "<thead>";
+						content += "<th id=deviceCol>device</td><th id=timeStampCol>time</td>";
+						for (i = 1; i <= largest; i++) {
+							content += "<th id=latencyCol>"+gridObj[key][i]["sla_name"]+"</td>";
+						}
+						content += "</thead><tbody>";
+					}
+					content += "<tr id=dataRow>";
+					content += "<td>"+key+"</td><td>"+gridObj[key][1]["stamp"]+"</td>";
+					for (i = 1; i<= largest; i++) {
+						content += "<td id=latencyData"
+                        			if (gridObj[key][i]["last"] > (gridObj[key][i]["avg"]-gridObj[key][i]["min"]+gridObj[key][i]["avg"])) {
+			                        	content += " class=alert";
+						}
+						content += ">"+gridObj[key][i]["last"].toString()+"<div id=otherData>"+gridObj[key][i]["min"].toString()+" / "+gridObj[key][i]["avg"].toString()+" / "+gridObj[key][i]["max"].toString()+"</div></td>";
+					}
+					content += "</tr>";
+				}
+				content += "</tbody>";
+				$('#gmilatency').html(content);
+			});
+                };
+	</script>
+</HEAD>
+<BODY>
+<table id="gmilatency">
+<tbody>
+</tbody>
+</table>
+<DIV id="informationBox">Measurements are in milleseconds and are round trip time (RTT) from perspective of the network core at facility to the destination in the column heading.  Underneath current measurement is min / avg / max.  <BR>If the measurement is > the difference of the average and the minimum, plus the average (sample > (avg+(avg-min))), the sample will alert (red).</DIV>
+</BODY>
+</HTML>

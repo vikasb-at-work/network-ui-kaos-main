@@ -1,0 +1,202 @@
+<style>
+	/* css for wider columns so they don't wrap*/
+	.wider-enable {
+		min-width: 95px;
+	}
+	.wider-neighbor_ip {
+		min-width: 105px;
+	}
+	.wider-remote_as {
+		min-width: 115px;
+	}
+	.wider-description {
+		min-width: 120px;
+	}
+	.wider-rm_inbound {
+		min-width: 155px;
+	}
+	.wider-rm_outbound {
+		min-width: 160px;
+	}
+</style>
+<!--add data modal - bgp for switch-->
+<div
+ref="switch_addBgp"
+class="modal fade"
+:class="{ show: switch_activeAddBgp, 'd-block': switch_activeAddBgp }"
+tabindex="-1"
+role="dialog">
+<div class="modal-dialog modal-xl" role="document">
+<div class="modal-content">
+  <div class="modal-header">
+	<h5 class="modal-title">BGP Settings</h5>
+	<button
+	  type="button"
+	  class="close"
+	  data-dismiss="modal"
+	  aria-label="Close"
+	  @click="switch_toggleAddBgp">
+	  <span aria-hidden="true">&times;</span>
+	</button>
+  </div>
+  <div class="modal-body">
+	<form>
+
+	<div style="border: solid #5476ff 3px; margin: 10px; padding: 10px;">
+      <div class="mb-3">
+          <label class="switch">
+          	<input type="checkbox" @click="toggleCheckbox" id="enableBGP" v-model="switch_bgp.enable">
+          	<div class="slider round"></div>
+      	  </label>
+          <label for="enableBGP">BGP ({%raw%}{{ {true:"Enabled",false:"Disabled"}[switch_bgp.enable] }}{%endraw%})</label>
+      </div>
+
+	<div class="mb-3">
+	<div role="group" class="btn-group">
+	  <div class="mb-3">
+		<label for="addASNumber" class="form-label">AS Number:</label>
+		<input
+		  type="text"
+		  class="form-control"
+		  id="addASNumber"
+		  v-model="switch_bgp.asNum"
+		  style="width: 100px"
+		  placeholder="e.g. 64839"/>
+	  </div>
+
+	  <div class="mb-3" style="border-left: 1px dashed #333; margin-left: 20px; padding-left: 10px;">
+		  <label for="addMaximumPaths" class="form-label">Maximum Paths:</label>
+          <select type="text" class="form-control" id="addModel" v-model="switch_bgp.maximum_paths" style="width: 120px">
+              <option v-for="x in 8" v-bind:value="x">{%raw%}{{x}}{%endraw%}</option>
+          </select>
+	  </div>
+
+	  <div class="mb-3" style="border-left: 1px dashed #333; margin-left: 20px; padding-left: 10px;">
+		<label for="addBgpTimerKeepalive" class="form-label">Keepalive Timer:</label>
+		<input
+		  type="text"
+		  class="form-control"
+		  id="addBgpTimerKeepalive"
+		  v-model="switch_bgp.bgp_timer_keepalive"
+		  style="width: 140px"
+		  placeholder="Enter a BGP keepalive timer, e.g. 3"/>
+	  </div>
+
+	  <div class="mb-3" style="border-left: 1px dashed #333; margin-left: 20px; padding-left: 10px;">
+		<label for="addBgpTimerHold" class="form-label">Hold Timer:</label>
+		<input
+		  type="text"
+		  class="form-control"
+		  id="addBgpTimerHold"
+		  v-model="switch_bgp.bgp_timer_hold"
+		  style="width: 120px"
+		  placeholder="Enter a BGP hold timer, e.g. 10"/>
+	  </div>
+
+        <div class="mb-3" style="border-left: 1px dashed #333; margin-left: 20px; padding-left: 10px;">
+              <label class="switch">
+              <input type="checkbox" @click="toggleCheckbox" id="redist_connected" v-model="switch_bgp.redist_connected">
+              <div class="slider round"></div>
+          </label><label for="redist_connected"> Redistribute Connected</label>
+          <div class="mb-3" :class="!switch_bgp.redist_connected && invisible">
+            <div class="mb-3" style="margin-top: 20px">
+                <label for="addConnectedRM" class="form-label">Redistribute Connected<BR>Route Map</label>
+                <input type="text" minlength="64" class="form-control" id="redist_connected_rm" v-model="switch_bgp.redist_connected_rm" placeholder="None" style="width: 200px"/>
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-3" style="border-left: 1px dashed #333; margin-left: 20px; padding-left: 10px;">
+              <label class="switch">
+              <input type="checkbox" @click="toggleCheckbox" id="redist_static" v-model="switch_bgp.redist_static">
+              <div class="slider round"></div>
+          </label><label for="redist_static"> Redistribute Static</label>
+          <div class="mb-3" :class="!switch_bgp.redist_static && invisible">
+            <div class="mb-3" style="margin-top: 20px">
+                <label for="addKeepalive" class="form-label">Redistribute Static<BR>Route Map</label>
+                <input type="text" class="form-control" id="redist_static_rm" v-model="switch_bgp.redist_static_rm" placeholder="None" size=20/>
+            </div>
+          </div>
+        </div>
+
+
+		</div>
+	</div>
+
+	  <div class="btn-group" style="float: right" role="group">
+		<button
+		  type="button"
+		  class="btn btn-primary btn-sm"
+		  @click="switch_bgpHandleAddSubmit">
+		  Save
+		</button>
+		<button
+		  type="button"
+		  class="btn btn-danger btn-sm"
+		  @click="switch_bgpHandleAddReset">
+		  Default
+		</button>
+	  </div>
+	</div>
+	<div style="margin: 40px"></div>
+	<div class="container" style="border: solid #48b03a 3px">
+    <div class="row">
+      <div class="col-sm-10">
+        <button type="button" @click="switch_toggleModalAddBGPNeighbor(true)" class="btn btn-success btn-sm" style="margin-top: -20px">Add BGP Neighbor</button>
+        <br><br>
+        <table class="table table-hover">
+          <thead>
+            <tr>
+                <th v-for="(c, index) in cols.bgpNeighbors" :key=index scope="col" :class="{'wider-enable': c.name === 'enable',
+                                                                                           'wider-neighbor_ip': c.name === 'neighbor_ip',
+                                                                                           'wider-remote_as': c.name === 'remote_as',
+                                                                                           'wider-description': c.name === 'description',
+                                                                                           'wider-rm_inbound': c.name === 'rm_inbound',
+                                                                                           'wider-rm_outbound': c.name === 'rm_outbound'}">
+                    <div>{%raw%}{{c.text}}{%endraw%}
+                      <template v-if="sort.column === c.name && sort.by === 'asc'">
+                        <i class="fa-solid fa-sort-up" @click="sort={column: c.name, by: 'desc'}"></i>
+                      </template>
+                      <template v-else-if="sort.column === c.name && sort.by === 'desc'">
+                        <i class="fa-solid fa-sort-down" @click="sort={column: c.name, by: ''}"></i>
+                      </template>
+                      <template v-else>
+                        <i class="fa-solid fa-sort" @click="sort={column: c.name, by: 'asc'}"></i>
+                      </template>
+                    </div>
+                   </div>
+                  </div>
+                </th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(row, index) in bgp_neighbor_filtered_data" :key="index">
+              <td>{%raw%}{{row.enabled}}{%endraw%}</td>
+              <td>{%raw%}{{row.neighbor_ip}}{%endraw%}</td>
+              <td>{%raw%}{{row.remote_as}}{%endraw%}</td>
+              <td>{%raw%}{{row.description}}{%endraw%}</td>
+              <td>{%raw%}{{row.rm_inbound}}{%endraw%}</td>
+              <td>{%raw%}{{row.rm_outbound}}{%endraw%}</td>
+              <td>
+                <div class="btn-group" role="group">
+                  <button type="button" @click="switch_toggleEditBgpNeighbor (row)" style="margin-left: 10px" class="btn btn-warning btn-sm">Update</button>
+                  <button type="button" @click="are_you_sure(switch_handleDeleteBgpNeighbor, row)" style="margin-left: 10px" class="btn btn-danger btn-sm">Delete</button>
+                  <button type="button" @click="switch_handleEnableDisableBgpNeighbor(row)" style="margin-left: 10px" class="btn btn-danger btn-sm">Enable/Disable</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+	</div>
+
+	</form>
+  </div>
+</div>
+</div>
+</div>
+<div v-if="switch_activeAddBgp" class="modal-backdrop fade show"></div>
+<!-- include other modals -->
+{% include "vue_switch_modal_add_switch_bgp_add_neighbor.html" %}

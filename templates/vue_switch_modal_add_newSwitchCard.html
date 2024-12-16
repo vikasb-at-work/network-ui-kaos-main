@@ -1,0 +1,70 @@
+<!--add data modal - new switch-->
+<div
+ref="switch_addCardData"
+class="modal fade"
+:class="{ show: switch_activeAddCardData, 'd-block': switch_activeAddCardData }"
+tabindex="-1"
+role="dialog">
+<div class="modal-dialog" role="document">
+<div class="modal-content">
+  <div class="modal-header">
+	<h5 class="modal-title">Add a card</h5>
+	<button
+	  type="button"
+	  class="close"
+	  data-dismiss="modal"
+	  aria-label="Close"
+	  @click="switch_toggleAddCardData">
+	  <span aria-hidden="true">&times;</span>
+	</button>
+  </div>
+  <div class="modal-body">
+	<form>
+	  <div class="mb-3">
+		<label for="addModel" class="form-label">Card Model:</label>
+		 <select type="text" class="form-select" id="addModel" v-model="switch_addData.model" placeholder="Select a card model">
+			  <option disabled>Please select a valid card model number from the list</option>
+			  <option v-for="s in switch_card_models_filtered_data" v-bind:value="s.model">{%raw%}{{s.model}}-{{s.description}}{%endraw%}</option>
+	  	</select>
+	  </div>
+
+<!--	  <div class="mb-3">
+		<label for="addSerial" class="form-label">Switch Serial#:</label>
+		<input
+		  type="text"
+		  class="form-control"
+		  id="addSerial"
+		  v-model="switch_addData.serial"
+		  placeholder="Enter a serial# for this switch."/>
+	  </div>
+
+	  <div class="mb-3">
+		<label for="addMac" class="form-label">Switch MAC Address:</label>
+		<input
+		  type="text"
+		  class="form-control"
+		  id="addMac"
+		  v-model="switch_addData.MAC"
+		  placeholder="Enter a MAC address for this switch."/>
+	  </div>
+-->
+	  <div class="btn-group" role="group">
+		<button
+		  type="button"
+		  class="btn btn-primary btn-sm"
+		  @click="switch_handleAddCardSubmit">
+		  Submit
+		</button>
+		<button
+		  type="button"
+		  class="btn btn-danger btn-sm"
+		  @click="switch_toggleAddCardData">
+		  Cancel
+		</button>
+	  </div>
+	</form>
+  </div>
+</div>
+</div>
+</div>
+<div v-if="switch_activeAddCardData" class="modal-backdrop fade show"></div>

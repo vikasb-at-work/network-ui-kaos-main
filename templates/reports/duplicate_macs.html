@@ -1,0 +1,96 @@
+{% extends 'menu.html' %}
+{% block content %}
+<link href="/css/samurai.css" rel="stylesheet" type="text/css" media="all">
+<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.3/css/jquery.dataTables.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css">
+<STYLE>
+	.ui-buttonset {
+		color: inherit;
+		float: right;
+		text-align: right;
+		padding-top: 0.25em;
+		margin: 0;
+		padding: 0;
+		display: block;
+		font-weight: normal;
+		-webkit-font-smoothing: inherit;
+	}
+	.ui-button, a.ui-button, a:link.ui-button {
+		color: black;
+		line-height: normal;
+		margin-right: 0.1em;
+		veritcal-align: middle;
+		user-select: none;
+		overflow: visible;
+		-webkit-font-smoothing: inherit;
+	}
+	.my-chart {
+		height: 20px;
+		width: 100px;
+		color: white;
+		padding-top: 10px;
+		padding-right: 5px;
+		text-align: right;
+		font-weight: bold;
+	}
+</STYLE>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<h3 align="left">Duplicate MAC Report</h3>
+These devices have more than one record for the same MAC address and need clean-up.  This is usually caused by a device moving locations or getting renamed.  The correct record is probably the newest one.
+     <div id="content_1" class="inv">
+      <table id="dupeMacs" class="display" style="width:40%">
+         <thead>
+            <td>
+               <b>Device</b>
+            </td>
+			<td>
+				<b>Model</b>
+			</td>
+            <td>
+				<b>MAC</b>
+            </td>
+			<td>
+				<b>Total</b>
+			</td>
+         </thead>
+         <tbody>
+         {% for dupe in all_dupes %}
+         <tr data-id="{{ dupe.mac }}">
+            <td id="{{ dupe.name }}"> {{ dupe.name }}</td>
+			<td id="{{ dupe.product }}"> {{ dupe.product }}</td>
+		    <td id="{{ dupe.mac }}-mac"> {{ dupe.mac }}</td>
+			<td id="{{ dupe.num }}-num"> {{ dupe.num }}</td>
+         </tr>
+         {% endfor %}
+         </tbody>
+      </table>
+
+   </div>
+
+
+<script src="https://code.jquery.com/jquery-3.3.1.js"></script>
+<script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap4.min.js"></script>
+<script>
+$(document).ready(function() {
+	var table=$('table.display').DataTable({
+				        lengthMenu: [
+				            [-1, 10, 25, 50],
+				            ["All", 10, 25, 50],
+				        ],
+						order: [[3, 'desc']],
+						columnDefs: [
+						    {"type" : "html", "targets" : 0},
+							{"type" : "html", "targets" : 1},
+							{"type" : "html", "targets" : 2},
+							{"type" : "html-num", "targets" : 3},
+						]
+				    });
+	$('#dupeMacs tbody').on('click', 'tr', function() {
+		var data=table.row(this).data();
+		window.open("/samurai?orderBy=Last_Seen&direction=0&macaddress="+encodeURIComponent(data[2]), "_blank")
+	});
+} );
+</script>
+{% endblock %}

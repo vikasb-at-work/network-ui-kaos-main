@@ -1,0 +1,103 @@
+.logo {
+	text-decoration: none;
+	border:0;
+	width : 50px;
+	height : 50px;
+	position: relative;
+	margin : 0;
+	padding : 0px;
+	background : url("/images/GlobalNetworkServices-small.png") no-repeat 0 0;
+	background-size: auto 50px;
+	text-indent: 50px;
+	text-transform: uppercase;
+	-webkit-font-smoothing:antialiased;
+	text-shadow:0 1px 0 #000;
+	z-index: 999;
+}	    
+.logo a {
+	font-family: "Verdana", "Arial", Sans-serif;
+	display : block;
+	height : auto;
+	color: orange;
+	position: absolute;
+	top: -200px;
+	text-decoration: none;
+    -webkit-transition: all .25s ease;
+	   -moz-transition: all .25s ease;
+	    -ms-transition: all .25s ease;
+	     -o-transition: all .25s ease;
+	        transition: all .25s ease;
+}
+nav {
+	position: relative;
+	left: 50px;
+	top: -40px;
+	text-transform: uppercase;
+}
+nav ul {
+	-webkit-font-smoothing:antialiased;
+	text-shadow:0 1px 0 #FFF;
+    background: #DDD;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+}
+nav li {
+    float: left;
+    margin: 0;
+    padding: 0;
+    position: relative;
+	min-width: 25%;
+}
+nav a {
+    background: #0000ff;
+    color: #FFF;
+    display: block;
+    font: 20px/50px sans-serif;
+    padding: 0 25px;
+    text-align: center;
+    text-decoration: none;
+}
+nav .dropdown:after {
+    content: ' ▶';
+}
+nav .dropdown:hover:after{
+	content:'\25bc'
+}
+nav li:hover a {
+    background: #0000cc;
+}
+nav li ul {
+    float: left;
+    left: 0;
+    opacity: 0;
+    position: absolute;
+    top: 200px;
+    visibility: hidden;
+    z-index: 1;
+}
+nav li:hover ul {
+    opacity: 1;
+    top: 48px;
+    visibility: visible;
+}
+nav li ul li {
+    float: none;
+    width: 100%;
+}
+nav li ul a:hover {
+    background: #bbb;
+}
+/* Clearfix */
+
+.cf:after, .cf:before {
+    content: "";
+    display: table;
+}
+.cf:after {
+    clear:both;
+}
+.cf {
+    zoom:0.65;
+}

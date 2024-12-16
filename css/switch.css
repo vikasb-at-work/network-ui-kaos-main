@@ -1,0 +1,269 @@
+    .txt {
+        fill: black;
+        font: bold 16px sans-serif;
+        z-index: 300;
+    }
+    .faceplate {
+        fill: white;
+        stroke: none;
+    }
+    .chassis {
+        fill: none;
+        stroke: black;
+        pointer-events: all;
+    }
+    .chassis:hover {
+        fill: #f7941d44;
+        stroke: blue !important;
+    }
+	.chassis-overdraw {
+		fill: none;
+		stroke: black;
+		pointer-events: all;
+	}
+    .port {
+        fill: grey;
+        stroke: black;
+        pointer-events: all;
+    }
+    .port:hover {
+        fill:  #f7941d;
+        stroke: blue !important;
+    }
+    .madeActive {
+        animation: blink 1s infinite;
+    }
+    .portUp {
+        fill: green;
+        stroke: #00ff00;
+    }
+    .portDown {
+        fill: #AA0000;
+        stroke: #ff0000;
+    }
+	.portDownPOE {
+		fill: #ff6600;
+		stroke: #993d00;
+	}
+	.invisible {
+		display: none;
+		visibility: hidden;
+	}
+    @keyframes blink-dash-clear {
+        from {stroke-dasharray: none; }
+        to {stroke-dasharray: .2%; }
+    }
+    .blink-dash-clear{
+        animation: blink-dash-clear 1s infinite;
+    }
+    @keyframes blink-blue-white {
+        from {stroke: blue; }
+        to {stroke: white; }
+    }
+    .blink-blue-white{
+        animation: blink-blue-white 1s infinite;
+    }
+	#switchContent{
+		margin-top: -160px;
+	}
+	#switches {
+		grid-area: content1;
+/* //	-webkit-transform:scale(0.50);
+//		-moz-transform:scale(0.50);
+//		-ms-transform:scale(0.50);
+//		transform:scale(0.50); */
+	}
+	#contextMenu {
+		border: 4px solid #f36e21;
+		width: 100%;
+		background-color:  #f36e21;
+		z-index: -1;
+	}
+	#deviceContextMenu {
+		grid-area: content2;
+	}
+	#selectedDetail {
+		grid-area: footer;
+	}
+	#grid {
+		display: grid;
+		margin-top: 10px;
+		grid-template-columns: 70% auto;
+		grid-template-areas:
+			'content1 content2'
+			'footer footer';
+	}
+	.deviceContextMenuInstance {
+		display: block;
+		width: 100%;
+		height: 139px;
+		margin-bottom: 6px;
+		background-color: #c79b6b;
+	}
+	.deviceContextMenuInstance6405 {
+		display: block;
+		width: 100%;
+		height: 990px;
+		background-color: #c79b6b;
+	}
+	.rounded-corners {
+		border-radius: 0.25rem;
+	}
+	.rounded-corners-with-button {
+			border-top-left-radius: 0.25rem;
+			border-bottom-left-radius: 0.25rem;
+			border-top-right-radius: 0;
+			border-bottom-right-radius: 0;
+	}
+	.ltGrey {
+		background-color: #cccccc;
+	}
+	.mdGrey {
+		background-color: #aaaaaa;
+	}
+	.gmiDkBlue {
+		background-color: #202975;
+		fill: #202975;
+	}
+	.gmiDkBlueTxt {
+		fill: #20297540;
+		stroke: #20297540;
+	}
+	.gmiRed {
+		background-color: #e32726;
+		fill: #e32726;
+	}
+	.gmiDkRed {
+		background-color: #4f0d0d;
+		fill: #4f0d0d;
+	}
+	.gmiLtBlue {
+		background-color: #0099d9;
+		fill: #0099d9;
+	}
+	.gmiOrange {
+        background-color:  #f7941d;
+        fill:  #f7941d;
+	}
+	.vlanOn {
+		background-color: #0099d9 !important;
+		font-color: black;
+	}
+	.vlanOff {
+		background-color: #97a1b0;
+		font-color: #cfd7e6;
+	}
+	.toggle-switch-inline {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		display: inline-flex;
+		border-top-left-radius: 0;
+		border-bottom-left-radius: 0;
+	}
+	.toggle-switch-inline li {
+		position: relative;
+		margin: 5px;
+		border-top-left-radius: 5px;
+		border-bottom-left-radius: 5px;
+	}
+	.toggle-switch-inline li label {
+		border: 1px solid;
+		border-radius: 5px;
+		padding: 3px;
+	}
+	.toggle-switch-inline label, .toggle-switch-inline input {
+		display: block;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+	}
+	.toggle-switch-inline input[type='radio']{
+		opacity:0.01;
+		z-index: 100;
+	}
+	.selected {
+		background-color: #0000ff;
+	}
+	.drop-zone {
+	}
+	.drop-zone--over {
+		opacity: 0.4;
+	}
+	.drop-zone--expand {
+		border: dashed 3px black;
+		padding: 30px;
+		background: orange;
+	}
+	.draggable-switch {
+	}
+	.divDisabled {
+		background-color: #aaaaaa;
+	}
+	.divDisabled label {
+		color: #666666;
+	}
+	.divDisabled input {
+		color: #aaaaaa;
+	}
+	.button {
+	}
+	.button rect {
+		stroke: #000000;
+		stroke-width: 2px;
+	}
+	.button:hover { 
+        fill:  #f7941d;
+	}
+	.buttonText {
+		font: bold 1px sans-serif;
+		fill: white;
+		stroke: none;
+	}
+	/* added for the interface changes for dyn seg */
+	.port-input-box {
+		width: 250px;
+		margin-left: auto;
+	}
+	.port-input-iprouting {
+		width: 300px;
+		margin-left: auto;
+	}
+	.port-input-desc {
+		width: 285px;
+		margin-left: auto;
+	}
+	.port-input-mtu {
+		width: 146px; /* should be 104 less than port-input-box */
+		margin-left: 10px;
+	}
+	.port-input-label {
+		display: flex;
+		justify-content: flex-end;
+	}
+	.port-toggle-label {
+		display:flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+	.port-toggle-box {
+		width:285px;
+		margin-left: auto;
+	}
+	/* These items are for the copper and sfp button dropdowns */
+	.dropdown-menu {
+		background-color: #cccccc; /* ltGrey from above */
+		width: auto;
+		height: auto;
+		padding: 0px;
+		/*border: 1px solid #ccc;*/
+		min-width: 0px;
+	}
+	.dropdown-item {
+		color: #000; 
+	}
+	.dropdown-item:hover {
+		background-color: #157347; /* this color matches the hover color for a bootstrap btn-success class button*/
+		color: #000; 
+	}

@@ -1,0 +1,74 @@
+# description: Deploys to Prod when the default branch set on the repository (usually main or master) has code pushed to it (usually after a PR has been merged).
+name: Deploy Production
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  # Converts the repository name into a kebab case safe name that can be used in DNS names and container names.
+  repo-name:
+    runs-on: gcp
+    outputs:
+      safeRepoName: ${{steps.kebabcase.outputs.kebabRepository}}
+    steps:
+      - id: kebabcase
+        uses: gmi-actions/kebabcase@v1
+  
+  # Builds and promote your container image
+  build-container:
+    needs: repo-name
+    uses: gmi-actions/build-container/.github/workflows/build-container.yml@v1
+    with:
+      container_name: ${{ needs.repo-name.outputs.safeRepoName }} # Defaults container name to your repository name
+    secrets: inherit
+  
+  # Deploys your application to k8s-applications repository
+  deploy:
+    environment: prod # CHANGE ME TO YOUR DESIRED ENV NAME!!!
+    needs:
+      - build-container
+      - repo-name
+    runs-on: gcp
+    outputs:
+      clusterMatrix: ${{steps.deploy.outputs.clusterMatrix}}
+    steps:
+    - uses: actions/checkout@v4 # Checkout is required to pull the correct catalog-info-yaml
+    - name: deploy
+      id: deploy
+      uses: gmi-actions/deployK8sApplication@v1 
+      with:
+        kubeconfig: ${{secrets.K8S_DEPLOY_KUBECONFIG}}
+        cluster_env: prod
+        app_env: prod
+        # These are your HELM values file overrides. The below contains defaults most projects will use.
+        values: | 
+          image: 
+            repository: ${{needs.build-container.outputs.container_registry}}/${{needs.build-container.outputs.container_name}}
+            tag: ${{needs.build-container.outputs.container_tag}}
+          istio:
+            # Don't forget to setup your environment with Variables. This example uses a github Environment specific Variable.
+            hosts:
+              - ${{ needs.repo-name.outputs.safeRepoName }}.k8s.genmills.com
+              - kaos.genmills.com
+          extraEnvs:
+            VAULT_APP_ROLE: gmi-platform-network-ui-kaos-read-prd
+            PLATFORM_ENVIRONMENT: PROD
+          podLabels:
+            admission.datadoghq.com/enabled: "true" # Enable Admission Controller to mutate new pods part of this deployment
+            tags.datadoghq.com/env: "prod"
+            tags.datadoghq.com/service: "${{ github.event.repository.name }}"
+            tags.datadoghq.com/version: "v0.1"
+          podAnnotations:	
+            admission.datadoghq.com/python-lib.version: "v2.6.5"
+            ad.datadoghq.com/${{ github.event.repository.name }}.logs: '[{"source": "python"}]'
+
+
+
+  # Deploys your application to the cluster(S). Utilizes argocd to sync the helm chart in your repository to the cluster with the above overrides.
+  sync:
+    uses: gmi-actions/deployK8sApplication/.github/workflows/sync.yml@v1
+    needs: deploy
+    with:
+      matrix: ${{ needs.deploy.outputs.clusterMatrix }}
+      environment: prod # CHANGE ME TO YOUR DESIRED ENV NAME!!!
+    secrets: inherit

@@ -1,0 +1,198 @@
+{% extends "layout_menu.html" %}
+{% block body %}
+
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/select/1.3.0/css/select.dataTables.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.5.6/css/buttons.dataTables.min.css">
+
+
+<title>Main Page</title>
+
+   {% with messages = get_flashed_messages() %}
+      {% if messages %}
+         {% for message in messages %}
+   </b>Connected to:   <font color="blue"> <b id="dbname"> {{ message }}</b></font>
+         {% endfor %}
+      {% endif %}
+   {% endwith %}
+   Last Updated on:
+{% for load_date in load_dates %}
+   {% for key,value in load_date.items() %}
+<font color="blue"><b>{{ value }}</b></font>
+            {% endfor%}
+         {% endfor %}
+
+<p>Please Select Which Query</p>
+
+   <style>
+   .inv {
+   display: none;
+   }
+</style>
+<select id="target">
+   <option value="">Select...</option>
+   <option value="content_1">Unused Nodes</option>
+   <option value="content_2">Unused Vips</option>
+<select>
+   <br>
+   <br>
+   <div id="content_1" class="inv">
+      <table id="example1" class="display" style="width:100%">
+         <thead>
+            <td>
+               <b>Unused Nodes</b>
+            </td>
+            <td>
+               <b>Address</b>
+            </td>
+         </thead>
+         <tbody>
+         {% for unused_node in unused_nodes %}
+         <tr data-id="{{ unused_node.name }}">
+            {% for key,value in unused_node.items() %}
+            <td id="{{ value }}"> {{ value }} </td>
+            {% endfor%}
+         </tr>
+         {% endfor %}
+         </tbody>
+      </table>
+
+   </div>
+    <div id="content_2" class="inv">
+      <table id="example2" class="display" style="width:100%">
+         <thead>
+            <td>
+               <b>Unused Vips</b>
+            </td>
+         </thead>
+         <tbody>
+         {% for unused_vip in unused_vips %}
+         <tr data-id="{{ unused_vip.name }}">
+            {% for key,value in unused_vip.items() %}
+            <td id="{{ value }}"> {{ value }} </td>
+            {% endfor%}
+         </tr>
+         {% endfor %}
+         </tbody>
+      </table>
+
+   </div>
+   <!--<div id="content_3" class="inv">Content 3</div>-->
+   <script>
+      document
+          .getElementById('target')
+          .addEventListener('change', function () {
+              'use strict';
+              var vis = document.querySelector('.vis'),
+                  target = document.getElementById(this.value);
+              if (vis !== null) {
+                  vis.className = 'inv';
+              }
+              if (target !== null ) {
+                  target.className = 'vis';
+              }
+      });
+   </script>
+</select>
+</select>
+
+
+
+<form id="delete_form" method="post" action="/f5/delete">
+
+    <input id="node_name" type="hidden" name="names">
+
+<button id="delete" type="button">Delete</button>
+</form>
+
+<script src="https://code.jquery.com/jquery-3.3.1.js"></script>
+<script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/select/1.3.0/js/dataTables.select.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/1.5.6/js/dataTables.buttons.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    var table = $('#example1').DataTable({
+        dom: 'Bfrtip',
+        select: false,
+        buttons: [
+            {
+                text: 'Select all',
+                action: function () {
+                    table.rows().select();
+                }
+            },
+            {
+                text: 'Select none',
+                action: function () {
+                    table.rows().deselect();
+                }
+            }
+        ]
+    } );
+
+    $('#example1').on( 'click', 'tr', function () {
+        $(this).toggleClass('selected');
+    } );
+    $('#delete').click( function () {
+        names = []
+        selectedNodes = $("#example1 .selected")
+        $.each(selectedNodes, function(i,tr){
+            names.push($(tr).attr("data-id"))
+        })
+        $("input#node_name").val(names.join());
+        $.post({
+            url:"/f5/delete",
+            data: $("form#delete_form").serialize(),
+            success: function(){
+                table.rows('.selected').remove().draw();
+            }
+        })
+    } );
+    });
+</script>
+<script>
+$(document).ready(function() {
+    var table = $('#example2').DataTable({
+        dom: 'Bfrtip',
+        select: false,
+        buttons: [
+            {
+                text: 'Select all',
+                action: function () {
+                    table.rows().select();
+                }
+            },
+            {
+                text: 'Select none',
+                action: function () {
+                    table.rows().deselect();
+                }
+            }
+        ]
+    } );
+
+    $('#example2 tbody').on( 'click', 'tr', function () {
+        $(this).toggleClass('selected');
+    } );
+    $('#delete').click( function () {
+        names = []
+        selectedNodes = $("#example2 .selected")
+        $.each(selectedNodes, function(i,tr){
+            names.push($(tr).attr("data-id"))
+        })
+        $("input#node_name").val(names.join());
+        $.post({
+            url:"/f5/delete",
+            data: $("form#delete_form").serialize(),
+            success: function(){
+                table.rows('.selected').remove().draw();
+            }
+        })
+    } );
+       });
+</script>
+
+
+{% endblock %}

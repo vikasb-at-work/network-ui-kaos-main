@@ -1,0 +1,729 @@
+{% extends 'menu.html' %}
+{% block content %}
+<style>
+    .input-group-label {
+        width: 130px;
+    }    
+    .form-control.text-right {
+        text-align: right;
+    }
+    /* Sets a max width for the Product column and allows the text to wrap */
+    td:nth-child(1) {
+        max-width: 320px;
+        white-space: normal;
+    }
+    /* Text color for non-active items */
+    .lighter-text {
+        color: #a0a0a0;
+    }
+    .url-input{
+        border-radius: .25rem;
+        border: 1px solid hsl(0, 0%, 70%);
+    }
+    .product-name-display {
+        border: none; 
+        /* background-color: transparent; */
+        color: inherit;
+        cursor: default;
+    }
+    .product-name-display:disabled {
+        background-color: transparent; /* override bootstrap background color */
+        opacity: 1;
+    }
+    .icon-question-background {
+        color: #003cff;
+    }
+    textarea {
+        resize: none;
+    }
+    .icon-pencil-custom {
+        color: #5cba45; /* Should match the "Custom" badge that gets applied closely */
+    }
+</style>
+<template id="gridTemplate">
+    <div class="container">
+        <div class="row">
+            <div class="col"> <!-- how wide the whole table is-->
+                <h1>Manage Custom Products&nbsp;<i class="fa-solid fa-pencil icon-pencil-custom"></i></h1>
+                <br>
+                <button type="button" @click="toggleAddCustomProduct(true)" class="btn btn-success btn-sm">Add Product</button>
+                <br><br>
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">Product Name</th>
+                            <th scope="col">Model Number</th>
+                            <th scope="col">Category</th>
+                            <th scope="col">Type</th>
+                            <th scope="col">Vendor</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="row in samurai_products_custom_list" :key="row.id" :class="{ 'lighter-text': row.current == 0 }">
+                            <td>{%raw%}{{ row.product          }}{%endraw%}</td>
+                            <td>{%raw%}{{ row.modelNumber      }}{%endraw%}</td>
+                            <td>{%raw%}{{ row.productType_name }}{%endraw%}</td>
+                            <td>{%raw%}{{ row.deviceType_name  }}{%endraw%}</td>
+                            <td>{%raw%}{{ row.vendor_name      }}{%endraw%}</td>                            
+                            <td>
+                                <div>
+                                    <button type="button" class="btn btn-info btn-sm" @click="toggleEditProductData(row)">Product</button>
+                                    <button type="button" class="btn btn-danger btn-sm" @click="handleDeleteProductSubmit(row)">Delete</button>
+                                    <button type="button" class="btn btn-warning btn-sm" @click="toggleMergeProduct(row)">Merge</button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div> <!-- end column -->
+        </div> <!-- end row -->
+    </div> <!-- end container -->
+
+<!-- edit product data modal -->
+<div ref="editProductData" class="modal fade" :class="{ show: activeEditProductData, 'd-block': activeEditProductData }" tabindex="-1"role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit {%raw%}{{ editProductData.productAlias }}{%endraw%}</h5>
+            </div> <!-- end modal header-->
+            <div class="modal-body" ref="modalBodyRef">
+                <form>
+                    <div class= "container"> 
+                        <div class = "row">
+                            <div class = "col"> 
+                                <!-- ProductAlias -->
+                                <div class="mb-3">
+                                    <label for="editProductAlias" class="form-label" style="display: inline-block">Custom product name:</label>
+                                    <div 
+                                        id="circle_anchor_editProductAlias" 
+                                        style="display: inline-block; padding-left: 5px;"
+                                        data-bs-toggle="tooltip" 
+                                        data-bs-placement="right" 
+                                        title="This is the name we will identify the product as if the discovered name isn't descriptive enough.">
+                                        <i class="fas fa-question-circle icon-question-background"></i>
+                                    </div>
+                                    <input id="editProductAlias" class="form-control" type="text" v-model="editProductData.productAlias">
+                                </div>
+                                <div class="row">
+                                    <div class="col">
+                                        <!-- ProductType Category-->
+                                        <div class="mb-3"> 
+                                            <label for="editProductType" class="form-label">Product Category:</label>
+                                            <select type="text" class="form-select" id="editProductType" v-model="editProductData.productType">
+                                                <option value="1">Hardware</option>
+                                                <option value="2">Software</option>
+                                            </select>
+                                        </div>
+                                    </div> <!-- end column -->
+                                    <div class="col">
+                                        <!-- DeviceType -->
+                                        <div class="mb-3"> 
+                                            <label for="editDeviceType" class="form-label">Product Type:</label>
+                                            <select type="text" class="form-select" id="editDeviceType" v-model="editProductData.deviceType">
+                                                <option v-for="row in samurai_deviceType_list" :value="row.id">{%raw%}{{row.deviceType}}{%endraw%}</option>
+                                            </select>
+                                        </div>
+                                    </div> <!-- end column -->
+                                </div> <!-- end row -->
+                                <!-- Vendor -->
+                                <div class="mb-3"> 
+                                    <label for="editVendor" class="form-label">Product Vendor:</label>
+                                    <select type="text" class="form-select" id="editVendor" v-model="editProductData.vendor_id">
+                                        <option v-for="row in samurai_vendor_list" :value="row.id">{%raw%}{{row.vendor}}{%endraw%}</option>
+                                    </select>
+                                </div>
+                                <!-- modelNumber -->
+                                <div class="mb-3">
+                                    <label for="editModelNumber" class="form-label" style="display: inline-block">Model number:</label>                                    
+                                    <input id="editModelNumber" class="form-control" type="text" placeholder="Enter model or part number here..." v-model="editProductData.modelNumber">
+                                </div>
+                            </div> <!-- end first column -->
+                        </div> <!-- end row -->
+                        <p>
+                            Additional attributes can be edited on the regular Samurai Products page.
+                        </p>
+                    </div> <!-- end container -->
+                    <!-- submit and reset buttons -->
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-primary btn-sm" @click="handleEditProductSubmit">Submit</button>
+                    </div>
+                    <!-- cancel button -->
+                    <div class="btn-group" role="group" style="position: absolute; bottom: 16px; right: 16px;">
+                        <button type="button" class="btn btn-warning btn-sm" @click="handleEditProductCancel">Cancel</button>
+                    </div>
+                </form>
+            </div> <!-- end modal body -->
+        </div> <!-- end modal content -->
+    </div> <!-- end modal dialog -->
+</div> <!-- end ref="editData" -->
+<div v-if="activeEditProductData" class="modal-backdrop fade show"></div>
+
+<!-- add product data modal -->
+<div ref="addProduct" class="modal fade" :class="{ show: activeAddProduct, 'd-block': activeAddProduct }" tabindex="-1"role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Custom Product</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" @click="handleAddProductCancel">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div> <!-- end modal header-->
+            <div class="modal-body" ref="modalBodyRef">
+                <form>
+                    <div class= "container"> 
+                        <div class = "row">
+                            <div class = "col"> 
+                                <!-- Product Name -->
+                                <div class="mb-3">
+                                    <label for="addProduct" class="form-label" style="display: inline-block">Product name:</label>
+                                    <input id="addProduct" class="form-control" type="text" placeholder="Enter a name for the product..." v-model="addProductData.product">
+                                </div>
+                                <div class="row">
+                                    <div class="col">
+                                        <!-- ProductType Category-->
+                                        <div class="mb-3"> 
+                                            <label for="addProductType" class="form-label">Product Category:</label>
+                                            <select type="text" class="form-select" id="addProductType" v-model="addProductData.productType">
+                                                <option value="1">Hardware</option>
+                                                <option value="2">Software</option>
+                                            </select>
+                                        </div>
+                                    </div> <!-- end column -->
+                                    <div class="col">
+                                        <!-- DeviceType -->
+                                        <div class="mb-3"> 
+                                            <label for="addDeviceType" class="form-label">Product Type:</label>
+                                            <select type="text" class="form-select" id="addDeviceType" v-model="addProductData.deviceType">
+                                                <option v-for="row in samurai_deviceType_list" :value="row.id">{%raw%}{{row.deviceType}}{%endraw%}</option>
+                                            </select>
+                                        </div>
+                                    </div> <!-- end column -->
+                                </div> <!-- end row -->
+                                <!-- Vendor -->
+                                <div class="mb-3"> 
+                                    <label for="addVendor" class="form-label">Product Vendor:</label>
+                                    <select type="text" class="form-select" id="addVendor" v-model="addProductData.vendor_id">
+                                        <option v-for="row in samurai_vendor_list" :value="row.id">{%raw%}{{row.vendor}}{%endraw%}</option>
+                                    </select>
+                                </div>
+                                <!-- modelNumber -->
+                                <div class="mb-3">
+                                    <label for="addModelNumber" class="form-label" style="display: inline-block">Model number:</label>                                    
+                                    <input id="addModelNumber" class="form-control" type="text" placeholder="Enter model or part number here..." v-model="addProductData.modelNumber">
+                                </div>
+                            </div> <!-- end first column -->
+                            <p>
+                                Additional attributes can be edited on the regular Samurai Products page.
+                            </p>
+                        </div> <!-- end row -->
+                    </div> <!-- end container -->
+                    <!-- submit and reset buttons -->
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-primary btn-sm" @click="handleAddProductSubmit">Submit</button>
+                    </div>
+                    <!-- cancel button -->
+                    <div class="btn-group" role="group" style="position: absolute; bottom: 16px; right: 16px;">
+                        <button type="button" class="btn btn-warning btn-sm" @click="handleAddProductCancel">Cancel</button>
+                    </div>
+                </form>
+            </div> <!-- end modal body -->
+        </div> <!-- end modal content -->
+    </div> <!-- end modal dialog -->
+</div> <!-- end ref="editData" -->
+<div v-if="activeAddProduct" class="modal-backdrop fade show"></div>
+
+<!-- merge product modal -->
+<div ref="mergeProduct" class="modal fade" :class="{ show: activeMergeProduct, 'd-block': activeMergeProduct }" tabindex="-1"role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Merge a custom product with a discovered product</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" @click="handleMergeProductCancel">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div> <!-- end modal header-->
+            <div class="modal-body" ref="modalBodyRef">
+                <form>
+                    <div class= "container"> 
+                        <div class = "row">
+                            <div class = "col"> <!-- begin left column -->
+                                <!-- Source Custom Product Name -->
+                                <div class="mb-3">
+                                    <label for="mergeSourceProduct" class="form-label" style="display: inline-block">Source Custom Product name:</label>
+                                    <input id="mergeSourceProduct" readonly class="form-control" type="text" placeholder="Enter a name for the source product..." v-model="mergeSourceProductData.product">
+                                </div>                                
+                            </div> <!-- end first column -->
+                            <div class="col-1 d-flex justify-content-center align-items-center">
+                                <!-- font awesome sizes fa-xs, fa-sm, fa-lg, fa-2x, fa-3x, fa-4x, fa-5x -->
+                                <i class="fa-solid fa-arrow-right fa-2x"></i>
+                            </div>
+                            <div class = "col"> <!-- begin right column style="border-left: 1px dashed #333;" --> 
+                                <!-- Destination Product Name -->
+                                <div class="mb-3">
+                                    <label for="mergeDestinationProduct" class="form-label" style="display: inline-block">Destination Discovered Product name:</label>
+                                    <select type="text" class="form-select" id="mergeDestinationProduct" v-model="mergeDestinationData.id">
+                                        <option value="">None Selected</option>
+                                        <option v-for="row in filtered_samurai_products_list" :value="row.id">{%raw%}{{row.productAlias}}{%endraw%}</option>
+                                    </select>
+                                </div>                                
+                            </div> <!-- end right column -->
+                        </div> <!-- end row -->
+                        <div class="mb-3">
+                            <hr>
+                            <p>NOTE: Merging a custom product with a discovered product will take the following actions:</p>
+                            <ul>
+                                <li>All user customizable attributes of the custom product will be copied to the destination product overwriting anything that is already there.</li>
+                                <li>Any product or device references to the custom product will be changed to the discovered product.</li>
+                                <li>The custom product will be removed at the end of the process.</li>
+                                <li>THIS CANNOT BE UNDONE.</li>
+                            </ul>
+                        </div>
+                    </div> <!-- end container -->
+                    <!-- submit and reset buttons -->
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-primary btn-sm" @click="are_you_sure(handleMergeProductSubmit, mergeSourceProductData.id)">Merge</button>
+                    </div>
+                    <!-- cancel button -->
+                    <div class="btn-group" role="group" style="position: absolute; bottom: 16px; right: 16px;">
+                        <button type="button" class="btn btn-warning btn-sm" @click="handleMergeProductCancel">Cancel</button>
+                    </div>
+                </form>
+            </div> <!-- end modal body -->
+        </div> <!-- end modal content -->
+    </div> <!-- end modal dialog -->
+</div> <!-- end ref="editData" -->
+<div v-if="activeMergeProduct" class="modal-backdrop fade show"></div>
+
+{% include "vue_utility_modal_are_you_sure.html" %}
+{% include "vue_utility_modal_alert.html" %}
+
+</div> <!-- end container -->
+</template>
+
+<script type="module">
+    import { createApp } from 'https://unpkg.com/petite-vue?module'
+    import 'https://unpkg.com/axios/dist/axios.min.js'
+ 
+    const samurai_get_product_endpoint = "/samurai/products/getData";
+    const samurai_get_product_endpoint_custom = "/samurai/products/getFilteredData/Custom";
+    const samurai_update_product_endpoint = "/samurai/products/updateData"; //need to add /<id> to this in the PUT
+    const samurai_get_product_replacement_endpoint = "/samurai/product_replacement/getData";
+    const samurai_update_product_replacement_endpoint = "/samurai/product_replacement/updateData"; //need to add /<id> to this in the PUT
+    const samurai_get_vendor_endpoint = "/samurai/vendor_info/getData";
+    const samurai_get_devicetype_endpoint = "/samurai/device_types/getData";
+    const samurai_merge_products_endpoint = "/samurai/products/mergeData" //need to add /<id> (of the discovered product) to this in the PUT
+
+    function app() {
+        return {
+            data() {
+                    return { 
+                        activeAddData: false
+                    }
+            },
+            $template: '#gridTemplate',
+            modalAlert: { title: '', body: '', button:'OK'},
+            tokenExpiredAlert: {
+                title: "Your API Token Has Expired",
+                body: "You will need to logout and log back in to reset your token.",
+                body2: "You will need to logout and log back in to reset your token. <br><br> <a href='/login?next=/config/global/irp'>Logout</a>",
+                button: "OK"},
+            areYouSure: {
+                title: 'WARNING - DATA WILL BE REMOVED',
+                body: 'This action will delete data.  Are you sure?',
+                button: 'Yes, proceed.',
+                action: undefined},
+            samurai_products_list: [],
+            filtered_samurai_products_list: [],
+            samurai_products_custom_list: [],
+            samurai_product_replacement_list: [],
+            samurai_vendor_list: [{id: 1, vendor: "* Unknown"}],
+            samurai_deviceType_list: [{id: 1, deviceType: "* Unknown"}],
+            showTooltip: false,
+            activeEditProductData: false,
+            activeAddProduct: false,
+            activeMergeProduct: false,
+            editReplacementData: {id: "", productOld: "", productOldName: "", productNew: "", productNewName: ""},
+            editPricingData: {id: "", product: "", capital: 0, expOther: 0, expSaas: 0, expMaint: 0, current:0, deviceType: 0,
+                              maint1PartNumber: "", maint1Description: "", maint2PartNumber: "", maint2Description: ""},
+            editProductData: {id: "", product: "", current:0, deviceType: 0, deviceType_name: "", vendor: 0, vendor_name: "", 
+                              productType: 0, productType_name: "", productNew: "", orig_productNew: "", replacement_id: 0,
+                              announcement: "", productAlias: "", modelNumber: "", productLink: "", productNotes: ""},
+            addProductData: {id: "", product: "", deviceType: 1, deviceType_name: "", vendor: 1, vendor_name: "", 
+                             productType: 1, productType_name: "", productNew: "", orig_productNew: "", 
+                             modelNumber: "", productLink: "", productNotes: ""},                              
+            editLifecycleData: {id: "", product: "", deviceType: 0, end_of_sale: "", end_of_hw_rewnew: "", end_of_sw_sec_upd: "",
+                                end_of_hw_support: "", end_of_support: "", announcement: ""},
+            mergeSourceProductData: {product: ""},
+            mergeDestinationData: {product: "", id: ""},
+            defultPricingData: {id: "", product: "", capital: 0, expOther: 0, expSaas: 0, expMaint: 0, current:0, deviceType: 0},
+            deleteData: {id: '' },
+
+            samuraiProductLink(row) {
+                return "/samurai?&deviceModel=" + row.product;
+            },
+            makeReplacementName(row) {
+                //console.log(row.product, row.modelNumber);
+                if (row.product == row.productAlias) {
+                    if (row.modelNumber !== "" && row.modelNumber !== null) {
+                        return row.productAlias + " (model: " + row.modelNumber + ")";
+                    } else {
+                        return row.productAlias;
+                    }
+                } else {
+                    if (row.modelNumber !== "" && row.modelNumber !== null) {
+                        return row.productAlias + " (model: " + row.modelNumber + ")" + " (orig: " + row.product + ")";
+                    } else {
+                        return row.productAlias + " (orig: " + row.product + ")";
+                    }
+                }
+            },
+            formatDollar(value) {
+                // Skip if null
+                if (value === null) {
+                    //console.log("value is null, skipping");
+                    return null
+                }
+                // Format value as dollar amount with thousands separator
+                let formattedValue = value.toLocaleString('en-US', {
+                    style: 'currency',
+                    currency: 'USD',
+                    minimumFractionDigits: 0
+                });
+            
+                return formattedValue;
+            },
+            are_you_sure(action,id){
+                this.areYouSure.displayed=true
+                var el = document.getElementById('modalAreYouSure');
+                var bel = new bootstrap.Modal(el);
+                bel.show();
+                this.areYouSure.active = bel;
+                this.areYouSure.action=action
+                this.areYouSure.id=id
+            },
+            dismiss_are_you_sure(value){
+                if (this.areYouSure.displayed) {
+                    this.areYouSure.result = value;
+                    if (value) {
+                        this.areYouSure.action(this.areYouSure.id)
+                    }
+                    this.areYouSure.displayed=false;
+                    this.areYouSure.active.hide();
+                }
+            },
+            activate_modal_alert(title, message, button, action){
+                this.modalAlert.title = title;
+                this.modalAlert.displayed = true;
+                this.modalAlert.button = button;
+                var el = document.getElementById('modalAlert');
+                var bel = new bootstrap.Modal(el);
+                bel.show();
+                this.modalAlert.active = bel;
+                var modalBody = document.getElementById('modalBody');
+                modalBody.innerHTML = message;
+            },
+            dismiss_modal_alert(){
+                if (this.modalAlert.displayed) {
+                    this.modalAlert.displayed=false;
+                    this.modalAlert.active.hide();
+                }
+            },
+            reset_add_product_data() {
+                this.addProductData = {product: "", productAlias: "", modelNumber: "", productType: "", deviceType: "", vendor_id: ""};
+            },
+            reset_merge_data() {
+                this.mergeDestinationData = {product: "", id: ""};
+            },
+            add_product_data(payload) {
+                const path = samurai_update_product_endpoint;
+                //Brian
+                console.log("add product payload", payload)
+                axios.post(path, payload).then((response) => {
+                    this.get_data();
+                }).catch((error) => {
+                    console.error(error.response.data);
+                    this.get_data();
+                })
+            },
+            delete_product_data(payload) {
+                const path = samurai_update_product_endpoint+"/"+payload.id;
+                //Brian
+                //console.log("payload", payload);
+                axios.delete(path, payload).then((response) => {
+                    this.get_data();
+                    //console.log("response", response.data)
+                }).catch((error) => {
+                    console.error(error.response);
+
+                    // response code 409 is specific to the delete failing due to the item still being in use
+                    if (error.response.status === 409) {
+                        let productNames = [];
+                        let deviceNames = [];
+
+                        const productReplacementUsage = error.response.data.product_replacement_usage;
+                        const samuraiOverrideUsage = error.response.data.samurai_override_usage;
+
+                        // Extract product names if available
+                        if (productReplacementUsage && productReplacementUsage.length > 0) {
+                            productNames = productReplacementUsage.map(item => item.product_name);
+                            //console.log("Product Names:", productNames);
+                        } else {
+                            //console.log("No product names found");
+                        }
+
+                        // Extract device names if available
+                        if (samuraiOverrideUsage && samuraiOverrideUsage.length > 0) {
+                            deviceNames = samuraiOverrideUsage.map(item => item.device_name);
+                            //console.log("Device Names:", deviceNames);
+                        } else {
+                            //console.log("No device names found");
+                        }
+
+                        let warningMessage = "<strong>Unable to delete " + payload.name + " because it is in use.</strong><br>";
+                        if (productNames.length > 0) {
+                            warningMessage += "<br>"
+                            warningMessage += "<strong>Replacement for product(s): </strong>" + productNames.join(", ");
+                            warningMessage += "<br>"
+                        }
+                        if (deviceNames.length > 0) {
+                            warningMessage += "<br>"
+                            warningMessage += "<strong>Replacement override for device(s): </strong>" + deviceNames.join(", ");
+                        }
+
+                        this.activate_modal_alert("Cannot delete product in use.", warningMessage, "OK");
+                        this.get_data();
+                    }
+                });
+            },
+            edit_product_data(payload) {
+                const path = samurai_update_product_endpoint+"/"+payload.id;
+  
+                axios.put(path, payload).then((response) => {
+                    this.get_data();
+                }).catch((error) => {
+                    console.error(error.response.data);
+                    this.get_data();
+                });
+            },
+            merge_product_data(payload, discovered_id) {
+                const path = samurai_merge_products_endpoint+"/"+discovered_id;
+                axios.put(path, payload).then((response) => {
+                    //console.log(response.data);
+                    this.get_data();
+                }).catch((error) => {
+                    console.error(error.response.data);
+                    this.get_data();
+                });
+            },
+            get_samurai_product_custom_data() {
+                //pull in custom products only
+                const path = samurai_get_product_endpoint_custom;
+                axios.get(path).then((response) => {
+                    this.samurai_products_custom_list = response.data;
+                    //convert productType to text
+                    for (let i=0; i < this.samurai_products_custom_list.length; i++) {
+                        if (this.samurai_products_custom_list[i].productType == 1) {
+                            this.samurai_products_custom_list[i].productType_name = "Hardware";
+                        } else if (this.samurai_products_custom_list[i].productType == 2) {
+                            this.samurai_products_custom_list[i].productType_name = "Software";
+                        }
+                    }
+                }).catch((error) => {
+                    console.error(error.response.data);
+                })
+            },
+            get_samurai_product_data() {
+                const path = samurai_get_product_endpoint;
+                axios.get(path).then((response) => {
+                    this.samurai_products_list = response.data;
+                    //convert productType to text
+                    for (let i=0; i < this.samurai_products_list.length; i++) {
+                        if (this.samurai_products_list[i].productType == 1) {
+                            this.samurai_products_list[i].productType_name = "Hardware";
+                        } else if (this.samurai_products_list[i].productType == 2) {
+                            this.samurai_products_list[i].productType_name = "Software";
+                        }
+                    }
+                }).catch((error) => {
+                    console.error(error.response.data);
+                })
+            },
+            get_samurai_product_replacement_data() {
+                const path = samurai_get_product_replacement_endpoint;
+                axios.get(path).then((response) => {
+                    this.samurai_product_replacement_list = response.data;
+                }).catch((error) => {
+                    console.error(error.response.data);
+                })
+            },
+            get_samurai_vendor_data() {
+                const path = samurai_get_vendor_endpoint;
+                axios.get(path).then((response) => {    
+                    this.samurai_vendor_list = response.data;
+                }).catch((error) => {
+                    console.error(error.response.data);
+                }) 
+            },
+            get_samurai_deviceType_data() {
+                const path = samurai_get_devicetype_endpoint;
+                axios.get(path).then((response) => {    
+                    this.samurai_deviceType_list = response.data;
+                }).catch((error) => {
+                    console.error(error.response.data);
+                }) 
+            },
+            get_data() {
+                //this.get_samurai_product_replacement_data();
+                this.get_samurai_product_data();
+                this.get_samurai_vendor_data();
+                this.get_samurai_deviceType_data();
+                this.get_samurai_product_custom_data();
+            },
+            handleEditReset() {
+                this.initEditForm()
+            },
+            handleEditProductCancel() {
+                this.get_data();
+                this.toggleEditProductData();
+            },
+            handleEditPricingCancel() {
+                this.get_data();
+                this.toggleEditPricingData();
+            },
+            handleEditLifecycleCancel() {
+                this.get_data();
+                this.toggleEditLifecycleData();
+            },
+            handleAddProductCancel() {
+                this.reset_add_product_data();
+                this.get_data();
+                this.toggleAddCustomProduct();
+            },
+            handleMergeProductCancel() {
+                this.reset_merge_data();
+                this.get_data();
+                this.toggleMergeProduct();
+            },
+            handleEditProductSubmit() {
+                if (this.editProductData.productAlias !== "") {
+                    //update replacement product if it was changed
+                    if (this.editProductData.orig_productNew !== this.editProductData.productNew) {
+                        const replacement_payload = {
+                            id: this.editProductData.replacement_id,
+                            productNew: this.editProductData.productNew
+                        }
+                        this.edit_replacement_data(replacement_payload);
+                    } 
+                    const payload = {
+                        id: this.editProductData.id,
+                        productAlias: this.editProductData.productAlias.trim(),
+                        modelNumber: this.editProductData.modelNumber.trim() || "",
+                        productType: this.editProductData.productType,
+                        deviceType: this.editProductData.deviceType,
+                        vendor: this.editProductData.vendor_id,
+                        productLink: this.editProductData.productLink,
+                        productNotes: this.editProductData.productNotes
+                    }
+                    this.edit_product_data(payload);
+                    this.toggleEditProductData();
+                } else {
+                    this.activate_modal_alert("Data validation error", "Product friendly name cannot be empty.", "OK")
+                }
+            },
+            handleAddProductSubmit() {
+                if (this.addProductData.product !== "") {
+                    const payload = {
+                        product: this.addProductData.product.trim(),
+                        productAlias: this.addProductData.product.trim(),
+                        modelNumber: this.addProductData.modelNumber.trim() || "",                        
+                        productType: this.addProductData.productType,
+                        deviceType: this.addProductData.deviceType,
+                        vendor: this.addProductData.vendor_id,
+                    }
+                    this.add_product_data(payload);
+                    this.reset_add_product_data();
+                    this.toggleAddCustomProduct();
+                } else {
+                    this.activate_modal_alert("Data validation error", "Product name cannot be empty.", "OK")
+                }
+            },
+            handleMergeProductSubmit() {
+                const payload = this.mergeSourceProductData;
+                const discovered_id = this.mergeDestinationData.id
+                if (discovered_id != "") {
+                    this.merge_product_data(payload, discovered_id);
+                    this.reset_merge_data();
+                    this.toggleMergeProduct();
+                } else {
+                    this.activate_modal_alert("Data validation error", "You must select a destination product for the merge.", "OK")
+                }
+            },
+            handleDeleteProductSubmit(row) {
+                const payload = {
+                    id: row.id,
+                    name: row.product
+                }
+                this.are_you_sure(this.delete_product_data, payload);
+            },
+            toggleEditProductData(row) {
+                if (row) {
+                    this.editProductData = row;	
+                }
+                const body = document.querySelector('body');
+                this.activeEditProductData = !this.activeEditProductData;
+                if (this.activeEditProductData) {
+                        body.classList.add('modal-open');
+                } else {
+                        body.classList.remove('modal-open');
+                }
+            },
+            toggleAddCustomProduct(add_product) {
+                if (add_product) {
+                    this.addProductData.deviceType = 1;
+                    this.addProductData.vendor_id = 1;
+                    this.addProductData.productType = 1;
+                }
+                const body = document.querySelector('body');
+                this.activeAddProduct = !this.activeAddProduct;
+                if (this.activeAddProduct) {
+                        body.classList.add('modal-open');
+                } else {
+                        body.classList.remove('modal-open');
+                }
+            },
+            toggleMergeProduct(row) {
+                if (row) {
+                    this.mergeSourceProductData = row;
+                    //take the id of the source out of the destination list so a user can't pick the same items to merge
+                    //also remove other custom products
+                    //also remove devices that aren't current
+                    this.filtered_samurai_products_list = this.samurai_products_list.filter(
+                        row => row.id !== this.mergeSourceProductData.id 
+                               && row.discovered == 0
+                               && row.current == 1
+                        );
+                }
+                const body = document.querySelector('body');
+                this.activeMergeProduct = !this.activeMergeProduct;
+                if (this.activeMergeProduct) {
+                        body.classList.add('modal-open');
+                } else {
+                        body.classList.remove('modal-open');
+                }
+            },
+            mounted() {
+                this.get_data();
+                }
+            }
+        }
+createApp({app}).mount()
+//These lines initialize all of the tooltips on the page
+var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+  return new bootstrap.Tooltip(tooltipTriggerEl)
+})
+
+</script>
+<div v-scope="app()" @vue:mounted="mounted"></div>
+{% endblock %}

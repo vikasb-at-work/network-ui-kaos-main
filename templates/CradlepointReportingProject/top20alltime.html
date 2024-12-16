@@ -1,0 +1,46 @@
+
+{% extends 'CradlepointReportingProject/base.html' %}
+
+{% block crp_content %}
+<style>
+    table {     
+        border-collapse: collapse;
+    }
+    td {
+        padding: 1px;
+        text-align: left;
+        border-bottom: 1px solid lightgrey;
+    }
+	th {
+		padding: 1px;
+		text-align: left;
+		border-bottom: 1px solid black;
+	}
+	.pad-left {
+		padding-left: 30px;
+	}
+
+</style>
+
+
+<h1> Highest all time usage </h1>
+    <br>
+    <div class="container">
+        <table>
+            <tr>
+                <th>Cradlepoint</th>
+                <th class="pad-left">Usage</th>
+            </tr>
+            {% for cp in CP_DICT %}
+            <tr>
+                <td>{{ cp["Cradlepoint"] }}</td>
+                <td class="pad-left">{{ "{:,.2f}".format(cp['Total_MB_Used']|round(2)) }}</td> 
+            </tr>
+            {% endfor %}
+          </table>
+        <br>
+        <br>
+    </div>
+{% endblock %}
+
+

@@ -1,0 +1,670 @@
+<!DOCTYPE>
+
+<html>
+
+	<head>
+		<title>control</title>
+
+		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1">
+
+		<link href="https://unpkg.com/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
+		<link href="/css/cytoscape-context-menus.css" rel="stylesheet" type="text/css" />
+		<link href="/css/popup.css" rel="stylesheet" type="text/css" />
+
+		<!--<script src="/js/cytoscape/cytoscape.js"></script>-->
+		<script src="https://code.jquery.com/jquery-2.0.3.min.js"></script>
+		<script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+		<script src="/js/cytoscape/cytoscape-cxtmenu.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.10/lodash.js"></script>
+		<script src="/js/cytoscape-edgehandles.js"></script>
+		<script src="/js/control.js"></script>
+		<script src="/js/cytoscape-context-menus.js"></script>
+
+		<style>
+			body {
+				font-family: helvetica;
+				font-size: 14px;
+				overflow: hidden;
+			}
+
+			#cy {
+				width: 100%;
+				height: 100%;
+				position: absolute;
+				left: 0;
+				top: 0;
+				z-index: 999;
+			}
+
+			h1 {
+				opacity: 0.5;
+				font-size: 3em;
+				color: #0000FF
+			}
+
+		      #buttons {
+			        position: absolute;
+			        right: 0;
+			        bottom: 0;
+			        z-index: 99999;
+		      }
+
+
+			/* you can set the disabled style how you like on the text/icon */
+			.cxtmenu-disabled {
+				opacity: 0.333;
+			}
+		</style>
+
+		<script>
+			window.addEventListener('DOMContentLoaded', function(){
+
+				var cy = window.cy = cytoscape({
+					container: document.getElementById('cy'),
+
+					ready: function(){
+					},
+
+					style: [
+						{
+							selector: 'node',
+							css: {
+								'height': 80,
+								'width': 80,
+								'background-fit': 'cover',
+								'border-color': '#A9A9A9',
+								'border-width': 5,
+								'border-opacity': 1,
+								'content': 'data(name)',
+							}
+						},
+						{
+							selector: 'edge',
+							css: {
+								'curve-style': 'unbundled-bezier',
+								'target-arrow-shape': 'circle',
+								'source-arrow-shape': 'circle'
+							}
+						},
+						{
+							selector: '[nodetype="site"]',
+							css: {
+								'background-image': '/images/site.png'
+							}
+						},
+						{
+							selector: '[nodetype="router"]',
+							css: {
+								'background-image': '/images/router.png'
+							}
+						},
+						{
+							selector: '[nodetype="l2switch"]',
+							css: {
+								'shape': 'square',
+								'background-image': '/images/l2switch.png'
+							}
+						},
+						{
+							selector: '[nodetype="l3switch"]',
+							css: {
+								'shape': 'square',
+								'background-image': '/images/l3switch.png'
+							}
+						},
+						{
+							selector: '[nodetype="cloud"]',
+							css: {
+								'height': 138,
+								'width': 288,
+								'border-opacity': 0,
+								'border-color': '#FFFFFF',
+								'border-width': 0,
+								'background-image': '/images/cloud.png',
+								'shape': 'hexagon',
+								'color': 'blue',
+								'text-margin-y': 90
+
+							}
+						},
+
+						{
+							selector: '[lastupdate^="-"]',
+							css: {
+								'border-color': '#FF8C00'
+							}
+						},
+						{
+							selector: '[lastupdate^="0"]',
+							css: {
+								'border-color': '#32CD32'
+							}
+						},
+						{
+							selector: '[lastupdate^="1"]',
+							css: {
+								'border-color': '#FF0000'
+							}
+						},
+						{
+							selector: '[lastupdate^="2"]',
+							css: {
+								'border-color': '#FF0000'
+							}
+						},
+						{
+							selector: '[lastupdate^="3"]',
+							css: {
+								'border-color': '#FF0000'
+							}
+						},
+						{
+							selector: '[lastupdate^="4"]',
+							css: {
+								'border-color': '#FF0000'
+							}
+						},
+						{
+							selector: '[lastupdate^="5"]',
+							css: {
+								'border-color': '#FF0000'
+							}
+						},
+						{
+							selector: '[lastupdate^="6"]',
+							css: {
+								'border-color': '#FF0000'
+							}
+						},
+						{
+							selector: '[lastupdate^="7"]',
+							css: {
+								'border-color': '#FF0000'
+							}
+						},
+						{
+							selector: '[lastupdate^="8"]',
+							css: {
+								'border-color': '#FF0000'
+							}
+						},
+						{
+							selector: '[lastupdate^="9"]',
+							css: {
+								'border-color': '#FF0000'
+							}
+						},
+						{
+							selector: '[lastupdate="11"]',
+							css: {
+								'border-color': '#32CD32'
+							}
+						},
+						{
+							selector: '[lastupdate="12"]',
+							css: {
+								'border-color': '#32CD32'
+							}
+						},
+						{
+							selector: '[lastupdate="13"]',
+							css: {
+								'border-color': '#32CD32'
+							}
+						},
+						{
+							selector: '[lastupdate="14"]',
+							css: {
+								'border-color': '#32CD32'
+							}
+						},
+						{
+							selector: '[lastupdate="15"]',
+							css: {
+								'border-color': '#32CD32'
+							}
+						},
+						{
+							selector: '[lastupdate="16"]',
+							css: {
+								'border-color': '#32CD32'
+							}
+						},
+						{
+							selector: '[lastupdate="17"]',
+							css: {
+								'border-color': '#32CD32'
+							}
+						},
+						{
+							selector: '[lastupdate="18"]',
+							css: {
+								'border-color': '#32CD32'
+							}
+						},
+						{
+							selector: '[lastupdate="19"]',
+							css: {
+								'border-color': '#32CD32'
+							}
+						},
+						{
+							selector: '[lastupdate="20"]',
+							css: {
+								'border-color': '#32CD32'
+							}
+						},
+						{
+							selector: '[lastupdate="21"]',
+							css: {
+								'border-color': '#32CD32'
+							}
+						},
+						{
+							selector: '[lastupdate="22"]',
+							css: {
+								'border-color': '#32CD32'
+							}
+						},
+						{
+							selector: '[lastupdate="23"]',
+							css: {
+								'border-color': '#32CD32'
+							}
+						},
+						{
+							selector: '[lastupdate="24"]',
+							css: {
+								'border-color': '#32CD32'
+							}
+						},
+						{
+							selector: '[lastupdate="25"]',
+							css: {
+								'border-color': '#32CD32'
+							}
+						},
+						{
+							selector: '[lastupdate="26"]',
+							css: {
+								'border-color': '#32CD32'
+							}
+						},
+						{
+							selector: '[lastupdate="27"]',
+							css: {
+								'border-color': '#32CD32'
+							}
+						},
+						{
+							selector: '[lastupdate="28"]',
+							css: {
+								'border-color': '#32CD32'
+							}
+						},
+						{
+							selector: '[lastupdate="29"]',
+							css: {
+								'border-color': '#32CD32'
+							}
+						},
+						{
+							selector: '[lastupdate="30"]',
+							css: {
+								'border-color': '#32CD32'
+							}
+						},
+						{
+							selector: 'node:active',
+							css: {
+								'border-color': '#0000FF'
+							}
+						},
+						{
+							selector: '.eh-handle',
+						        style: {
+					                	'background-color': 'red',
+					        	        'width': 12,
+						                'height': 12,
+						                'shape': 'ellipse',
+						                'overlay-opacity': 0,
+						                'border-width': 12, // makes the handle easier to hit
+						                'border-opacity': 0
+						              }
+						},
+
+            {
+              selector: '.eh-hover',
+              style: {
+                'background-color': 'red'
+              }
+            },
+
+            {
+              selector: '.eh-source',
+              style: {
+                'border-width': 2,
+                'border-color': 'red'
+              }
+            },
+
+            {
+              selector: '.eh-target',
+              style: {
+                'border-width': 2,
+                'border-color': 'red'
+              }
+            },
+
+            {
+              selector: '.eh-preview, .eh-ghost-edge',
+              style: {
+                'background-color': 'red',
+                'line-color': 'red',
+                'target-arrow-color': 'red',
+                'source-arrow-color': 'red'
+              }
+            },
+
+            {
+              selector: '.eh-ghost-edge.eh-preview-active',
+              style: {
+                'opacity': 0
+              }
+            }
+
+					],
+
+					elements: {
+						nodes: [
+							{ data: { id: 'MGO', name: 'MGO', nodetype: 'site' } },
+							{ data: { id: 'JFB', name: 'JFB', nodetype: 'site' } },
+							{ data: { id: 'Minneapolis', name: 'Minneapolis', nodetype: 'city' } },
+							{ data: { id: 'Chanhassen', name: 'Chanhassen', nodetype: 'site' } },
+							{ data: { id: 'MGOR1', name: 'MGOR1', nodetype: 'router', lastupdate: '01' } },
+							{ data: { id: 'JFBR1', name: 'JFBR1', nodetype: 'router', lastupdate: '01' } },
+							{ data: { id: 'MGOR2', name: 'MGOR2', nodetype: 'router', lastupdate: '31' } },
+							{ data: { id: 'MGOR3', name: 'MGOR3', nodetype: 'router', lastupdate: '30' } },
+							{ data: { id: 'CL3', name: 'CL3', nodetype: 'cloud' } },
+							{ data: { id: 'VZ', name: 'VZ', nodetype: 'cloud' } },
+							{ data: { id: 'INTERNET', name: 'INTERNET', nodetype: 'cloud' } }
+						],
+						edges: [
+							{ data: { source: 'Minneapolis', target: 'MGO' } },
+							{ data: { source: 'Minneapolis', target: 'JFB' } },
+							{ data: { source: 'Minneapolis', target: 'Chanhassen' } },
+							{ data: { source: 'MGOR1', target: 'MGO' } },
+							{ data: { source: 'JFBR1', target: 'JFB' } },
+							{ data: { source: 'MGOR2', target: 'MGO' } },
+							{ data: { source: 'MGOR3', target: 'MGO' } },
+							{ data: { source: 'MGOR1', target: 'CL3' } }
+						
+						]
+					}
+				});
+
+
+                cy.contextMenus({
+                                    menuItems: [
+                                        {
+                                            id: 'remove',
+                                            content: 'remove',
+                                            tooltipText: 'remove',
+                                            image: {src : "/images/remove.svg", width : 12, height : 12, x : 6, y : 4},
+                                            selector: '[nodetype="site"]',
+                                            onClickFunction: function (event) {
+                                              var target = event.target || event.cyTarget;
+                                              target.remove();
+                                            },
+                                            hasTrailingDivider: true
+                                          },
+                                        ]
+                                      });
+
+
+			cy.cxtmenu({
+					selector: '[nodetype="site"]',
+
+					commands: [
+						{
+							content: '<span class="fa fa-flash fa-2x"></span>',
+							select: function(ele){
+								console.log( ele.id() );
+
+							}
+						},
+
+						{
+							content: '<span class="fa fa-star fa-2x"></span>',
+							select: function(ele){
+								console.log( ele.data('name') );
+							},
+							enabled: false
+						},
+
+						{
+							content: 'Routers',
+							select: function(ele){
+								console.log( ele.position() );
+								alert("You picked routers");
+							}
+						},
+
+						{
+							content: 'Switches',
+							select: function(ele){
+								console.log( ele.position());
+								alert("You picked switches");
+							}
+						},
+						{
+							content: '+ Router',
+							select: function(ele){
+								console.log( 'add new router' );
+								var name = askQuestion('Please enter a router name');
+								console.log(name);
+								console.log(event.clientX)
+								console.log(ele.data('name'))
+								cy.add([
+									{
+										group: 'nodes',
+										data: { id: name, name: name, nodetype: 'router', lastupdate: '-1' },
+										position: { x: event.clientX-1, y: event.clientY-1 }
+									},
+									{
+										group: 'edges',
+										data: { source: ele.data('name'), target: name }
+									}
+								]);	
+							}
+						},
+						{
+							content: '+ L2 Switch',
+							select: function(ele){
+								console.log( 'add new L2 switch' );
+								var name = askQuestion('Please enter a switch name');
+								console.log(name);
+								console.log(event.clientX)
+								console.log(ele.data('name'))
+								cy.add([
+									{
+										group: 'nodes',
+										data: { id: name, name: name, nodetype: 'l2switch', lastupdate: '-1' },
+										position: { x: event.clientX-1, y: event.clientY-1 }
+									},
+									{
+										group: 'edges',
+										data: { source: ele.data('name'), target: name }
+									}
+								]);	
+							}
+						},
+						{
+							content: '+ L3 Switch',
+							select: function(ele){
+								console.log( 'add new L2 switch' );
+								var name = askQuestion('Please enter a switch name');
+								console.log(name);
+								console.log(event.clientX)
+								console.log(ele.data('name'))
+								cy.add([
+									{
+										group: 'nodes',
+										data: { id: name, name: name, nodetype: 'l3switch', lastupdate: '-1' },
+										position: { x: event.clientX-1, y: event.clientY-1 }
+									},
+									{
+										group: 'edges',
+										data: { source: ele.data('name'), target: name }
+									}
+								]);	
+							}
+						}
+					]
+				});
+				
+			cy.cxtmenu({
+					selector: '[nodetype="router"]',
+
+					commands: [
+						{
+							content: '<span class="fa fa-flash fa-2x"></span>',
+							select: function(ele){
+								console.log( ele.id() );
+							}
+						},
+
+						{
+							content: '<span class="fa fa-star fa-2x"></span>',
+							select: function(ele){
+								console.log( ele.data('name') );
+							},
+							enabled: false
+						},
+
+						{
+							content: 'connect',
+							select: function(ele) {
+        							var eh = cy.edgehandles();
+								eh.start( cy.$('node:selected') );
+							}
+						}
+					]
+				});
+
+				cy.cxtmenu({
+					selector: '[nodetype="l2switch"]',
+
+					commands: [
+						{
+							content: '<span class="fa fa-flash fa-2x"></span>',
+							select: function(ele){
+								console.log( ele.id() );
+							}
+						},
+
+						{
+							content: '<span class="fa fa-star fa-2x"></span>',
+							select: function(ele){
+								console.log( ele.data('name') );
+							},
+							enabled: false
+						}
+					]
+				});
+
+				cy.cxtmenu({
+					selector: '[nodetype="l3switch"]',
+
+					commands: [
+						{
+							content: '<span class="fa fa-flash fa-2x"></span>',
+							select: function(ele){
+								console.log( ele.id() );
+							}
+						},
+
+						{
+							content: '<span class="fa fa-star fa-2x"></span>',
+							select: function(ele){
+								console.log( ele.data('name') );
+							},
+							enabled: false
+						}
+					]
+				});
+
+				cy.cxtmenu({
+					selector: 'edge',
+
+					commands: [
+					]
+				});
+
+				cy.cxtmenu({
+					selector: 'core',
+
+					commands: [
+						{
+							content: '.',
+							select: function(){
+								console.log( 'bg1' );
+							}
+						},
+
+						{
+							content: '...',
+							select: function(){
+								console.log( 'bg1' );
+							}
+						},
+
+						{
+							content: '+',
+							select: function(ele){
+								console.log( 'add new site' );
+								var name = askQuestion('Please enter a site name');
+								console.log(name);
+								console.log(ele.data('name'));
+								console.log(event.clientX)
+								console.log(event.cyTarget)
+								cy.add([
+									{
+										group: 'nodes',
+										data: { id: name, name: name, nodetype: 'site' },
+										position: { x: event.clientX, y: event.clientY }
+									},
+									{
+										group: 'edges',
+										data: { source: 'M', target: name }
+									}
+								]);	
+							}
+						}
+					]
+				});
+
+
+			});
+
+
+
+
+		</script>
+	</head>
+
+	<body>
+		<h1>control</h1>
+
+		<div id="cy"></div>
+
+    <div id="buttons">
+      <button id="start">Start on selected</button>
+      <button id="draw-on">Draw mode on</button>
+      <button id="draw-off">Draw mode off</button>
+    </div>
+
+
+	</body>
+
+</html>

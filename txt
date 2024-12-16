@@ -1,0 +1,1060 @@
+{
+  "result": [
+    {
+      "city": "Carlisle", 
+      "country": "US", 
+      "site": "ADA", 
+      "equipment": "0", 
+      "state": "Pennsylvania", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Dubai", 
+      "country": "UAE", 
+      "site": "AEDB", 
+      "equipment": "0", 
+      "state": "Emerite of Dubai", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Albuqurque", 
+      "country": "US", 
+      "site": "ALA", 
+      "equipment": "0", 
+      "state": "New Mexico", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Melbourne", 
+      "country": "Australia", 
+      "site": "AUML", 
+      "equipment": "0", 
+      "state": "Victoria", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Sydney", 
+      "country": "Australia", 
+      "site": "AUSY", 
+      "equipment": "0", 
+      "state": "New South Wales", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Avon", 
+      "country": "US", 
+      "site": "AVA", 
+      "equipment": "SP", 
+      "state": "Iowa", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Ashburn", 
+      "country": "US", 
+      "site": "AVZ", 
+      "equipment": "0", 
+      "state": "Virginia", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Goodyear", 
+      "country": "US", 
+      "site": "BAW", 
+      "equipment": "0", 
+      "state": "Arizona", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "McDonough", 
+      "country": "US", 
+      "site": "BGA", 
+      "equipment": "0", 
+      "state": "Georgia", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Wilton", 
+      "country": "US", 
+      "site": "BHQ", 
+      "equipment": "0", 
+      "state": "Conneticut", 
+      "nickname": "Blue Headquarters"
+    }, 
+    {
+      "city": "Richmond", 
+      "country": "US", 
+      "site": "BIN", 
+      "equipment": "0", 
+      "state": "Indiana", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Independence", 
+      "country": "US", 
+      "site": "BIO", 
+      "equipment": "0", 
+      "state": "Iowa", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Buffalo", 
+      "country": "US", 
+      "site": "BMA", 
+      "equipment": "0", 
+      "state": "New York", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Joplin", 
+      "country": "US", 
+      "site": "BMO", 
+      "equipment": "0", 
+      "state": "Missouri", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Bellevue", 
+      "country": "US", 
+      "site": "BNE", 
+      "equipment": "0", 
+      "state": "Nebraska", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Marion", 
+      "country": "US", 
+      "site": "BOH", 
+      "equipment": "0", 
+      "state": "Ohio", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Burlington", 
+      "country": "Canada", 
+      "site": "BON", 
+      "equipment": "0", 
+      "state": "Ontario", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Brooklyn Park", 
+      "country": "US", 
+      "site": "BPW", 
+      "equipment": "0", 
+      "state": "Minnesota", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Barueri", 
+      "country": "Brazil", 
+      "site": "BRBA", 
+      "equipment": "0", 
+      "state": "Sao Paulo", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Cambara", 
+      "country": "Brazil", 
+      "site": "BRCB", 
+      "equipment": "0", 
+      "state": "Parana", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Campo Grande", 
+      "country": "Brazil", 
+      "site": "BRCG", 
+      "equipment": "0", 
+      "state": "Mato Grosso do Sul", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Campo Novo", 
+      "country": "Brazil", 
+      "site": "BRCN", 
+      "equipment": "0", 
+      "state": "Rio Grande do Sul", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Cajamar", 
+      "country": "Brazil", 
+      "site": "BRCO", 
+      "equipment": "0", 
+      "state": "Sao Paulo", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Curitiba", 
+      "country": "Brazil", 
+      "site": "BRCR", 
+      "equipment": "0", 
+      "state": "Parana", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Duque De Caxias", 
+      "country": "Brazil", 
+      "site": "BRDC", 
+      "equipment": "0", 
+      "state": "Rio de Janeiro", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Pouso Alegra", 
+      "country": "Brazil", 
+      "site": "BRPU", 
+      "equipment": "0", 
+      "state": "Minas Gerais", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Paranavai", 
+      "country": "Brazil", 
+      "site": "BRPV", 
+      "equipment": "0", 
+      "state": "Parana", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Recife", 
+      "country": "Brazil", 
+      "site": "BRRE", 
+      "equipment": "0", 
+      "state": "Pernambuco", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Salvador", 
+      "country": "Brazil", 
+      "site": "BRSA", 
+      "equipment": "0", 
+      "state": "Bahia", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Sao Bernardo do Campo", 
+      "country": "Brazil", 
+      "site": "BRSB", 
+      "equipment": "0", 
+      "state": "Sao Paulo", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Sao Paulo", 
+      "country": "Brazil", 
+      "site": "BRSP", 
+      "equipment": "0", 
+      "state": "Sao Paulo", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Taguatinga", 
+      "country": "Brazil", 
+      "site": "BRTG", 
+      "equipment": "0", 
+      "state": "Tocantins", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Contagem", 
+      "country": "Brazil", 
+      "site": "BRVM", 
+      "equipment": "0", 
+      "state": "Minas Gerais", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Belvidere", 
+      "country": "US", 
+      "site": "BVA", 
+      "equipment": "0", 
+      "state": "Illinois", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Belvidere", 
+      "country": "US", 
+      "site": "BVW", 
+      "equipment": "0", 
+      "state": "Ohio", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Bentonville", 
+      "country": "US", 
+      "site": "BWA", 
+      "equipment": "SP", 
+      "state": "Arkansas", 
+      "nickname": "Wal-Mart"
+    }, 
+    {
+      "city": "Nyon", 
+      "country": "Switzerland", 
+      "site": "CHNY", 
+      "equipment": "0", 
+      "state": "Canton of Vaud", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Minneapolis", 
+      "country": "US", 
+      "site": "CHT", 
+      "equipment": "SP", 
+      "state": "Minnesota", 
+      "nickname": "Checkerboard"
+    }, 
+    {
+      "city": "Cincinnati", 
+      "country": "US", 
+      "site": "CIA", 
+      "equipment": "SP", 
+      "state": "Ohio", 
+      "nickname": "Kroger"
+    }, 
+    {
+      "city": "Chicago", 
+      "country": "US", 
+      "site": "CIZ", 
+      "equipment": "0", 
+      "state": "Illinois", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Chanhassen", 
+      "country": "US", 
+      "site": "CMA", 
+      "equipment": "SP", 
+      "state": "Minnesota", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Cincinnati", 
+      "country": "US", 
+      "site": "CNA", 
+      "equipment": "0", 
+      "state": "Ohio", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Beijing", 
+      "country": "China", 
+      "site": "CNBE", 
+      "equipment": "0", 
+      "state": "Beijing Municipality", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Gaungzhou", 
+      "country": "China", 
+      "site": "CNGS", 
+      "equipment": "0", 
+      "state": "GuangDong", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Gaungzhou", 
+      "country": "China", 
+      "site": "CNGU", 
+      "equipment": "0", 
+      "state": "GuangDong", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Beijing", 
+      "country": "China", 
+      "site": "CNHP", 
+      "equipment": "0", 
+      "state": "Heibei", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Nanjing", 
+      "country": "China", 
+      "site": "CNNJ", 
+      "equipment": "0", 
+      "state": "Jiangsu", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Qinke", 
+      "country": "China", 
+      "site": "CNQK", 
+      "equipment": "0", 
+      "state": "Shanghai Municipality", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Pudong", 
+      "country": "China", 
+      "site": "CNRD", 
+      "equipment": "0", 
+      "state": "Shanghai Municipality", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Pudong", 
+      "country": "China", 
+      "site": "CNSP", 
+      "equipment": "0", 
+      "state": "Shanghai Municipality", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Cedar Rapids", 
+      "country": "US", 
+      "site": "CRA", 
+      "equipment": "0", 
+      "state": "Iowa", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Perris Valley", 
+      "country": "US", 
+      "site": "DCA", 
+      "equipment": "SP", 
+      "state": "California", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Hamburg", 
+      "country": "Germany", 
+      "site": "DEHM", 
+      "equipment": "0", 
+      "state": "Hamburg Metropolitan Region", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Dominguez Hills", 
+      "country": "US", 
+      "site": "DHA", 
+      "equipment": "SP", 
+      "state": "California", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Wilmington", 
+      "country": "US", 
+      "site": "DIL", 
+      "equipment": "SP", 
+      "state": "Illinois", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Austin", 
+      "country": "US", 
+      "site": "EPW", 
+      "equipment": "0", 
+      "state": "Texas", 
+      "nickname": "Epic Warehouse"
+    }, 
+    {
+      "city": "Madrid", 
+      "country": "Spain", 
+      "site": "ESMD", 
+      "equipment": "0", 
+      "state": "Province of Madrid", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "San Adrian", 
+      "country": "Spain", 
+      "site": "ESNA", 
+      "equipment": "0", 
+      "state": "Navarre", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Fridley", 
+      "country": "US", 
+      "site": "FEA", 
+      "equipment": "SP", 
+      "state": "Minnesota", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Fort Wayne", 
+      "country": "US", 
+      "site": "FIA", 
+      "equipment": "SP", 
+      "state": "Indiana", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Arras", 
+      "country": "France", 
+      "site": "FRAR", 
+      "equipment": "0", 
+      "state": "Hauts-de-France", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Labutut", 
+      "country": "France", 
+      "site": "FRSE", 
+      "equipment": "0", 
+      "state": "Nouvelle-Aquitaine", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Boulogne-Billancourt", 
+      "country": "France", 
+      "site": "FRVE", 
+      "equipment": "0", 
+      "state": "Ile-de-France", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Aubervilliers", 
+      "country": "France", 
+      "site": "FRYA", 
+      "equipment": "0", 
+      "state": "Ile-de-France", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Nantes", 
+      "country": "France", 
+      "site": "FRYD", 
+      "equipment": "0", 
+      "state": "Pays de la Loire", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "La Fleche", 
+      "country": "France", 
+      "site": "FRYE", 
+      "equipment": "0", 
+      "state": "Pays de la Loire", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Givors", 
+      "country": "France", 
+      "site": "FRYG", 
+      "equipment": "0", 
+      "state": "Auvergne-Rhone-Alpes", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "LeMans", 
+      "country": "France", 
+      "site": "FRYL", 
+      "equipment": "0", 
+      "state": "Pays de la Loire", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Moneteau", 
+      "country": "France", 
+      "site": "FRYM", 
+      "equipment": "0", 
+      "state": "Bourgogne-Franche-Comte", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Vienne", 
+      "country": "France", 
+      "site": "FRYV", 
+      "equipment": "0", 
+      "state": "Nouvelle-Aquitaine", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Galesburg", 
+      "country": "US", 
+      "site": "GBA", 
+      "equipment": "SP", 
+      "state": "Illinois", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Uxbridge", 
+      "country": "England", 
+      "site": "GBHH", 
+      "equipment": "0", 
+      "state": "London", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Great Falls", 
+      "country": "US", 
+      "site": "GFA", 
+      "equipment": "SP", 
+      "state": "Montana", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Covington", 
+      "country": "US", 
+      "site": "GNA", 
+      "equipment": "SP", 
+      "state": "Georgia", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Athens", 
+      "country": "Greece", 
+      "site": "GRAT", 
+      "equipment": "0", 
+      "state": "Attica", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Oinofita", 
+      "country": "Greece", 
+      "site": "GRIO", 
+      "equipment": "0", 
+      "state": "Boeotia", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Minneapolis", 
+      "country": "US", 
+      "site": "GSE", 
+      "equipment": "0", 
+      "state": "Minnesota", 
+      "nickname": "SOO Elevator"
+    }, 
+    {
+      "city": "Rockport", 
+      "country": "US", 
+      "site": "HFA", 
+      "equipment": "0", 
+      "state": "Washington", 
+      "nickname": "Home Farm"
+    }, 
+    {
+      "city": "Hannibal", 
+      "country": "US", 
+      "site": "HGS", 
+      "equipment": "0", 
+      "state": "Missouri", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Hong Kong", 
+      "country": "China", 
+      "site": "HKCK", 
+      "equipment": "0", 
+      "state": "Hong Kong SAR", 
+      "nickname": "Cake Kitchen"
+    }, 
+    {
+      "city": "Kowloon City", 
+      "country": "China", 
+      "site": "HKKW", 
+      "equipment": "0", 
+      "state": "Hong Kong SAR", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Fo Tan", 
+      "country": "China", 
+      "site": "HKST", 
+      "equipment": "0", 
+      "state": "Hong Kong SAR", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Hannibal", 
+      "country": "US", 
+      "site": "HMT", 
+      "equipment": "0", 
+      "state": "Missouri", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Hannibal", 
+      "country": "US", 
+      "site": "HNA", 
+      "equipment": "0", 
+      "state": "Missouri", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Murfreesboro", 
+      "country": "US", 
+      "site": "IMAV", 
+      "equipment": "0", 
+      "state": "Tennesee", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Banglore ", 
+      "country": "India", 
+      "site": "INBG", 
+      "equipment": "0", 
+      "state": "Karnataka", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Delhi", 
+      "country": "India", 
+      "site": "INDL", 
+      "equipment": "0", 
+      "state": "Dehli National Capital Territory", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Mumbai", 
+      "country": "India", 
+      "site": "INMB", 
+      "equipment": "0", 
+      "state": "Maharashtra", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Mumbai", 
+      "country": "India", 
+      "site": "INMP", 
+      "equipment": "0", 
+      "state": "Maharashtra", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Nasik", 
+      "country": "India", 
+      "site": "INNK", 
+      "equipment": "0", 
+      "state": "Maharashtra", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Dublin", 
+      "country": "Ireland", 
+      "site": "IRDU", 
+      "equipment": "0", 
+      "state": "Leinster", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Bnei Atarot", 
+      "country": "Israel", 
+      "site": "ISAT", 
+      "equipment": "0", 
+      "state": "Central", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Holon", 
+      "country": "Israel", 
+      "site": "ISHO", 
+      "equipment": "0", 
+      "state": "Tel Aviv", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Golden Valley", 
+      "country": "US", 
+      "site": "JDC", 
+      "equipment": "0", 
+      "state": "Minnesota", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Joplin", 
+      "country": "US", 
+      "site": "JLA", 
+      "equipment": "0", 
+      "state": "Missouri", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Kalamazoo", 
+      "country": "US", 
+      "site": "KCS", 
+      "equipment": "SP", 
+      "state": "Michigan", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Kansas City", 
+      "country": "US", 
+      "site": "KMA", 
+      "equipment": "SP", 
+      "state": "Missouri", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Montreal", 
+      "country": "Canada", 
+      "site": "KPA", 
+      "equipment": "0", 
+      "state": "Quebec", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Jungwon-gu, Seoul", 
+      "country": "South Korea", 
+      "site": "KRFR", 
+      "equipment": "0", 
+      "state": "Gyeonggi-do", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Gangnam-gu, Seoul", 
+      "country": "South Korea", 
+      "site": "KRSL", 
+      "equipment": "0", 
+      "state": "Gyeonggi-do", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Milwaukee", 
+      "country": "US", 
+      "site": "LMA", 
+      "equipment": "SP", 
+      "state": "Wisconsin", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "St. Hyacinthe", 
+      "country": "Canada", 
+      "site": "LSH", 
+      "equipment": "0", 
+      "state": "Quebec", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Milwaukee", 
+      "country": "US", 
+      "site": "MGA", 
+      "equipment": "0", 
+      "state": "Wisconsin", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Golden Valley", 
+      "country": "US", 
+      "site": "MGO", 
+      "equipment": "0", 
+      "state": "Minnesota", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Milwaukee", 
+      "country": "US", 
+      "site": "MGW", 
+      "equipment": "SP", 
+      "state": "Wisconsin", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Miami", 
+      "country": "US", 
+      "site": "MLA", 
+      "equipment": "SP", 
+      "state": "Florida", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Murfreesboro", 
+      "country": "US", 
+      "site": "MSA", 
+      "equipment": "0", 
+      "state": "Tennesee", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Irapuato", 
+      "country": "Mexico", 
+      "site": "MXIR", 
+      "equipment": "0", 
+      "state": "Guanajuato", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Mexico City", 
+      "country": "Mexico", 
+      "site": "MXMC", 
+      "equipment": "0", 
+      "state": "Mexico City FE", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Montgomery", 
+      "country": "US", 
+      "site": "MYA", 
+      "equipment": "SP", 
+      "state": "Illinois", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Scottsdale", 
+      "country": "US", 
+      "site": "PHA", 
+      "equipment": "SP", 
+      "state": "Arizona", 
+      "nickname": "Western Business Center"
+    }, 
+    {
+      "city": "Palmyra", 
+      "country": "US", 
+      "site": "PPA", 
+      "equipment": "SP", 
+      "state": "Pennsylvania", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Roanoke", 
+      "country": "US", 
+      "site": "ROA", 
+      "equipment": "SP", 
+      "state": "Texas", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Toronto", 
+      "country": "Canada", 
+      "site": "RXA", 
+      "equipment": "0", 
+      "state": "Ontario", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Stockton", 
+      "country": "US", 
+      "site": "SCA", 
+      "equipment": "SP", 
+      "state": "California", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Gothenburg", 
+      "country": "Sweden", 
+      "site": "SEGB", 
+      "equipment": "0", 
+      "state": "Vastergotland, ?Bohuslan? and ?Halland", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Social Circle", 
+      "country": "US", 
+      "site": "SGA", 
+      "equipment": "SP", 
+      "state": "Georgia", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Singapore ", 
+      "country": "Republic of Singapore", 
+      "site": "SGAP", 
+      "equipment": "0", 
+      "state": "0", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Superior", 
+      "country": "US", 
+      "site": "SZA", 
+      "equipment": "SP", 
+      "state": "Wisconsin", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Tampa", 
+      "country": "US", 
+      "site": "TPA", 
+      "equipment": "0", 
+      "state": "Floria", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Taipei City", 
+      "country": "Taiwan", 
+      "site": "TWCK", 
+      "equipment": "0", 
+      "state": "Taipei SM", 
+      "nickname": "Cake Kitchen"
+    }, 
+    {
+      "city": "Kaoshiung City", 
+      "country": "Taiwan", 
+      "site": "TWKH", 
+      "equipment": "0", 
+      "state": "Kaoshiung SM", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Taichung City", 
+      "country": "Taiwan", 
+      "site": "TWTC", 
+      "equipment": "0", 
+      "state": "Taichung SM", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Taipei City", 
+      "country": "Taiwan", 
+      "site": "TWTP", 
+      "equipment": "0", 
+      "state": "Taipei SM", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Vernon", 
+      "country": "US", 
+      "site": "VRA", 
+      "equipment": "SP", 
+      "state": "California", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Dresher", 
+      "country": "US", 
+      "site": "VSA", 
+      "equipment": "SP", 
+      "state": "Pennsylvania", 
+      "nickname": "East Business Center"
+    }, 
+    {
+      "city": "Washington", 
+      "country": "US", 
+      "site": "WDC", 
+      "equipment": "SP", 
+      "state": "District of Columbia", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Winnipeg", 
+      "country": "Canada", 
+      "site": "WIA", 
+      "equipment": "0", 
+      "state": "Manitoba", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Wellston", 
+      "country": "US", 
+      "site": "WSA", 
+      "equipment": "0", 
+      "state": "Ohio", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Plymouth", 
+      "country": "US", 
+      "site": "XWA", 
+      "equipment": "0", 
+      "state": "Minnesota", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Murfreesboro", 
+      "country": "US", 
+      "site": "YMA", 
+      "equipment": "0", 
+      "state": "Tennesee", 
+      "nickname": "0"
+    }, 
+    {
+      "city": "Reed City", 
+      "country": "US", 
+      "site": "YRA ", 
+      "equipment": "0", 
+      "state": "Michigan", 
+      "nickname": "0"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+<!-- Modal -->
+<div class="modal fade" style="background: black; opacity: .9" id="modalAlert" tabindex="-1" role="dialog" aria-labelledby="modalCenterTitle" aria-hidden="true">
+<div class="modal-dialog modal-dialog-centered modal-fullscreen" style="min-width: 400px; opacity: 1 !important;">
+  <div class="modal-dialog modal-dialog-centered" role="document" style="min-width: 400px; opacity: 1 !important;">
+    <div class="modal-content" style="opacity: 1 !important;">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalLongTitle">{%raw%}{{modalAlert.title}}{%endraw%}</h5>
+        <!-- This is a red circle with a white x in the middle-->
+        <!-- <i class="fa-solid fa-circle-xmark fa-2xl" style="color: #dc3545"></i> -->
+      </div>
+	  
+	  <div class="modal-body" id="modalBody" style="opacity: 1 !important;">
+		  <!-- modalAlert.body goes here -->
+	  </div>
+	  
+	  <div class="modal-footer">
+      <button id="button-proceed" v-if="modalAlert.proceed_button" type="button" class="btn btn-warning" data-dismiss="modal" @click="proceed_alter_dismiss_modal_alert();">{%raw%}{{modalAlert.proceed_button}}{%endraw%}</button>
+		  <button id="button-ok" type="button" class="btn btn-danger" data-dismiss="modal" @click="dismiss_modal_alert();">{%raw%}{{modalAlert.button}}{%endraw%}</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>

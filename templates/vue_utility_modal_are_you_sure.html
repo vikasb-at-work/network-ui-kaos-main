@@ -1,0 +1,22 @@
+<!-- Modal -->
+<div class="modal fade" style="background: black; opacity: .9" id="modalAreYouSure" tabindex="-1" role="dialog" aria-labelledby="modalCenterTitle" aria-hidden="true">
+<div class="modal-dialog modal-dialog-centered modal-fullscreen" style="opacity: 1 !important;">
+  <div class="modal-dialog modal-dialog-centered" role="document" style="opacity: 1 !important;">
+    <div class="modal-content" style="opacity: 1 !important;">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalLongTitle">{%raw%}{{areYouSure.title}}{%endraw%}</h5>
+        <button id="button-x" type="button" class="close" data-dismiss="modal" aria-label="Close" @click="dismiss_are_you_sure(false);">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" style="opacity: 1 !important;">
+        {%raw%}{{areYouSure.body}}{%endraw%}
+      </div>
+      <div class="modal-footer">
+        <button id="button-cancel" type="button" class="btn btn-secondary" data-dismiss="modal" @click="dismiss_are_you_sure(false);">Cancel</button>
+		<button id="button-accept" type="button" class="btn btn-primary" @click="dismiss_are_you_sure(true);">{%raw%}{{areYouSure.button}}{%endraw%}</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>

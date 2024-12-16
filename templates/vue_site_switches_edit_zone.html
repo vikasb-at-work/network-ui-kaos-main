@@ -1,0 +1,60 @@
+<!-- edit switch zone modal -->
+<div
+ref="switch_editZoneData"
+class="modal fade"
+:class="{ show: switch_activeEditZoneData, 'd-block': switch_activeEditZoneData }"
+tabindex="-1"
+role="dialog">
+<div class="modal-dialog" role="document">
+<div class="modal-content">
+  <div class="modal-header">
+	<h5 class="modal-title">Change Switch Zone</h5>
+	<button
+	  type="button"
+	  class="close"
+	  data-dismiss="modal"
+	  aria-label="Close"
+	  @click="switch_toggleEditZone">
+	  <span aria-hidden="true">&times;</span>
+	</button>
+  </div>
+  <div class="modal-body">
+	<form>
+      <div class="mb-3">
+          <label for="editZone" class="form-label">Zone Type:</label>
+        <select
+          type="text"
+          class="form-select"
+          id="editZone"
+          v-model="switch_editZone.zone"
+          placeholder="Which zone is this switch in?">
+          <option value="" disabled>Please select the zone this switch is in.</option>
+          <option value=1>Default/All</option>
+          <option value=2>Enterprise</option>
+          <option value=3>ESX TOR</option>
+          <option value=4>Manufacturing</option>
+          <option value=5>FW Stack</option>
+          <option value=6>WAN POD</option>
+      </select>
+      </div>
+
+	  <div class="btn-group" role="group">
+		<button
+		  type="button"
+		  class="btn btn-primary btn-sm"
+		  @click="switch_toggleEditZone(); are_you_sure(switch_handleEditZoneSubmit,1,areYouSureZone);">
+		  Submit
+		</button>
+		<button
+		  type="button"
+		  class="btn btn-danger btn-sm"
+		  @click="switch_toggleEditZone">
+		  Cancel
+		</button>
+	  </div>
+	</form>
+  </div>
+</div>
+</div>
+</div>
+<div v-if="switch_activeEditZoneData" class="modal-backdrop fade show"></div>

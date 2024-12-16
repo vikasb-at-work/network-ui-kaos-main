@@ -1,0 +1,1004 @@
+{% extends 'menu.html' %}
+{% block content %}
+<style>
+  /* css for wider columns so they don't wrap*/
+  .wider-region {
+    min-width: 90px;
+  }
+  .wider-dhcp_override {
+    min-width: 105px;
+  }
+  .inactive {
+    background-color: #e0e0e0;
+    color: #a9a9a9;
+  }
+  .inactive .update-btn {
+    pointer-events: none;
+  }
+  .knobs,
+  .layer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+  }
+  .button:disabled {
+    background-color: #a9a9a9;
+    cursor: not-allowed;
+  }
+  .button {
+    position: relative;
+    width: 78px;
+    overflow: hidden;
+  }
+  .button.b2 {
+    border-radius: 2px;
+  }
+
+  .checkbox {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 3;
+  }
+
+  .knobs {
+    z-index: 2;
+  }
+
+  .layer {
+    width: 100%;
+    background-color: #6dc7ef;
+    transition: 0.3s ease all;
+    z-index: 1;
+  }
+  #button-13 .knobs:before,
+  #button-13 .knobs:after,
+  #button-13 .knobs span {
+    position: absolute;
+    height: 100%;
+    width: 15px;
+    text-align: center;
+    padding: 9px 4px;
+    border-radius: 2px;
+    transition: 0.3s ease all;
+  }
+
+  #button-13 .knobs:before,
+  #button-13 .knobs:after {
+    z-index: 1;
+  }
+
+  #button-13 .knobs:before {
+    content: "Active";
+    left: 8px;
+    font-size: 15px;
+    bottom: 4px;
+    opacity: 1;
+  }
+
+  #button-13 .knobs:after {
+    content: "Inactive";
+    left: 9px;
+    font-size: 15px;
+    bottom: 4px;
+    opacity: 0;
+  }
+
+  #button-13 .knobs span {
+    width: 10px;
+    left: 67px;
+    background-color: #03a9f4;
+    z-index: 2;
+  }
+
+  #button-13 .checkbox:checked + .knobs span {
+    left: 0px;
+    background-color: #fcebeb;
+  }
+
+  #button-13 .checkbox:not(checked) + .knobs::before {
+    opacity: 1;
+  }
+
+  #button-13 .checkbox:not(checked) + .knobs::after {
+    opacity: 0;
+  }
+
+  #button-13 .checkbox:checked + .knobs::before {
+    opacity: 0;
+  }
+
+  #button-13 .checkbox:checked + .knobs::after {
+    opacity: 1;
+  }
+
+  #button-13 .checkbox:checked ~ .layer {
+    right: 50px;
+    background-color: #f44336;
+  }
+
+</style>
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="check-circle-fill" fill="currentColor" viewBox="0 0 16 16">
+    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+  </symbol>
+  <symbol id="info-fill" fill="currentColor" viewBox="0 0 16 16">
+    <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+  </symbol>
+  <symbol id="exclamation-triangle-fill" fill="currentColor" viewBox="0 0 16 16">
+    <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+  </symbol>
+</svg>
+
+<template id="gridTemplate">
+  <div id="alert" class="alert fixed-top" style="margin-top: 50px; padding: 10px; z-index: 100" role="alert">
+	  <svg id="message_box_icon" class="bi flex-shrink-0 me-2" width="24" height="24" role="img"><use xlink:href=""></svg>{%raw%}{{message}}{%endraw%}
+  </div>
+  <div class="container">
+    <div class="row">
+      <div class="col-sm-10">
+        <h1>GMI Sites</h1>
+        <hr><br><br>
+        <button type="button" @click="toggleAddData" class="btn btn-success btn-sm">Add Site</button>
+		    <br><br>
+        <table class="table table-hover">
+          <thead>
+            <tr>
+			        <th v-for="(c, index) in cols" :key=index scope="col" :class="{'wider-region': c.text === 'Region',
+                                                                       'wider-dhcp_override': c.text === 'DHCP Override'}">
+					      <div>{%raw%}{{c.text}}{%endraw%}
+                  <template v-if="sort.column === c.name && sort.by === 'asc'">
+                  <i class="fa-solid fa-sort-up" @click="sort={column: c.name, by: 'desc'}"></i>
+                  </template>
+                  <template v-else-if="sort.column === c.name && sort.by === 'desc'">
+                  <i class="fa-solid fa-sort-down" @click="sort={column: c.name, by: ''}"></i>
+                  </template>
+                  <template v-else>
+                  <i class="fa-solid fa-sort" @click="sort={column: c.name, by: 'asc'}"></i>
+                  </template>
+					      </div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(row, index) in filtered_data" :key="index" :class="{'inactive': row.active === 0}" :style="row.active === 1 ? '': 'background-color: #e0e0e0;'">
+              <td>{%raw%}{{row.regionData.name}}{%endraw%}</td>
+              <td>{%raw%}{{row.site}}{%endraw%}</td>
+              <td>{%raw%}{{row.type}}{%endraw%}</td>
+              <td>{%raw%}{{row.address}}{%endraw%}</td>
+              <td>{%raw%}{{row.city}}{%endraw%}</td>
+              <td>{%raw%}{{row.state}}{%endraw%}</td>
+              <td>{%raw%}{{row.country}}{%endraw%}</td>
+              <td>{%raw%}{{row.nickname}}{%endraw%}</td>
+              <td>{%raw%}{{row.dhcp_override}}{%endraw%}</td>
+              <td>
+                <div class="btn-group" role="group">
+                  <button type="button" :disabled="row.active === 0" @click="toggleEditData (row)" class="btn btn-warning btn-sm update-btn">Update</button>
+                  <div class="button b2" id="button-13">
+                    <input type="checkbox" @change="handleonoffData (row)" class="checkbox" :checked="row.active === 0"/>
+                    <div class="knobs">
+                      <span></span>
+                    </div>
+                    <div class="layer"></div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+		</div>
+  </div>
+</div>
+
+<!--add data modal -->
+<div
+  ref="addData"
+  class="modal fade"
+  :class="{ show: activeAddData, 'd-block': activeAddData }"
+  tabindex="-1"
+  role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Add a new site</h5>
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close"
+          @click="toggleAddData">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <div class="mb-3">
+            <div class="btn-group" role="group">
+              <div class="mb-3">
+                <label for="addSite" class="form-label">Site Mneumonic:</label>
+                <input type="text" class="form-control" id="addSite" v-model="addData.site" placeholder="e.g. MGO or ESNA..." style="width: 135px;">
+              </div>
+              <div class="mb-3" style="border-left: 1px dashed #333; margin-left: 15px; padding-left: 15px;">
+                  <label for="addRegion" class="form-label">ClearPass Region</label>
+                  <select type=text class=form-select id=addRegion v-model=addData.region style="width: 135px;">
+                      <option v-for="r in regions" v-bind:value="r.region">{%raw%}{{r.name}}{%endraw%}</option>
+                  </select>
+              </div>
+              <div class="mb-3" style="border-left: 1px dashed #333; margin-left: 15px; padding-left: 15px;">
+                <label for="addDHCPOverride" class="form-label">DHCP Override</label>
+                <select type=text class=form-select id=addDCHPOverride v-model=addData.dhcp_override style="width: 135px">
+                  <option value="">Not Used</option>
+                  <option v-for="site in dhcpOverrideList" v-bind:value="site">{%raw%}{{site}}{%endraw%}</option>
+                </select>
+              </div>
+            </div>
+        </div>
+
+          <div class="mb-3">
+            <label for="addType" class="form-label">Type:</label>
+            <select
+              type="text"
+              class="form-select"
+              id="addType"
+              v-model="addData.type"
+              placeholder="What type of site is this">
+			  <option disabled value="">What type of site is this</option>
+				<option>Warehouse</option>
+				<option>Sales</option>
+				<option>Plant</option>
+				<option>Plant/Mill</option>
+				<option>Datacenter</option>
+				<option>Transit Point</option>
+				<option>Hub</option>
+				<option>Distribution Center</option>
+				<option>Elevator</option>
+				<option>Mill</option>
+				<option>Other</option>
+			  </select>
+          </div>
+
+          <div class="mb-3">
+			<div class='btn-group' role="group">
+            <label for="addAttention" style="width: 100px" class="form-label">Attention:</label>
+            <input
+              type="text"
+              class="form-control"
+              id="addAttention"
+              v-model="addData.attention"
+              placeholder="" size=180>
+			</div>
+			<div class='btn-group' role="group">
+            <label for="addAddress" style="width: 100px" class="form-label">Address1:</label>
+            <input
+              type="text"
+              class="form-control"
+              id="addAddress"
+              v-model="addData.address"
+              placeholder="123 Anywhere St., Springfield, XX, 12345" size=180>
+			</div>
+			<div class='btn-group' role="group">
+            <label for="addAddress2" style="width: 100px" class="form-label">Address2:</label>
+            <input
+              type="text"
+              class="form-control"
+              id="addAddress2"
+              v-model="addData.address2"
+              placeholder="" size=180>
+          	</div>
+			<div class='btn-group' role="group">
+            <label for="addAddress3" style="width: 100px" class="form-label">Address3:</label>
+            <input
+              type="text"
+              class="form-control"
+              id="addAddress3"
+              v-model="addData.address3"
+              placeholder="" size=180>
+          	</div>
+			<div class='btn-group' role="group">
+            <label for="addSuffix" style="width: 100px" class="form-label">Suffix:</label>
+            <input
+              type="text"
+              class="form-control"
+              id="addSuffix"
+              v-model="addData.suffix"
+              placeholder="" size=180>
+          	</div>
+		  </div>
+
+		  <div class="btn-group" role="group">
+		  <div class="mb-3">
+            <label for="addCity" class="form-label">City:</label>
+            <input
+              type="text"
+              class="form-control"
+              id="addCity"
+              v-model="addData.city"
+              placeholder="Springfield" size=40>
+          </div>
+		  <div class="mb-3">
+            <label for="addState" class="form-label">State:</label>
+            <input
+              type="text"
+              class="form-control"
+              id="addState"
+              v-model="addData.state"
+              placeholder="XX" size=20>
+		  </div>
+		  <div class="mb-3">
+            <label for="addPost" class="form-label">Postal Code:</label>
+            <input
+              type="text"
+              class="form-control"
+              id="addPost"
+              v-model="addData.postal_code"
+              placeholder="XXXXX" size=20>
+		  </div>
+		  <div class="mb-3">
+            <label for="addCountry" class="form-label">Country:</label>
+            <input
+              type="text"
+              class="form-control"
+              id="addCountry"
+              v-model="addData.country"
+              placeholder="USA" size=20>
+		  </div>
+          </div>
+
+		  <div class="btn-group" role="group">
+		  <div class="mb-3">
+            <label for="addNick" class="form-label">Nickname:</label>
+            <input
+              type="text"
+              class="form-control"
+              id="addNick"
+              v-model="addData.nickname"
+              placeholder="The Elevator">
+          </div>
+		  <div class="mb-3">
+            <label for="addOverride" class="form-label">Site Override:</label>
+            <input
+              type="text"
+              class="form-control"
+              id="addOverride"
+              v-model="addData.site_override"
+              placeholder="">
+          </div>
+		  </div>
+
+          <div class="btn-group" role="group">
+            <button
+              type="button"
+              class="btn btn-primary btn-sm"
+              @click="handleAddSubmit">
+              Submit
+            </button>
+            <button
+              type="button"
+              class="btn btn-danger btn-sm"
+              @click="handleAddReset">
+              Reset
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<div v-if="activeAddData" class="modal-backdrop fade show"></div>
+
+<!-- edit data modal -->
+<div
+  ref="editData"
+  class="modal fade"
+  :class="{ show: activeEditData, 'd-block': activeEditData }"
+  tabindex="-1"
+  role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Update Site Information</h5>
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close"
+          @click="toggleEditData">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <div class="mb-3">
+            <div class="btn-group" role="group">
+              <div class="mb-3">
+                <label for="editSite" class="form-label">Site Mneumonic:</label>
+                <input type="text" class="form-control" id="editSite" v-model="editData.site" placeholder="e.g. MGO or ESNA..." style="width: 135px;">
+              </div>
+              <div class="mb-3" style="border-left: 1px dashed #333; margin-left: 15px; padding-left: 15px;">
+                  <label for="editRegion" class="form-label">ClearPass Region</label>
+                  <select type=text class=form-select id=editRegion v-model=editData.region style="width: 135px;">
+                      <option v-for="r in regions" v-bind:value="r.region">{%raw%}{{r.name}}{%endraw%}</option>
+                  </select>
+              </div>
+              <div class="mb-3" style="border-left: 1px dashed #333; margin-left: 15px; padding-left: 15px;">
+                <label for="editDHCPOverride" class="form-label">DHCP Override</label>
+                <select type=text class=form-select id=editDCHPOverride v-model=editData.dhcp_override style="width: 135px">
+                  <option value="">Not Used</option>
+                  <option v-for="site in dhcpOverrideList" v-bind:value="site">{%raw%}{{site}}{%endraw%}</option>
+                </select>
+              </div>
+            </div>
+        </div>
+
+		  <div class="mb-3">
+            <label for="editType" class="form-label">Site Type:</label>
+            <select
+              type="text"
+              class="form-select"
+              id="editType"
+              v-model="editData.type"
+              placeholder="What type of site is this">
+              <option disabled value="">What type of site is this</option>
+                <option>Warehouse</option>
+                <option>Sales</option>
+                <option>Plant</option>
+                <option>Plant/Mill</option>
+                <option>Datacenter</option>
+                <option>Transit Point</option>
+                <option>Hub</option>
+                <option>Distribution Center</option>
+                <option>Elevator</option>
+                <option>Mill</option>
+                <option>Other</option>
+              </select>
+          </div>
+			
+          <div class="mb-3">
+            <div class='btn-group' role="group">
+            <label for="editAttention" style="width: 100px" class="form-label">Attention:</label>
+            <input
+              type="text"
+              class="form-control"
+              id="editAttention"
+              v-model="editData.attention"
+              placeholder="" size=180>
+            </div>
+            <div class='btn-group' role="group">
+            <label for="editAddress" style="width: 100px" class="form-label">Address1:</label>
+            <input
+              type="text"
+              class="form-control"
+              id="editAddress"
+              v-model="editData.address"
+              placeholder="123 Anywhere St., Springfield, XX, 12345" size=180>
+            </div>
+            <div class='btn-group' role="group">
+            <label for="editAddress2" style="width: 100px" class="form-label">Address2:</label>
+            <input
+              type="text"
+              class="form-control"
+              id="editAddress2"
+              v-model="editData.address2"
+              placeholder="" size=180>
+            </div>
+            <div class='btn-group' role="group">
+            <label for="editAddress3" style="width: 100px" class="form-label">Address3:</label>
+            <input
+              type="text"
+              class="form-control"
+              id="editAddress3"
+              v-model="editData.address3"
+              placeholder="" size=180>
+            </div>
+            <div class='btn-group' role="group">
+            <label for="editSuffix" style="width: 100px" class="form-label">Suffix:</label>
+            <input
+              type="text"
+              class="form-control"
+              id="editSuffix"
+              v-model="editData.suffix"
+              placeholder="" size=180>
+            </div>
+          </div>
+
+
+          <div class="btn-group" role="group">
+          <div class="mb-3">
+            <label for="editCity" class="form-label">City:</label>
+            <input
+              type="text"
+              class="form-control"
+              id="editCity"
+              v-model="editData.city"
+              placeholder="Springfield" size=40>
+          </div>
+          <div class="mb-3">
+            <label for="editState" class="form-label">State:</label>
+            <input
+              type="text"
+              class="form-control"
+              id="editState"
+              v-model="editData.state"
+              placeholder="XX" size=20>
+          </div>
+          <div class="mb-3">
+            <label for="editPost" class="form-label">Postal Code:</label>
+            <input
+              type="text"
+              class="form-control"
+              id="editPost"
+              v-model="editData.postal_code"
+              placeholder="XXXXX" size=20>
+          </div>
+          <div class="mb-3">
+            <label for="editCountry" class="form-label">Country:</label>
+            <input
+              type="text"
+              class="form-control"
+              id="editCountry"
+              v-model="editData.country"
+              placeholder="USA" size=20>
+          </div>
+          </div>
+
+          <div class="btn-group" role="group">
+          <div class="mb-3">
+            <label for="editNick" class="form-label">Nickname:</label>
+            <input
+              type="text"
+              class="form-control"
+              id="editNick"
+              v-model="editData.nickname"
+              placeholder="The Elevator">
+          </div>
+          <div class="mb-3">
+            <label for="editOverride" class="form-label">Site Override:</label>
+            <input
+              type="text"
+              class="form-control"
+              id="editOverride"
+              v-model="editData.site_override"
+              placeholder="">
+          </div>
+          </div>
+
+          <div class="btn-group" role="group">
+            <button
+              type="button"
+              class="btn btn-primary btn-sm"
+              @click="handleEditSubmit">
+              Submit
+            </button>
+            <button
+              type="button"
+              class="btn btn-danger btn-sm"
+              @click="handleEditCancel">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<div v-if="activeEditData" class="modal-backdrop fade show"></div>
+{% include "vue_utility_modal_are_you_sure.html" %}
+{% include "vue_utility_modal_alert.html" %}
+  </div>
+</template>
+
+<script type="module">
+  import { createApp } from 'https://unpkg.com/petite-vue?module'
+  import 'https://unpkg.com/axios/dist/axios.min.js'
+ 
+  const endpoint = "/rest/v1/config/gmiSites";
+  const dhcpOverrideEndpoint = "/rest/v1/global-dhcp/byType/1";
+  
+  function app() {
+    return {
+    $template: '#gridTemplate',
+	  areYouSure: {title: 'WARNING - DATA WILL BE REMOVED', body: 'This action will delete data.  Are you sure?', button:'Yes, proceed.', action:undefined},
+	  modalAlert: {title: '', body: '', button:'OK', action:undefined, proceed_button:null},
+	  cols: [
+      {name: 'region', text: 'Region'},
+      {name: 'site', text: 'Site'},
+      {name: 'type', text: 'Type'},
+      {name: 'address', text: 'Address'},
+      {name: 'city', text: 'City'},
+      {name: 'state', text: 'State'},
+      {name: 'country', text: 'Country'},
+      {name: 'nickname', text: 'Nickname'},
+      {name: 'dhcp_override', text: 'DHCP Override'}
+	  ],
+	  data: [],
+      sort: {
+	      column: 'id',
+	      by: 'asc'
+      },
+	  regions: [{region:1, name: 'Corp'},{region:2, name: 'NA Plant'},{region:3,name: 'Europe'},{region:4,name: 'India'},{region:5,name: 'LATAM'}, {region:6,name: 'Asia'}, {region:7,name: 'China'}],
+	  message_class: "none",
+	  message: "",
+      message_icon: "",
+	  activeAddData: false,
+	  activeEditData: false,
+      addData: { vlan: '', name: '', region: 1 },
+	  editData: { vlan: '', name: '', id: '', dhcp_override: ""},
+	  deleteData: { id: '' },
+    toggleActiveData: {id: ''},
+	  alertData: {site: ''},
+    dhcpOverrideList: [],
+	  add_data(payload) {
+		const path = endpoint;
+		axios.post(path, payload).then(response => {
+			//console.log("add site response", response);
+      this.message_alert("alert-success", "You have added a new site to the database.");
+			this.get_data(); 
+			}).catch((error) => {
+				console.log(error); 
+				this.get_data(); 
+			});
+	  },
+	activate_modal_alert(title, data, button, action, proceed_button){
+		this.modalAlert.title = title;
+		this.modalAlert.displayed = true;
+		this.modalAlert.button = button;
+    if (proceed_button) {
+      // console.log("setting the proceed button")
+      this.modalAlert.proceed_button = proceed_button;
+    }
+        var el = document.getElementById('modalAlert');
+        var bel = new bootstrap.Modal(el);
+        bel.show();
+        this.modalAlert.active = bel;
+ 		var modalBody = document.getElementById('modalBody');
+  		modalBody.innerHTML = data;
+    },
+    proceed_alter_dismiss_modal_alert(){
+      let payload = {
+        id: this.editData.id,
+        site: this.editData.site,
+        type: this.editData.type,
+        address: this.editData.address,
+        city: this.editData.city,
+        state: this.editData.state,
+        country: this.editData.country,
+        nickname: this.editData.nickname,
+        region: this.editData.region,
+        attention: this.editData.attention,
+        address2: this.editData.address2,
+        address3: this.editData.address3,
+        suffix: this.editData.suffix,
+        postal_code: this.editData.postal_code,
+        site_override: this.editData.site_override,
+        dhcp_override: this.editData.dhcp_override,
+        proceed_confirm_site: 'YES',
+        active: 1
+	  	}
+		  this.edit_data(payload);
+      if (this.modalAlert.displayed) {
+        this.modalAlert.displayed=false;
+        this.modalAlert.proceed_button = null;
+        this.modalAlert.active.hide();
+    }
+    },
+    dismiss_modal_alert(){
+        if (this.modalAlert.displayed) {
+            this.modalAlert.displayed=false;
+            this.modalAlert.active.hide();
+        }
+    },
+	  message_alert(message_class, message){
+		  this.message_class=message_class;
+		  this.message=message;
+		  switch (message_class) {
+			case 'alert-success': this.message_icon = "#check-circle-fill"; break;
+			case 'alert-info' : this.message_icon = "#info-fill"; break;
+			case 'alert-warning': this.message_icon = "#exclamation-triangle-fill"; break;
+		    case 'alert-danger' : this.message_icon = "#exclamation-triangle-fill"; break;
+		  }
+		  this.alert_box = document.getElementById("alert");
+		  this.message_box_icon = document.getElementById("message_box_icon");
+		  this.message_box_icon.getElementsByTagName("use")[0].setAttributeNS('http://www.w3.org/1999/xlink', 'href', this.message_icon);
+		  this.alert_box.classList = ("alert fixed-top");
+		  this.alert_box.classList.add(this.message_class);
+	  },
+	  edit_data(payload) {
+		const path = "{}/{}".format(endpoint,this.editData.id)
+    // console.log(payload)
+		axios.put(path, payload)
+			.then(response => {
+				this.get_data(); 
+        payload.proceed_confirm_site = 'NO';
+          		//console.log(`Response from the modify function: ${response.data}`); 
+				if (response.data.Result === "Success") { 
+					this.message_alert("alert-success","You have updated the record successfully");
+				} else {
+	                var baseURL = "/config/site/switches";
+	                var alertURL = baseURL + "/" + this.alertData.site;
+	                var alertString = 'The site have switches that are still attached to the site, please confirm proceed for moving the switch to new renamed site: <br><br>';
+	                alertString += "Check out <a href='" + alertURL + "'>" + this.alertData.site + " switches</a>"
+	                this.activate_modal_alert("PLEASE CONFIRM FOR SITE TO BE MODIFIED", alertString, "Go back", null, "Proceed");
+				}
+			})
+			.catch((error) => {
+				console.log(error); 
+				this.get_data(); 
+			});
+	  },
+	  delete_data(payload) {
+  	  const path = "{}/{}".format(endpoint, this.deleteData.id);
+
+  	  axios.delete(path)
+      	.then(response => {
+      		//console.log(`Response from the delete function: ${response.data}`); 
+			//console.log(`deleteData.id = ${this.deleteData.id}`);
+			//console.log(`deleteData.siteName = ${this.deleteData.siteName}`);
+			this.get_data();
+
+			if (response.data.Result === "Success") {
+        		this.message_alert("alert-danger", "You have deleted record " + this.deleteData.id);
+      		} else {
+        	    var baseURL = "/config/site/switches";
+				var alertURL = baseURL + "/" + this.deleteData.siteName;
+        		var alertString = 'The site cannot be deleted becuase there are switches that are still attached to the site: <br><br>';
+				alertString += "Check out <a href='" + alertURL + "'>" + this.deleteData.siteName + " switches</a>"
+				this.activate_modal_alert("SITE CANNOT BE DELETED", alertString, "OK");
+            }
+    	})
+    	.catch(error => {
+      		console.log(error);
+      		this.get_data();
+    	});
+    },
+    get_data() {
+      const path = endpoint;
+      axios.get(path).then((res) => {
+        this.data = return_result(res.data);
+      }).catch((error) => {console.error(error);})
+        },
+      get filtered_data() {
+      //console.log("this is unfiltered data");
+      //console.log(this.data);
+      let activerows = this.data.filter(row => row.active === 1);
+      let inactiverows = this.data.filter(row => row.active === 0);
+      //console.log("this is filtered one");
+      //console.log(activerows);
+      let new_data = activerows;
+      //console.error(typeof(new_data));
+      if (typeof(new_data[0]) != "undefined") {
+            if (this.sort.by == 'asc') {
+                for (const[k,v] of Object.entries(new_data[0])){
+                    if (this.sort.column == k) {
+                        new_data.sort ( (a,b) => (a[k] > b[k]) ? 1: -1);
+                    }
+                }
+            } else {
+                for (const[k,v] of Object.entries(new_data[0])){
+                    if (this.sort.column == k) {
+                        new_data.sort ( (a,b) => (a[k] < b[k]) ? 1: -1);
+                    }
+                }
+            }
+      }
+      //console.error(new_data);
+      new_data = [...new_data, ...inactiverows];
+      return new_data;
+	  },
+    handleAddReset() {
+		  this.initForm()
+	  },
+    handleAddSubmit() {
+      if (this.addData.site != "" && this.addData.site != undefined) {
+        const nameExists = this.data.some(item => item.site === this.addData.site);	
+      
+        if (nameExists !== true) {
+          const payload = {
+            site: this.addData.site,
+            type: this.addData.type,
+            address: this.addData.address,
+            city: this.addData.city,
+            state: this.addData.state,
+            country: this.addData.country,
+            nickname: this.addData.nickname,
+            region: this.addData.region,
+            attention: this.addData.attention,
+            address2: this.addData.address2,
+            address3: this.addData.address3,
+            suffix: this.addData.suffix,
+            postal_code: this.addData.postal_code,
+            site_override: this.addData.site_override,
+            dhcp_override: this.addData.dhcp_override,
+            lat: '',
+            lng: '',
+            aruba_central_id: '',
+            active: 1
+        }	
+        this.toggleAddData();
+        this.add_data(payload);
+        this.initForm();
+        } else {
+          this.activate_modal_alert("SITE NAME ERROR", "A site with that name already exists.", "OK");
+        }
+      } else {
+        this.activate_modal_alert("SITE NAME ERROR", "A site mneumonic is missing.  Please add the site mneumonic and resubmit", "OK");
+      }
+	  },
+	  handleEditCancel() {
+		  this.toggleEditData()
+	  },
+    handleEditSubmit() {
+		  this.toggleEditData();
+      let payload = {
+        id: this.editData.id,
+        site: this.editData.site,
+        type: this.editData.type,
+        address: this.editData.address,
+        city: this.editData.city,
+        state: this.editData.state,
+        country: this.editData.country,
+        nickname: this.editData.nickname,
+        region: this.editData.region,
+        attention: this.editData.attention,
+        address2: this.editData.address2,
+        address3: this.editData.address3,
+        suffix: this.editData.suffix,
+        postal_code: this.editData.postal_code,
+        site_override: this.editData.site_override,
+        dhcp_override: this.editData.dhcp_override,
+        proceed_confirm_site: 'NO',
+        active: 1
+	  	}
+		  this.edit_data(payload);
+    },
+    handleonoffData(row) {
+      if (row) {
+        this.toggleActiveData.id = row.id;
+        this.toggleActiveData.siteName = row.site;
+        row.active = row.active === 1 ? 0 : 1;
+        this.toggleActiveData.activation = row.active;
+        let payload = {
+          id: this.toggleActiveData.id,
+          site: this.toggleActiveData.siteName,
+          active: this.toggleActiveData.activation,
+
+        }
+        //console.log(payload);
+        this.toggleactivate_data(payload);
+      }
+    },
+    toggleactivate_data(payload) {
+        const path = "{}/{}".format(endpoint, payload.id);
+        axios.put(path, payload)
+          .then(response => {
+          //console.log(`Response from the delete function: ${response.data}`); 
+          //console.log(`deleteData.id = ${this.deleteData.id}`);
+          //console.log(`deleteData.siteName = ${this.deleteData.siteName}`);
+          this.get_data();
+  
+        if (response.data.Result === "Success") {
+              this.message_alert("alert-danger", "You have switched the activation for the site " + payload.id);
+            } else {
+              this.activate_modal_alert("Toggling activation failed", "", "OK");
+            }
+        })
+        .catch(error => {
+            console.log(error);
+            this.get_data();
+        });
+    },
+	  handleDelete(id) {
+      if (id) {
+        this.deleteData.id = id.id;
+        this.deleteData.siteName = id.site;
+        this.delete_data();
+      }
+	  },
+	  initForm() {
+      this.addData.site = '';
+      this.addData.type = '';
+      this.addData.address = '';
+      this.addData.city = '';
+      this.addData.state = '';
+      this.addData.country = '';
+      this.addData.nickname = '';
+      this.addData.region = 1;
+      this.addData.attention = '';
+      this.addData.address2 = '';
+      this.addData.address3 = '';
+      this.addData.suffix = '';
+      this.addData.postal_code = '';
+      this.addData.site_override = '';
+      this.addData.dhcp_override = '';
+      this.addData.active = 1;
+	  },
+    toggleAddData() {
+      const body = document.querySelector('body');
+      this.activeAddData = !this.activeAddData;
+      if (this.activeAddData) {
+        body.classList.add('modal-open');
+      } else {
+        body.classList.remove('modal-open');
+      }
+    },
+	  toggleEditData(id) {
+      if (id) {
+        //console.error(id);
+        this.alertData.site = id.site;
+        this.editData = id;
+        if (id.dhcp_override == undefined) {
+          this.editData.dhcp_override = "";
+        }
+//			this.editData.site = id.site;
+//			this.editData.address = id.address;
+//			this.editData.id = id.id;
+      }
+      const body = document.querySelector('body');
+      this.activeEditData = !this.activeEditData;
+      if (this.activeEditData) {
+        body.classList.add('modal-open');
+      } else {
+        body.classList.remove('modal-open');
+      }
+	  },
+    are_you_sure(action,id){
+      this.areYouSure.displayed=true
+      var el = document.getElementById('modalAreYouSure');
+      var bel = new bootstrap.Modal(el);
+      bel.show();
+      this.areYouSure.active = bel;
+      this.areYouSure.action=action
+      this.areYouSure.id=id
+    },
+    dismiss_are_you_sure(value){
+      if (this.areYouSure.displayed) {
+          this.areYouSure.result = value;
+          if (value) {
+              this.areYouSure.action(this.areYouSure.id)
+          }
+          this.areYouSure.displayed=false;
+          this.areYouSure.active.hide();
+      }
+    },
+    get_dhcp_server_override_list() {
+      //pull the list of sites that have dhcp failover pairs
+      const path = dhcpOverrideEndpoint;
+      let tempList = []
+
+      axios.get(path).then( response => {
+        //console.log("response.data", response.data);
+        let dhcpServerWorkingList = response.data;
+
+        for (let i = 0; i < dhcpServerWorkingList.length; i++){
+          tempList.push(dhcpServerWorkingList[i].site);
+        }
+        //this creates a list from set(tempList) which should keep duplicates out of the dropdown
+        this.dhcpOverrideList = [...new Set(tempList)];
+
+        this.dhcpOverrideList.sort()
+        //console.log(this.dhcpOverrideList);
+        }).catch((error) => {
+          console.log(error); 
+        });
+    },
+	  mounted() {
+      this.initForm();
+      this.get_data();
+      this.get_dhcp_server_override_list();
+	  }
+    }
+  }
+
+  createApp({app}).mount()
+</script>
+
+<div v-scope="app()" @vue:mounted="mounted"></div>
+
+{% endblock %}

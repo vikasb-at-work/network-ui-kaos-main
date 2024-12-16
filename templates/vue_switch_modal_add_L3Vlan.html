@@ -1,0 +1,278 @@
+<!--add data modal - new L3 VLAN-->
+<div
+ref="switch_L3addData"
+class="modal fade"
+:class="{ show: switch_L3activeAddData, 'd-block': switch_L3activeAddData }"
+tabindex="-1"
+role="dialog">
+<div class="modal-dialog modal-lg" role="document">
+<div class="modal-content">
+  <div class="modal-header">
+	  <h5 class="modal-title">Add a L3 SVI ({%raw%}{{switch_L3addData.vlan}}{%endraw%}) on switch {%raw%}{{switch_L3addData.switch_name}}{%endraw%}</h5>
+	<button
+	  type="button"
+	  class="close"
+	  data-dismiss="modal"
+	  aria-label="Close"
+	  @click="switch_toggleAddModalL3(this)">
+	  <span aria-hidden="true">&times;</span>
+	</button>
+  </div>
+  <div class="modal-body">
+	<form>
+
+	<div class="container">
+		<div class="row">
+			<div class="col-sm">
+	  			<div class="mb-3">
+	  				<div class="btn-group" role="group">
+						<label for="addIP" class="form-label">Primary IP/CIDR</label>
+	  					<div class="mb-3" style="border-left: 1px dashed #333; margin-left: 20px; padding-left: 10px;">
+		  					<label class="switch">
+								<input type="checkbox" @click="toggleCheckbox" id="addL3IPDHCP" v-model="switch_L3addData.ip_dhcp">
+								<div class="slider round"></div>
+	  						</label>
+							<label for="addL3IPDHCP">IP DHCP ({%raw%}{{ switch_L3addData.ip_dhcp }}{%endraw%})</label>
+	  					</div>
+	  				</div>
+					<input :disabled="switch_L3addData.ip_dhcp" type="text" class="form-control" id="addIP" v-model="switch_L3addData.ip" placeholder="E.g. 1.1.1.1/32" width="200px"/>
+	  			</div>
+				<div class="row"> <!-- default route / user vlan row-->
+					<div class="col-6 d-flex align-self-start" >
+						<div class="mb-3" v-if="switch_getDefaultRoute.exists === false">
+							<button type="button" class="btn btn-warning btn-sm" style="width: 167.25px; height: 52px;" @click.prevent="let input_ip_isvalid = switch_addDefaultRouteFindNextHop(); if (input_ip_isvalid) {switch_toggleDefaultRoute();}">
+								Create Default Route
+							</button>
+						</div>
+						<div v-else class="mb-3" > 
+							<button type="button" class="btn btn-secondary btn-sm" style="width: 167.25px; height: 52px;">
+								Default route exists (next hop: {%raw%}{{ switch_getDefaultRoute.nexthop }}{%endraw%})
+							</button>
+						</div>
+					</div>
+					<div class="col-6 d-flex align-self-end justify-content-end" > 
+						<!-- if a user_vlan is set and it is equal to the current vlan don't have an action on the button-->
+						<div class="mb-3" v-if="switch_user_vlan_exists === true && switch_vars_user_vlan.value == switch_L3addData.vlan">
+							<button type="button" class="btn btn-secondary btn-sm" style="width: 167.25px; height: 52px;">
+								{user_vlan} is currently set to vlan {%raw%}{{switch_vars_user_vlan.value}}{%endraw%} 
+							</button>
+						</div>
+						<!-- if a user_vlan is not set -->
+						<div class="mb-3" v-else-if="switch_user_vlan_exists === false"> 
+							<button type="button" class="btn btn-warning btn-sm" style="width: 167.25px; height: 52px;" @click="are_you_sure(handle_user_vlan_change_button_click,switch_L3addData.vlan, areYouSureUserVlan)">
+								Set {user_vlan} to {%raw%}{{switch_L3addData.vlan}}{%endraw%}
+							</button>
+						</div>
+						<!-- if a user vlan is set but it is set to a different vlan -->
+						<div class="mb-3" v-else> 
+							<button type="button" class="btn btn-warning btn-sm" style="width: 167.25px; height: 52px;" @click="are_you_sure(handle_user_vlan_change_button_click,switch_L3addData.vlan, areYouSureUserVlan)">
+								{user_vlan} is currently set to vlan {%raw%}{{switch_vars_user_vlan.value}}{%endraw%}
+							</button>
+						</div>
+					</div>
+				</div> <!-- end - default route / user vlan row-->
+      			<div class="mb-3 rounded-corners" style="background-color: #ccc; padding: 4px;">
+        			<label for="addSecondaryIP" class="form-label">Secondary IPs</label>
+					<div class="btn-group" role="group">
+						<select v-model="internal_secondary_ip_selected" class="rounded-corners-with-button" multiple="multiple" style="width: 323px; height: 50px;">
+							<option v-for="ip in internal_secondary_ips">{%raw%}{{ip}}{%endraw%}</option>
+						</select>
+						<button type="button" style="height: 50px; width: 27px" class="btn btn-danger btn-sm" @click="secondary_ip_input=internal_secondary_ip_selected[0]; internal_secondary_ips.splice(internal_secondary_ips.indexOf(internal_secondary_ip_selected[0]),1);">-</button>
+					</div>
+					<div class="btn-group" role="group" style="margin-top: 10px;">
+						<input type="text" class="form-control rounded-corners-with-button" id="ip" v-model="secondary_ip_input" placeholder="Enter new IP/CIDR" style="width: 323px">
+						<button
+							type="button"
+							class="btn btn-primary btn-sm"
+							@click.prevent="let array_push_success = switch_validateIPSendtoArray(internal_secondary_ips, secondary_ip_input, true); if (array_push_success) { secondary_ip_input='';}">
+							+
+						</button>
+					</div>
+      			</div>
+
+	  <div class="mb-3">
+		<label for="addDescription" class="form-label">L3 Interface Description</label>
+		<input
+		  type="text"
+		  class="form-control"
+		  id="addDescription"
+		  v-model="switch_L3addData.description"
+		  placeholder="Enter a description for this L3 interface"/>
+	  </div>
+
+	  <div class="mb-3">
+		  <label class="switch">
+		  <input type="checkbox" @click="toggleCheckbox" id="addL3Shutdown" v-model="switch_L3addData.shutdown">
+		  <div class="slider round"></div>
+	  </label><label for="addL3Shutdown">Shutdown ({%raw%}{{ switch_L3addData.shutdown }}{%endraw%})</label>
+	  </div>
+
+	  <div class="mb-3">
+		  <label class="switch">
+		  <input type="checkbox" @click="toggleCheckbox" id="addL3Counters" v-model="switch_L3addData.l3_counters">
+		  <div class="slider round"></div>
+	  </label><label for="addL3Counters">L3 Counters ({%raw%}{{ switch_L3addData.l3_counters }}{%endraw%})</label>
+	  </div>
+
+	  <div class="mb-3">
+		  <label class="switch">
+		  <input type="checkbox" @click="toggleCheckbox" id="addIPDirectedBroadcast" v-model="switch_L3addData.ip_directed_broadcast">
+		  <div class="slider round"></div>
+	  </label><label for="addIPDirectedBroadcast">IP Directed Broadcast ({%raw%}{{ switch_L3addData.ip_directed_broadcast }}{%endraw%})</label>
+	  </div>
+
+	  <div class="mb-3">
+		  <label class="switch">
+		  <input type="checkbox" @click="toggleCheckbox" id="addIPNeighborFlood" v-model="switch_L3addData.ip_neighbor_flood">
+		  <div class="slider round"></div>
+	  </label><label for="addIPNeighborFlood">IP Neighbor Flood ({%raw%}{{ switch_L3addData.ip_neighbor_flood }}{%endraw%})</label>
+	  </div>
+
+	  <div class="mb-3">
+		  <label class="switch">
+		  <input type="checkbox" @click="toggleCheckbox" id="addL3IPProxyArp" v-model="switch_L3addData.ip_proxy_arp">
+		  <div class="slider round"></div>
+	  </label><label for="addL3IPProxyArp">IP Proxy ARP ({%raw%}{{ switch_L3addData.ip_proxy_arp }}{%endraw%})</label>
+	  </div>
+
+	  <div class="mb-3">
+		  <label class="switch">
+		  <input type="checkbox" @click="toggleCheckbox" id="addL3IPIGMPQuerier" v-model="switch_L3addData.ip_igmp_querier">
+		  <div class="slider round"></div>
+	  </label><label for="addL3IPIGMPQuerier">IP IGMP Querier ({%raw%}{{ switch_L3addData.ip_igmp_querier }}{%endraw%})</label>
+	  </div>
+
+	</div><!--end column 1-->
+	<!--start column 2--><div class="col-sm" style="border-left: 1px dashed #333;">
+
+	  <div class="mb-3">
+		<label for="addMTU" class="form-label">IP MTU</label>
+		<div class="btn-group" role="group">
+		<input
+		  type="text"
+		  class="form-control rounded-corners-with-button"
+		  id="addMTU"
+		  v-model="switch_L3addData.ip_mtu"
+		  placeholder="Enter the IP MTU range 68 - 9168 for this L3 interface"/ style="width: 200px">
+		<button type="button" class="btn btn-info btn-sm" @click.prevent="switch_L3addData.ip_mtu=1500">STD</button>
+		<button type="button" class="btn btn-warning btn-sm" @click.prevent="switch_L3addData.ip_mtu=9198">JUMBO</button>
+		</div>
+	  </div>
+
+	  <div class="mb-3">  <!-- enable helpers toggle -->
+		<label class="switch">  
+			<input type="checkbox" id="enableHelpers" v-model="switch_L3addData.ip_enable_helpers">
+			<div class="slider round"></div>
+		</label>
+		<label for="enableHelpers">Enable DHCP helpers for this vlan ({%raw%}{{ switch_L3addData.ip_enable_helpers }}{%endraw%})</label>
+	  </div>
+	  	<div v-show="switch_L3addData.ip_enable_helpers == true">	
+	  		<div class="mb-3 rounded-corners" style="background-color: #ccc; padding: 4px;"> <!-- grey box -->
+				<div class="btn-group" role="group">
+					<label for="addHelper" class="form-label">IP Helpers</label>
+					<div class="mb-3" style="border-left: 1px dashed #333; margin-left: 20px; padding-left: 10px;">
+						<label class="switch"> <!-- use defaults toggle --> 
+							<input 
+								type="checkbox"
+								@click="handleHelperDefaultsCheckboxClick(false)"
+								id="useHelperDefaults"
+								v-model="switch_L3addData.ip_helpers_use_defaults">
+								<div class="slider round"></div>
+							</label>
+						<label for="enableHelpers">Use helper defaults ({%raw%}{{ switch_L3addData.ip_helpers_use_defaults }}{%endraw%})</label>
+					</div>
+				</div>
+			<!-- default helpers here-->
+			<div v-if="switch_L3addData.ip_helpers_use_defaults == true" class="d-flex "> 
+				<pre>  Primary DHCP   : {%raw%}{{ switch_L3.primary_dhcp_name }}{%endraw%}<br>  Secondary DHCP : {%raw%}{{ switch_L3.secondary_dhcp_name }}{%endraw%}<br>  Clearpass      : {%raw%}{{ switch_L3.clearpass_name }}{%endraw%}</pre>
+			</div>
+		<div class="btn-group" role="group">
+			<select v-model="internal_ip_selected" multiple="multiple" style="width: 324px; height: 75px;" class="rounded-corners-with-button">
+				<option v-for="ip in internal_ip_helpers">{%raw%}{{ip}}{%endraw%}</option>
+			</select>
+			<!-- button to remove helper-->
+			<button 
+				type="button" 
+				style="height: 75px; width: 27px" 
+				class="btn btn-danger btn-sm" 
+				@click="ip_helper_input=internal_ip_selected[0]; internal_ip_helpers.splice(internal_ip_helpers.indexOf(internal_ip_selected[0]), 1);">
+				-
+			</button>
+		</div>
+		<div class="btn-group" role="group" style="margin-top: 10px">
+			<input type="text" class="form-control rounded-corners-with-button" id="ip" v-model="ip_helper_input" placeholder="Enter new IP" style="width: 324px">
+			<!-- button to add helper-->
+			<button 
+				type="button" 
+				class="btn btn-primary btn-sm" 
+				@click.prevent="let helper_length = helper_array_length_add(); let array_push_success = switch_validateIPSendtoArray(internal_ip_helpers, ip_helper_input, false, helper_length); if (array_push_success) {ip_helper_input='';}">
+				+
+			</button>
+		</div>
+      </div>
+	  </div>
+      <div class="mb-1">
+        <label for="addIPPolicyIn" class="form-label">IP Policy In</label>
+        <input
+          type="text"
+          class="form-control"
+          id="addIPPolicyIn"
+          v-model="switch_L3addData.ip_policy_in"
+          placeholder="Enter policy name or leave blank for none"/>
+      </div>
+
+      <div class="mb-1">
+        <label for="addIPAclIn" class="form-label">IP ACL In</label>
+        <input
+          type="text"
+          class="form-control"
+          id="addIPAclIn"
+          v-model="switch_L3addData.ip_acl_in"
+          placeholder="Enter an ACL for inbound or leave blank for none"/>
+      </div>
+
+      <div class="mb-1">
+        <label for="addIPAclOut" class="form-label">IP ACL Out</label>
+        <input
+          type="text"
+          class="form-control"
+          id="addIPAclOut"
+          v-model="switch_L3addData.ip_acl_out"
+          placeholder="Enter an ACL for outbound or leave blank for none"/>
+      </div>
+
+      <div class="mb-1">
+        <label for="addVrf" class="form-label">VRF</label>
+        <input
+          type="text"
+          class="form-control"
+          id="addVRF"
+          v-model="switch_L3addData.vrf"
+          placeholder="Enter a VRF for this L3 interface or leave blank for default"/>
+      </div>
+
+			</div><!--end column 2-->
+		</div><!--end row-->
+	</div><!--end container-->
+
+	  <div class="btn-group" role="group">
+		<button
+		  type="button"
+		  class="btn btn-primary btn-sm"
+		  @click="switch_L3handleAddSubmit">
+		  Submit
+		</button>
+		<button
+		  type="button"
+		  class="btn btn-danger btn-sm"
+		  @click="switch_L3handleAddReset">
+		  Reset
+		</button>
+	  </div>
+
+  </form>
+  </div>
+</div>
+</div>
+</div>
+<div v-if="switch_L3activeAddData" class="modal-backdrop fade show"></div>

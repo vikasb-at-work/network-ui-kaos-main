@@ -1,0 +1,12 @@
+<!doctype html>
+<title>F5-Neo4j Project</title>
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+<link rel="stylesheet" type="text/css"
+      href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/css/bootstrap.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css">
+
+<div class="page">
+  <h1>F5 Clean Up</h1><p><a href="{{ url_for('application') }}">Home</a>
+  <a href="{{ url_for('f5') }}">F5-Home</a></p>
+  {% block body %}{% endblock %}
+</div>

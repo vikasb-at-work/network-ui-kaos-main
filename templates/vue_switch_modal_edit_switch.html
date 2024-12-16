@@ -1,0 +1,63 @@
+<!--add data modal - add or edit switch serial, mac-->
+<div
+ref="switch_ModalSwitchAddEditData"
+class="modal fade"
+:class="{ show: switch_activeModalSwitchSerialMAC, 'd-block': switch_activeModalSwitchSerialMAC }"
+tabindex="-1"
+role="dialog">
+<div class="modal-dialog" role="document">
+<div class="modal-content">
+  <div class="modal-header">
+	<h5 class="modal-title">Switch Serial/MAC</h5>
+	<button
+	  type="button"
+	  class="close"
+	  data-dismiss="modal"
+	  aria-label="Close"
+	  @click="switch_toggleModalSwitchSerialMAC">
+	  <span aria-hidden="true">&times;</span>
+	</button>
+  </div>
+  <div class="modal-body">
+	<form>
+
+      <div class="mb-3">
+        <label for="addRoute" class="form-label">Serial Number</label>
+        <input
+          type="text"
+          class="form-control"
+          id="addSerial"
+          v-model="switch_replace.serial"
+          placeholder="Enter a valid CX switch serial number"/>
+      </div>
+
+      <div class="mb-3">
+        <label for="addNexthop" class="form-label">MAC Address</label>
+        <input
+          type="text"
+          class="form-control"
+          id="addMAC"
+          v-model="switch_replace.MAC"
+          placeholder="Enter a valid MAC address"/>
+      </div>
+
+	  <div class="btn-group" role="group">
+		<button
+		  type="button"
+		  class="btn btn-primary btn-sm"
+		  @click="are_you_sure(switch_handleModalSwitchSerialMAC,-1,areYouSureModify)">
+		  Submit
+		</button>
+		<button
+		  type="button"
+		  class="btn btn-danger btn-sm"
+		  @click="switch_toggleModalSwitchSerialMAC">
+		  Cancel
+		</button>
+	  </div>
+	</form>
+  </div>
+</div>
+</div>
+</div>
+<div v-if="switch_activeModalSwitchSerialMAC" class="modal-backdrop fade show"></div>

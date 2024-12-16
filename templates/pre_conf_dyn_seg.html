@@ -1,0 +1,149 @@
+{% extends 'menu.html' %}
+{% block content %}
+<HEAD>
+			<link rel="canonical" href="https://getbootstrap.com/docs/3.4/examples/starter-template/">
+		<link rel="canonical" href="https://getbootstrap.com/docs/5.3/examples/cheatsheet/">
+			<link href="https://getbootstrap.com/docs/5.3/dist/css/bootstrap-theme.min.css" rel="stylesheet">
+	<link href="https://getbootstrap.com/docs/5.3/examples/sticky-footer-navbar/sticky-footer-navbar.css" rel="stylesheet">
+		
+	<SCRIPT src="/js/jquery-3.6.0.min.js"></SCRIPT>
+	<style>
+	.btn-group-xs > .btn, .btn-xs {
+ 	 padding: .25rem .4rem;
+  	font-size: .875rem;
+  	line-height: .5;
+  	border-radius: .2rem;
+	}
+	.json-textarea {
+	color: #0ec846;
+	background-color: #2f2b2b;
+	pointer-events: none;
+	}
+	</style>
+
+<body>
+<main class="container-md">
+<div class="my-3 w-100 p-3 bg-body rounded shadow">
+<h3> Push configs to pre-configure Dynamic Segmentation </h3>
+&nbsp;
+<form action="" method="post">
+<div class="row">&nbsp;&nbsp;&nbsp;&nbsp;
+<div class="form-check col-auto">&nbsp;&nbsp;&nbsp;&nbsp;
+  <input class="form-check-input" type="checkbox" value="clearpass" name="addtoClearpass" id="addtoClearpass">
+	&nbsp;&nbsp;
+  <label class="form-check-label" for="flexCheckDefault">
+    Please check if the device is not added to Clearpass
+  </label>
+</div>
+</div>
+&nbsp;
+<div class="row">
+  <div class="form-switch col-auto">&nbsp;&nbsp;&nbsp;
+    <input class="form-check-input" type="checkbox" role="switch" name="OOBEnabled" id="OOBEnabled" checked>
+    <label class="form-check-label" for="flexSwitchCheckChecked">&nbsp;&nbsp;Is OOB Enabled</label>
+  </div> 
+  <div class="form-check form-switch col-auto">&nbsp;&nbsp;
+    <input class="form-check-input" type="checkbox" role="switch" name="siteController" id="siteController" autocomplete="off" OnChange="enableDiv()">
+    <label class="form-check-label" for="flexSwitchCheckDefault">&nbsp;&nbsp;Site has a controller</label>
+  </div>
+<div class="form-switch col-auto">&nbsp;&nbsp;&nbsp;
+    <input class="form-check-input" type="checkbox" role="switch" name="BaseConfigProvision" id="BaseConfigProvision" autocomplete="off" OnChange="enableIPDetails()">
+    <label class="form-check-label" for="flexSwitchCheckChecked">&nbsp;&nbsp;Provision Base configs (Is the switch freshly plugged?)</label>
+  </div>
+<div class="col-auto">
+        <button type="button" class="btn btn-outline-info btn-xs" data-mdb-toggle="tooltip" data-mdb-placement="right" title="If this is selected please enter IP address since base config not provisioned and if want to use IP Address for data traffic other than OOBM(required)">?</button>
+        </div>
+  </div>
+&nbsp;
+<div class="input-group mb-3" id="IPProvisionHide" hidden=true>
+    <input type="text" class="form-control" name="dataIPAddress" id="dataIPAddress" placeholder="Data-band IP Format Example:192.168.1.10/24">
+    <span class="input-group-text">tag</span>
+    <input type="text" class="form-control" name="switchidentifier" id="switchidentifier" placeholder="Switch hostname as identifier">
+</div>
+  <div class="input-group mb-3">
+    <label class="input-group-text" for="inputGroupSelect01">Select Switch Site &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+    <select class="form-select" name="sitename" id="sitename">
+      <option selected>Choose...</option>
+      <!--<option value="LATAM">LATAM</option>
+      <option value="INDIA">INDIA</option>
+      <option value="EUROPE">EUROPE</option>-->
+      <option value="Corp">Corp</option>
+      <option value="Europe">Europe</option>
+      <option value="India">India</option>
+      <option value="LATAM">LATAM</option>
+      <option value="APAC">APAC</option>
+      <option value="China">China</option>
+      {% for site in sites %}
+		<option value={{ site }}>{{ site }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="input-group mb-3">
+    <input type="text" class="form-control" name="modeltype" id="modeltype" placeholder="Model example:5400 (optional)">
+    <span class="input-group-text">@</span>
+    <input type="text" class="form-control" name="SwitchIP" id="SwitchIP" placeholder="Switch mgmt IP with subnet mask if possible: Format 192.168.1.1/24">
+  </div>
+  <div class="input-group mb-3">
+    <input type="text" class="form-control" name="useremail" id="useremail" placeholder="Enter you email for audit and reports">
+    <span class="input-group-text">@</span>
+    <input type="text" class="form-control" name="domaingenmills" id="domaingenmills" placeholder="genmills.com">
+  </div>
+    &nbsp;
+  <div class="row mb-3">
+    <div class="col-sm">
+      <input type="input" name="adminvlan" id="adminvlan" class="form-control" placeholder="Admin VLAN">
+    </div> 
+    <div class="col-sm">
+      <input type="input" placeholder="Voice VLAN" name="voicevlan" id="voicevlan" class="form-control">
+    </div> 
+    <div class="col-sm">
+      <input type="input" placeholder="Sourced Radius VLAN"  name="sourcedvlan" id="sourcedvlan" class="form-control">
+    </div> 
+  </div>
+<div class="row">
+  &nbsp;
+</div>
+<div hidden=true id="controllerhide">
+    <div class="input-group mb-3">
+      <input type="text" class="form-control" name="pcontroller" id="pcontroller" placeholder="Primary Controller IP (required)">
+      <span class="input-group-text">&nbsp;</span>
+      <input type="text" class="form-control" name="scontroller" id="scontroller" placeholder="Secondary Controller IP if present">
+    </div>
+  </div>
+  &nbsp;
+  <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+</div>
+</main>
+<main class="container-md">
+<div class="my-3 w-100 p-3 bg-body rounded shadow">
+<h4> JSON provided </h4>
+ <!-- <div class="my-3 h-100 w-100 p-3 bg-light bg-gradient rounded shadow">-->
+<textarea class="form-control json-textarea" id="json-textarea" name="json-textarea" rows=4>
+    {% if response %}
+    {{ response | tojson(indent=4) }}
+    {% endif %}
+</textarea>
+</div>
+</main>
+<script type="text/javascript">
+  var outputElement = document.getElementById("json-textarea");
+  outputElement.style.height = outputElement.scrollHeight + "px";
+  function enableDiv() {
+      if (document.getElementById("siteController").checked == true){
+        document.getElementById("controllerhide").hidden = false;
+      } else {
+        document.getElementById("controllerhide").hidden = true;
+      }
+    }
+    function enableIPDetails() {
+      if (document.getElementById("BaseConfigProvision").checked == true){
+        document.getElementById("IPProvisionHide").hidden = false;
+      } else {
+        document.getElementById("IPProvisionHide").hidden = true;
+      }
+    }
+</script>
+</body>
+{% endblock %}
+

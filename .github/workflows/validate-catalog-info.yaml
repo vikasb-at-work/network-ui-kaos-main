@@ -1,0 +1,17 @@
+name: Validate catalog-info.yaml file
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'catalog-info.yaml'
+
+jobs:
+  validate:
+    runs-on: gcp
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate catalog-info.yaml file using default schema
+        uses: gmi-actions/validate-yaml-file@v1
+        with:
+          yaml_file: catalog-info.yaml
+          #schema_file: your-schema.json # Pass this parameter to validate against your own schema

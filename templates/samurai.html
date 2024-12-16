@@ -1,0 +1,413 @@
+{% extends 'menu.html' %}
+{% block content %}
+<link href="/css/samurai.css" rel="stylesheet" type="text/css" media="all">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="/js/tableSelect.js"></script>
+<script src="/js/library.js"></script>
+<script src="/js/buttons.js"></script>
+{% if (exportExcel)>0 %}
+<script src="/js/exportExcel.js"></script>
+<div id="infoBox">Please wait, generating excel spreadsheet...</div>
+{% else %}
+
+<div id="actionButtons">
+	<a id="moveYear" href="javascript:moveYear('{{ new_query_string }}');">Move to year<BR><SELECT name=moveYear id=moveYearInput onClick="javascript: return false;">
+			<option value="N">None</option>
+			<option value="0">0 - {{ fy[0] }}</option>
+			<option value="1">1 - {{ fy[1] }}</option>
+			<option value="2">2 - {{ fy[2] }}</option>
+			<option value="3">3 - {{ fy[3] }}</option>
+			<option value="4">4 - {{ fy[4] }}</option>
+			<option value="5">5 - {{ fy[5] }}</option>
+			<option value="6">6 - {{ fy[6] }}</option>
+			<option value="7">7 - {{ fy[7] }}</option>
+			<option value="8">8 - {{ fy[8] }}</option>
+			<option value="9">9 - {{ fy[9] }}</option>
+		</select>
+	</a>
+	<a id="moveBudget" href="javascript:moveBudget('{{ new_query_string }}');">Move to budget<BR><SELECT NAME=moveBudget id=moveBudgetInput onClick="javascript: return false;">
+			<option value="8">OPIE</option>
+			<option value="9">SAMURAI</option>
+			<option value="15">OTAR</option>
+			<option value="10">OTHER PROJECT</option>
+			<option value="11">UNKNOWN</option>
+		</select>
+	</a>
+    <a id="movePlanner" href="javascript:movePlanner('{{ new_query_string }}');">SWITCH PLANNER<BR><SELECT id=movePlannerInput name=movePlanner onClick="javascript:return false;">
+            {% for k in plannerDisplayOrder: %}
+                {% if k != "ALL": %}
+					<OPTION value="{{ planners[k] }}" {% if filterPlanner == planners[k] %} SELECTED {% endif %}>{{ k }}</OPTION>
+				{% endif %}
+            {% endfor %}
+        </SELECT>
+    </a>
+	<a id="newReplacement" href="javascript:newReplacement('{{ new_query_string }}');">Override Replacement<BR><SELECT name=newReplacement id=newReplacementInput onClick="javascript: return false;">
+			<OPTION VALUE='0'>REMOVE OVERRIDE</OPTION>
+			{% for product in overrideProducts: %}
+			<OPTION VALUE='{{ product["id"] }}'>{{ product["product"]|truncate(36) }}</OPTION>
+			{% endfor %}
+		</select>
+	</a>
+	<a id="newCapital" href="javascript:newCapital('{{ new_query_string }}');">Override capital<BR><INPUT onClick="javascript: return false;" type=text size=12 id=newCapitalInput name=newCapital></a>
+	<a id="moveSite" href="javascript:moveSite('{{ new_query_string }}');">MOVE TO SITE<BR><SELECT onClick="javascript: return false;" name=moveSite id=moveSiteInput>
+            {% for place in sites: %}
+            <OPTION value="{{ place['id'] }}">{{ place['location'] }}</OPTION>
+            {% endfor %}
+		</select>
+	</a>
+	<!--<a id="retireAssets" href="javascript:retireAssets('{{ new_query_string }}');">RETIRE<BR>ASSETS</a>-->
+	<a href="javascript: exportExcel();">Export to Excel</a>
+	<a href="">Depreiciation list</a>
+</div>
+<!--<div id="infoBox">start: {{ start }} stop: {{ stop }} page: {{ page }} rowcount: {{ rowCount }} requestquerystring: {{ request.query_string }} newquerystring: {{ new_query_string }}</div>-->
+{% if thisYear is not none %}
+{% if (thisYear >= 0) %}
+	<div id="infoBox">Selected fiscal year is {{ fy[thisYear] }}</div>
+{% endif %}
+{% endif %}
+<!-- <div id="infoBox">{{ debug_variables_here }}</div> -->
+<div id="tipBox">Total capital for current filter {{ formatDollar(filteredCapital) }}
+<div id="toolTipButtons"><a href=/samurai>CLEAR ALL FILTERS</A></div>
+</div>
+
+<div id="pageNav">&nbsp;  page:
+{% for i in navPages1 %}
+<a id="page_start_{{ i*page }}" href=?{{ new_query_string }}&start={{ (i*page) }}>{{i+1}}</a>
+{% endfor%}
+{% if navPages2 != [] %}
+{% if navPages1[ (navPages1|length)-1 ] != (navPages2[0]-1) %}...{%endif%}
+{% for i in navPages2 %}
+<a id="page_start_{{ i*page }}" href=?{{ new_query_string }}&start={{ i*page }}>{{ i+1 }}</a>
+{% endfor%}
+{% endif%}
+<script language=JavaScript>
+
+function changeLocationPage(page){
+	var url = new URL(document.location.href)
+	var cur = url.searchParams;
+	cur.set('page',page); 
+	url.search = cur.toString()
+	document.location.href=(url.toString());
+}
+function changeLocationStart(start){
+	var url = new URL(document.location.href)
+	var cur = url.searchParams;
+	cur.set('start',start); 
+	url.search = cur.toString()
+	document.location.href=(url.toString());
+}
+</script>
+{% set pageSizes = [10,25,50,100,1000,10000,100000] %}
+GO: <input type=text id=start name=start onChange="changeLocationStart((this.value-1)*{{page}});return false;"> PAGE SIZE: <select onChange="changeLocationPage(this.value)">
+	{%for ps in pageSizes%}
+		<OPTION value={{ps}}{%if ps==page%} SELECTED{%endif%}>{{ps}}</OPTION>
+	{%endfor%}
+</select>
+</div>
+<div id="filterButtons">
+<!--	<a id="year" href="javascript:jsReplaceQueryString('{{ replaceQueryString('year','')}}', 'filterYearInput')">YEAR<BR><SELECT id=filterYearInput name=filterYear onClick="javascript: return false;">
+			<OPTION VALUE=""{% if year==None or year=="": %} SELECTED{% endif %}>ALL YEARS</OPTION>
+			<OPTION VALUE="N"{% if year =="N" or year=="n": %} SELECTED{% endif %}>NO YEAR ASSIGNED</OPTION>
+			<OPTION VALUE="0,5"{% if year=="0,5" %} SELECTED{% endif %}>YEAR 0</OPTION>
+			<OPTION VALUE="1,6"{% if year=="1,6" %} SELECTED{% endif %}>YEAR 1</OPTION>
+			<OPTION VALUE="2,7"{% if year=="2,7" %} SELECTED{% endif %}>YEAR 2</OPTION>
+			<OPTION VALUE="3,8"{% if year=="3,8" %} SELECTED{% endif %}>YEAR 3</OPTION>
+			<OPTION VALUE="4,9"{% if year=="4,9" %} SELECTED{% endif %}>YEAR 4</OPTION>
+		</SELECT>
+	</a>
+//-->
+<!--	<a id="budgetSource" href="javascript:jsReplaceQueryString('{{ replaceQueryString('budgetSource','')}}', 'filterBudgetSource')">BUDGET SOURCE<BR><SELECT id=filterBudgetSource name=filterbudget onClick="javascript: return false;">
+			<OPTION VALUE=""{% if budgetSource==None or budgetSource=="": %} SELECTED{% endif %}>ALL BUDGETS</OPTION>
+			<OPTION VALUE="8"{% if budgetSource=="8": %} SELECTED{% endif %}>OPIE</OPTION>
+			<OPTION VALUE="9"{% if budgetSource=="9": %} SELECTED{% endif %}>SAMURAI</OPTION>
+			<OPTION VALUE="15"{% if budgetSource=="15": %} SELECTED{% endif %}OTAR</OPTION>
+			<OPTION VALUE="10"{% if budgetSource=="10": %} SELECTED{% endif %}>OTHER PROJECTS</OPTION>
+			<OPTION VALUE="11"{% if budgetSource=="11": %} SELECTED{% endif %}>UNKNOWN</OPTION>
+		</SELECT>
+	</a>
+//-->
+    <!--<a id="deviceName" href="javascript:jsReplaceQueryString('{{ replaceQueryString('deviceName', '') }}','deviceNameInput')">DEVICE NAME<BR><INPUT onClick = "javascript:return false;" type=text size=12  id=deviceNameInput name=deviceName value='{{ deviceNameInput }}')></a>
+//-->
+<!--    <a id="deviceModel" href="javascript:jsReplaceQueryString('{{ replaceQueryString('deviceModel', '') }}','deviceModelInput')">DEVICE MODEL(S)<BR><INPUT onClick = "javascript:return false;" type=text size=12  id=deviceModelInput name=deviceModel value='{{ deviceModelInput }}')></a>
+//-->
+<!--	<a id="filterPlanner" href="javascript:jsReplaceQueryString('{{ replaceQueryString('filterPlanner', '')}}', 'filterPlannerInput')">PLANNER<BR><SELECT id=filterPlannerInput name=filterPlanner onClick="javascript:return false;">
+			{% for k in plannerDisplayOrder: %}
+				<OPTION value="{{ planners[k] }}" {% if (filterPlanner|string) == (planners[k]|string) %} SELECTED {% endif %}>{{ k }}</OPTION>
+			{% endfor %}
+		</SELECT>
+	</a>
+//-->
+<!--	<a id="filterSite" href="javascript:jsReplaceQueryString('{{ replaceQueryString('site', '')}}', 'filterSiteInput')">SITE<BR><SELECT id=filterSiteInput name=filterSite onClick="javascript:return false;">
+			<OPTION value="0"{% if site==None: %} SELECTED{% endif %}>ALL SITES</A>
+			{% for place in sites: %}
+			<OPTION value="{{ place['id'] }}"{% if (site|string)==(place['id']|string): %} SELECTED{% endif %}>{{ place['location'] }}</OPTION>
+			{% endfor %}
+		</SELECT>
+	</a>
+	<a id="filterRegion" href="javascript:jsReplaceQueryString('{{ replaceQueryString('region','')}}', 'filterRegionInput')">REGION<BR><SELECT id=filterRegionInput name=filterRegion onClick="javascript:return false;">
+			<OPTION VALUE=""{% if region==None: %} SELECTED{% endif %}>ALL REGIONS</A>
+			{% for rr in regions: %}
+			<OPTION VALUE="{{ rr['id'] }}"{% if (region|string)==(rr['id']|string): %} SELECTED{% endif %}>{{ rr['name'] }}</OPTION>
+			{% endfor %}
+		</SELECT>
+	</a>
+//-->
+	<a id="filterState" href="javascript:jsReplaceQueryString('{{ replaceQueryString('state', '')}}', 'filterStateInput')">STATE<BR><SELECT id=filterStateInput name=filterState onClick="javascript:return false;">
+			{% if state==None: %}
+			{% set state=0 %}
+			{% endif %}
+			{% for row in states: %}
+			<OPTION value="{{ row['id'] }}"{% if (state|string)==(row['id']|string): %} SELECTED{% endif %}>{{ row['name'] }}</OPTION>
+			{% endfor %}
+		</SELECT>
+	</a>
+	<a id="filterReplacementState" href="javascript:jsReplaceQueryString('{{ replaceQueryString('replacementState', '')}}', 'filterReplacementStateInput')">REPLACEMENTS<BR><SELECT id=filterReplacementStateInput name=filterReplacementState onClick="javascript:return false;">
+			<OPTION value=""{% if replacementState=="0" or replacementState==None %} SELECTED{% endif %}>ALL</OPTION>
+			<OPTION value="1"{% if replacementState=="1" %} SELECTED{%endif%}>CHANGED ONLY</OPTION>
+			<OPTION value="2"{% if replacementState=="2" %} SELECTED{%endif%}>NOT CHANGING</OPTION>
+		</SELECT>
+	</a>
+<!--    <a id="filterParent" href="javascript:jsReplaceQueryString('{{ replaceQueryString('parent', '')}}', 'filterParentChildrenInput')">PARENT/CHILDREN<BR><SELECT id=filterParentChildrenInput name=filterParentChildren onClick="javascript: return false;">
+			
+<OPTION value=""{% if parent==None or parent=="0" %} SELECTED{%endif%}>ALL</OPTION>
+			<OPTION value="1"{% if parent=="1" %} SELECTED{%endif%}>CHILDREN ONLY</OPTION>
+        </SELECT>
+    </a>
+//-->
+<!--	<a id="filterOld" href="javascript:jsReplaceQueryString('{{ replaceQueryString('olderThan', '')}}', 'filterOldInput')">NOT SEEN IN<BR><SELECT id=filterOldInput name=filterOld onClick="javascript: return false;">
+			<OPTION value="0"{% if olderThan==None or olderThan=="0" %} SELECTED{%endif%}>ALL</OPTION>
+			<OPTION value="-7"{% if olderThan=="-7" %} SELECTED{%endif%}>Seen in last 7 DAYS</OPTION>
+			<OPTION value="7"{% if olderThan=="7" %} SELECTED{%endif%}>Not seen in 7+ DAYS</OPTION>
+			<OPTION value="30"{% if olderThan=="30" %} SELECTED{%endif%}>Not seen in 30+ DAYS</OPTION>
+			<OPTION value="90"{% if olderThan=="90" %} SELECTED{%endif%}>Not seen in 90+ DAYS</OPTION>
+		</SELECT>
+	</a>
+//-->
+</div>
+{% endif %}
+{% if (exportExcel)>0 %}
+<div style="display:none">
+{% endif %}
+      <table id="samurai_table" class="display">
+         <thead>
+			 {% if (exportExcel)>0 %}
+			 {% else %}
+			<TR>
+				<th></th>
+				<th></th>
+				{% for key in display_order %}
+				<th>
+				{% if key == "Region" %}
+					<a id="filterRegion" href="javascript:jsClearQueryString('{{ replaceQueryString('region','')}}')">
+					<span class="fa fa-filter" id="flt_region" style="font-size:16px;text-align:left;color:blue"></span>
+				    </a>
+					<SELECT id=filterRegionInput name=filterRegion onClick="javascript:return false;" onChange="javascript:jsReplaceQueryString('{{ replaceQueryString('region','')}}', 'filterRegionInput')" style="width: 50px;">
+		            <OPTION VALUE=""{% if region==None: %} SELECTED{% endif %}>ALL REGIONS</A>
+		            {% for rr in regions: %}
+		            <OPTION VALUE="{{ rr['id'] }}"{% if (region|string)==(rr['id']|string): %} SELECTED{% endif %}>{{ rr['name'] }}</OPTION>
+		            {% endfor %}
+			        </SELECT>
+				{% endif %}
+				{% if key == "Location" %}
+					<a id="filterSite" href="javascript:jsClearQueryString('{{ replaceQueryString('site', '')}}')">
+					<span class="fa fa-filter" id="flt_location" style="font-size:16px;text-align:left;color:blue"></span>
+					</a>
+					<SELECT id=filterSiteInput name=filterSite onClick="javascript:return false;" onChange="javascript:jsReplaceQueryString('{{ replaceQueryString('site', '')}}', 'filterSiteInput')" style="width: 60px">
+		            <OPTION value="0"{% if site==None: %} SELECTED{% endif %}>ALL SITES</A>
+		            {% for place in sites: %}
+		            <OPTION value="{{ place['id'] }}"{% if (site|string)==(place['id']|string): %} SELECTED{% endif %}>{{ place['location'] }}</OPTION>
+		            {% endfor %}
+			        </SELECT>
+				{% endif %}
+				{% if key == "Planner" %}
+					<a id="filterPlanner" href="javascript:jsClearQueryString('{{ replaceQueryString('filterPlanner', '')}}')">
+					<span class="fa fa-filter" id="flt_planner" style="font-size:16px;text-align:left;color:blue"></span>
+					</a>
+					<SELECT id=filterPlannerInput name=filterPlanner onClick="javascript:return false;" onChange="javascript:jsReplaceQueryString('{{ replaceQueryString('filterPlanner', '')}}', 'filterPlannerInput')" style="width: 50px">
+		            {% for k in plannerDisplayOrder: %}
+		            <OPTION value="{{ planners[k] }}" {% if (filterPlanner|string) == (planners[k]|string) %} SELECTED {% endif %}>{{ k }}</OPTION>
+					{% endfor %}
+			        </SELECT>
+				{% endif %}
+				{% if key == "Budget_Source" %}
+   					<a id="budgetSource" href="javascript:jsClearQueryString('{{ replaceQueryString('budgetSource','')}}')">
+					<span class="fa fa-filter" id="flt_budget" style="font-size:16px;text-align:left;color:blue"></span>
+					</a>
+					<SELECT id=filterBudgetSource name=filterbudget onClick="javascript: return false;" onChange="javascript:jsReplaceQueryString('{{ replaceQueryString('budgetSource','')}}', 'filterBudgetSource')" style="width:50px">
+		            <OPTION VALUE=""{% if budgetSource==None or budgetSource=="": %} SELECTED{% endif %}>ALL BUDGETS</OPTION>
+		            <OPTION VALUE="8"{% if budgetSource=="8": %} SELECTED{% endif %}>OPIE</OPTION>
+		            <OPTION VALUE="9"{% if budgetSource=="9": %} SELECTED{% endif %}>SAMURAI</OPTION>
+					<OPTION VALUE="15"{% if budgetSource=="15": %} SELECTED{% endif %}>OTAR</OPTION>
+		            <OPTION VALUE="10"{% if budgetSource=="10": %} SELECTED{% endif %}>OTHER PROJECTS</OPTION>
+					<OPTION VALUE="18"{% if budgetSource=="18": %} SELECTED{% endif %}>CYBER SECURITY</OPTION>
+		            <OPTION VALUE="11"{% if budgetSource=="11": %} SELECTED{% endif %}>UNKNOWN</OPTION>
+			        </SELECT>
+				{% endif %}
+				{% if key == "Year" %}
+					<a id="year" href="javascript:jsClearQueryString('{{ replaceQueryString('year','')}}')">
+					<span class="fa fa-filter" id="flt_year" style="font-size:16px;text-align:left;color:blue"></span>
+					</a>
+					<SELECT id=filterYearInput name=filterYear onClick="javascript: return false;" onChange="javascript:jsReplaceQueryString('{{ replaceQueryString('year','')}}', 'filterYearInput')" style="width:50px">
+		            <OPTION VALUE=""{% if year==None or year=="": %} SELECTED{% endif %}>ALL YEARS</OPTION>
+		            <OPTION VALUE="N"{% if year =="N" or year=="n": %} SELECTED{% endif %}>NO YEAR ASSIGNED</OPTION>
+		            <OPTION VALUE="0,5"{% if year=="0,5" %} SELECTED{% endif %}>YEAR 0</OPTION>
+        		    <OPTION VALUE="1,6"{% if year=="1,6" %} SELECTED{% endif %}>YEAR 1</OPTION>
+		            <OPTION VALUE="2,7"{% if year=="2,7" %} SELECTED{% endif %}>YEAR 2</OPTION>
+		            <OPTION VALUE="3,8"{% if year=="3,8" %} SELECTED{% endif %}>YEAR 3</OPTION>
+		            <OPTION VALUE="4,9"{% if year=="4,9" %} SELECTED{% endif %}>YEAR 4</OPTION>
+			        </SELECT>
+				{% endif %}
+				{% if key == "Device_Name" %}
+					<a id="deviceName" href="javascript:jsClearQueryString('{{ replaceQueryString('deviceName', '') }}')">
+					<span class="fa fa-filter" id="flt_name" style="font-size:16px;text-align:left;color:blue"></span>
+					<INPUT onClick = "javascript:return false;" onChange = "javascript:jsReplaceQueryString('{{ replaceQueryString('deviceName', '') }}','deviceNameInput')" type=text size=6  id=deviceNameInput name=deviceName value='{{ deviceNameInput }}'>
+					</a>
+				{% endif %}
+				{% if key == "Device_Model" %}
+					<a id="deviceModel" href="javascript:jsClearQueryString('{{ replaceQueryString('deviceModel', '') }}')">
+					<i class="fa fa-filter" id="flt_model" style="font-size:16px;text-align:left;color:blue"></i>
+					<INPUT onClick = "javascript:return false;" type=text size=6  onChange="javascript:jsReplaceQueryString('{{ replaceQueryString('deviceModel', '') }}','deviceModelInput')" id=deviceModelInput name=deviceModel value='{{ deviceModelInput }}'>
+					</a>
+				{% endif %}
+				{% if key == "Device_New" %}
+                    <a id="deviceNew" href="javascript:jsClearQueryString('{{ replaceQueryString('deviceNew', '') }}')">
+					<span class="fa fa-filter" id="flt_new" style="font-size:16px;text-align:left;color:blue"></span>
+					<INPUT onClick = "javascript:return false;" type=text size=6 id=deviceNewInput onChange="javascript:jsReplaceQueryString('{{ replaceQueryString('deviceNew', '') }}','deviceNewInput')" name=deviceNew value='{{ deviceNewInput }}'>
+					</a>
+				{% endif %}
+				{% if key == "Serial_Number" %}
+				    <a id="snFilter" href="javascript:jsClearQueryString('{{ replaceQueryString('snFilter', '') }}')">
+					<span class="fa fa-filter" id="flt_serial" style="font-size:16px;text-align:left;color:blue"></span>
+					<INPUT onClick = "javascript:return false;" type=text size=6  onChange="javascript:jsReplaceQueryString('{{ replaceQueryString('snFilter', '') }}','snFilterInput')" id=snFilterInput name=snFilter value='{{ snFilterInput }}'>
+					</a>
+				{% endif %}
+				{% if key == "Version" %}
+					<a id="version" href="javascript:jsClearQueryString('{{ replaceQueryString('version', '') }}')">
+					<span class="fa fa-filter" id="flt_version" style="font-size:16px;text-align:left;color:blue"></span>
+					<INPUT onClick = "javascript: return false;" type=text size=4 onChange="javascript:jsReplaceQueryString('{{ replaceQueryString('version','') }}','versionInput')" id=versionInput name=version value='{{ versionInput }}'>
+					</a>
+				{% endif %}
+				{% if key == "Capital" %}
+					<a id="capital" href="javascript:jsClearQueryString('{{ replaceQueryString('capital','') }}')">
+					<span class="fa fa-filter" id="flt_capital" style="font-size:16px;text-align:left;color:blue"></span>
+					</a>
+					<SELECT id=filterCapitalInput name=filterCapital onClick="javascript: return false;" onChange="javascript:jsReplaceQueryString('{{ replaceQueryString('capital','') }}','filterCapitalInput')" style="width:50px">
+					<OPTION VALUE=""{% if filterCapital==None or filterCapital=="": %} SELECTED{% endif %}>ALL</OPTION>
+					<OPTION VALUE="N"{% if filterCapital=="N": %} SELECTED{% endif %}>None</OPTION>
+					<OPTION VALUE="0"{% if filterCapital=="0": %} SELECTED{% endif %}>0</OPTION>
+					<OPTION VALUE="B"{% if filterCapital=="B": %} SELECTED{% endif %}>0 or None</OPTION>
+					<OPTION VALUE="S"{% if filterCapital=="S": %} SELECTED{% endif %}>&gt; 0</OPTION>
+					</SELECT>
+				{% endif %}
+				{% if key == "IP_Address" %}
+					<a id="ipaddress" href="javascript:jsClearQueryString('{{ replaceQueryString('ipaddress', '') }}')">
+					<span class="fa fa-filter" id="flt_ipaddress" style="font-size:16px;text-align:left;color:blue"></span>
+					<INPUT onClick = "javascript: return false;" type=text size=4 onChange="javascript:jsReplaceQueryString('{{ replaceQueryString('ipaddress','') }}','ipaddressInput')" id=ipaddressInput name=ipaddress value='{{ ipaddressInput }}'>
+					</a>
+				{% endif %}
+				{% if key == "MAC_Address" %}
+					<a id="macaddress" href="javascript:jsClearQueryString('{{ replaceQueryString('macaddress', '') }}')">
+					<i class="fa fa-filter" id="flt_macaddress" style="font-size:16px;text-align:left;color:blue"></i>
+					<INPUT onClick = "javascript: return false;" type=text size=4 onChange="javascript:jsReplaceQueryString('{{ replaceQueryString('macaddress','') }}','macaddressInput')" id=macaddressInput name=macaddress value='{{ macaddressInput }}'>
+					</a>
+				{% endif %}
+				{% if key == "End_of_Sale"%}
+					<a id="end_of_sale" href="javascript:jsClearQueryString('{{ replaceQueryString('end_of_sale', '') }}')">
+						<i class="fa fa-filter" id="flt_end_of_sale" style="font-size:16px;text-align:left;color:blue"></i>
+						<INPUT onClick = "javascript: return false;" type=text size=4 onChange="javascript:jsReplaceQueryString('{{ replaceQueryString('end_of_sale','') }}','endofsaleInput')" id=endofsaleInput name=endofsale value='{{ endofsaleInput }}'>
+					</a>
+				{% endif %}
+				{% if key == "End_of_Support"%}
+					<a id="end_of_support" href="javascript:jsClearQueryString('{{ replaceQueryString('end_of_support', '') }}')">
+						<i class="fa fa-filter" id="flt_end_of_support" style="font-size:16px;text-align:left;color:blue"></i>
+						<INPUT onClick = "javascript: return false;" type=text size=4 onChange="javascript:jsReplaceQueryString('{{ replaceQueryString('end_of_support','') }}','endofsupportInput')" id=endofsupportInput name=endofsupport value='{{ endofsupportInput }}'>
+					</a>
+				{% endif %}
+				{% if key == "Last_Seen" %}
+					<a id="filterOld" href="javascript:jsClearQueryString('{{ replaceQueryString('olderThan', '')}}')">
+					<span class="fa fa-filter" id="flt_lastseen" style="font-size:16px;text-align:left;color:blue"></span>
+					</a>
+					<SELECT id=filterOldInput name=filterOld onClick="javascript: return false;" onChange="javascript:jsReplaceQueryString('{{ replaceQueryString('olderThan', '')}}', 'filterOldInput')" style="width:50px">
+		            <OPTION value="0"{% if olderThan==None or olderThan=="0" %} SELECTED{%endif%}>ALL</OPTION>
+					<OPTION value="-7"{% if olderThan=="-7" %} SELECTED{%endif%}>Seen in last 7 DAYS</OPTION>
+					<OPTION value="-30"{% if olderThan=="-30" %} SELECTED{%endif%}>Seen in last 30 DAYS</OPTION>
+					<OPTION value="-90"{% if olderThan=="-90" %} SELECTED{%endif%}>Seen in last 90 DAYS</OPTION>
+					<OPTION value="-365"{% if olderThan=="-365" %} SELECTED{%endif%}>Seen in last YEAR</OPTION>
+		            <OPTION value="7"{% if olderThan=="7" %} SELECTED{%endif%}>Not seen in 7+ DAYS</OPTION>
+		            <OPTION value="30"{% if olderThan=="30" %} SELECTED{%endif%}>Not seen in 30+ DAYS</OPTION>
+		            <OPTION value="90"{% if olderThan=="90" %} SELECTED{%endif%}>Not seen in 90+ DAYS</OPTION>
+			        </SELECT>
+				{% endif %}
+				{% if key == "DB_Source" %}
+					<a id="dbSource" href="javascript:jsClearQueryString('{{ replaceQueryString('dbSource','') }}')">
+					<span class="fa fa-filter" id="flt_dbsource" style="font-size:16px;text-align:left;color:blue"></span>
+					</a>
+					<SELECT id=dbSourceInput name=dbSource onClick="javascript: return false;" onChange="javascript:jsReplaceQueryString('{{ replaceQueryString('dbSource','')}}', 'dbSourceInput')" style="width:50px">
+					<OPTION value=""{% if (dbSource|string)==None or (dbSource|string)=="": %} SELECTED{% endif %}>ALL</OPTION>
+					{% for source in sources: %}
+                    <OPTION value="{{ source['id'] }}"{% if (dbSource|string)==(source['id']|string): %} SELECTED{% endif %}>{{ source['description'] }}</OPTION>
+                    {% endfor %}			
+					</SELECT>
+				{% endif %}
+				</th>
+				{% endfor%}
+			</TR>
+			{% endif %}
+			<TR>
+			<th></th>
+			<th><input id="check_all" type="checkbox"></th>
+			{% for key in display_order %}
+            <th fieldType="rowHeader" id="{{ key }}" onClick="javascript:goToURL('?'+'{{ replaceSortOrder(key) }}');">
+				{{ key }}
+			</th>
+			{% endfor%}
+		    </TR>
+         </thead>
+         <tbody>
+		 {% set insideGroup=namespace(status=0) %}
+         {% for device in samuraiData %}
+		 {% if (device["parentSN"] == "") and (insideGroup.status == 1) %}</tbody><tbody class=collapsibleRow>
+		 {% elif (device["parentSN"] == "") and (insideGroup.status == 0) %}<tbody class=collapsibleRow>{% set insideGroup.status=1 %}
+		{% endif %}
+		 <tr deviceRow="{{ device["Device_Name"] }}">
+      		<td name="no-highlight">{% if (device["childCount"] > 0) %}<span class=plus></span>{% endif %}</td>
+			<td><input disabled type="checkbox" name="row-check" value="{{ device["Device_Name"] }}"></td>
+            {% for key in display_order %}
+			<td fieldName="{{ key }}"
+				{% if key == "Capital" and device["overrideCapital"]==1 %} 
+					override=True>{{ formatDollar(device[key]) }}
+				{% elif key == "Capital" and device["factor"] != 1 %}
+					 scaled=True>{{ formatDollar(device[key]) }}
+				{% elif key == "Capital" %}
+					>{{ formatDollar(device[key]) }}
+				{% elif key == "Device_New" and device["overrideModel"]==1 %}
+					override=True>{{ device[key] }}
+				{% elif (key == "End_of_Sale" or key == "End_of_Support") and device[key] is not none and device[key] < today %}
+					style="color:red">{{ device[key] }}
+				{% else %}
+					>{{ device[key] }}
+				{% endif %}
+			</td>
+            {% endfor%}
+         </tr>
+         {% endfor %}
+		 </tbody>
+         </tbody>
+      </table>
+{% if (exportExcel)>0 %}
+</div>
+{% else %}
+<div id="pageNav">&nbsp;  page:
+	{% for i in navPages1 %}
+	<a id="page_start_{{ i*page }}" href=?{{ new_query_string }}&start={{ (i*page) }}>{{i+1}}</a>
+	{% endfor%}
+	{% if navPages2 != [] %}
+	{% if navPages1[ (navPages1|length)-1 ] != (navPages2[0]-1) %}...{%endif%}
+	{% for i in navPages2 %}
+	<a id="page_start_{{ i*page }}" href=?{{ new_query_string }}&start={{ i*page }}>{{ i+1 }}</a>
+	{% endfor%}
+	{% endif%}
+</div>
+{% endif %}
+{% endblock %}

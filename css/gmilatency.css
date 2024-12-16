@@ -1,0 +1,170 @@
+.logoContainer {
+//	float: left;
+	background-color: white;
+//	display: table-column;
+//    border: solid 1px black;
+//    padding: 5px;
+//    white-space: no-wrap !important;
+//	height: auto;
+	height: 100px;
+	border: solid 1px black;
+//	max-height: 89%;
+//	max-width: 11.5%;
+//	flex: 1;
+}
+#deviceCol {
+	width: 24%;
+	background: white;
+	text-align: center;
+	font-color: black;
+	border: solid 1px black;
+}
+#device {
+	font-size: 14px;
+}
+#timestamp {
+	font-size: 14px;
+}
+#timeStampCol {
+	width: 15.5%;
+	background: white;
+	text-align: center;
+	font-color: black;
+	border: solid 1px black;
+}
+#resultCol {
+	width: 12%;
+}
+#CHICAGO_CLOUD_EDGE_CIZ
+{
+	content: url("/images/equinix-ch3.png");
+}
+#ASHBURN_CLOUD_EDGE_AVZ
+{
+	content: url("/images/equinix-dc11.png");
+}
+#GCP_CENTRAL_DEV_CONNECT
+{
+	content: url("/images/google-cloud-central.png");
+}
+#GCP_EAST_DEV_CONNECT
+{
+	content: url("/images/google-cloud-east.png");
+}
+#MINNEAPOLIS_DATACENTER_MGO
+{
+	content: url("/images/gmi-minneapolis.png");
+}
+body {
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	text-transform: uppercase;
+}
+.head {
+	position: fixed;
+	margin-top: -40px;
+	margin-left: -1px;
+	display: flex;
+	border: solid 1px;
+}
+
+.tbody2 {
+	margin-top: 73px;
+	width: 100%;
+}
+.thead {
+	position: fixed;
+	background: #0066ff;
+	color: white;
+	max-height: 7em;
+	line-height: auto;
+//	height: 7em;
+	line-height: 7em;
+	display: flex;
+	margin-left: -2px;
+	width: 89.5%;
+}
+
+.headCell {
+	float: left;
+	display: table-column;
+	border: solid 1px black;
+	padding: 5px;
+	white-space: no-wrap !important;
+}
+
+.table1 { 
+	margin-left: 100px;
+	margin-right: auto;
+	width: 90%;
+	padding: 0px;
+	border: none;
+}
+
+.table2 {
+	margin-left: 100px;
+	margin-right: auto;
+	width: 90%;
+	padding: 0px;
+	border: none;
+}
+
+.cell {
+	float: left; 
+	border: solid 1px black;
+	padding: 5px;
+	white-space: no-wrap !important;
+}
+
+.row {
+	display: flex;
+}
+
+.row:nth-child(even) {
+	background: #ddddff;
+}
+
+#notUpdatingShortTerm {
+	background: orange !important;
+	color: white;
+}
+
+#notUpdatingLongTerm {
+	background: darkgrey !important;
+	color: lightgrey;
+}
+
+#latencyCol {
+	writing-mode: vertical-rl;
+	transform: rotate(180deg);
+    	left: calc(50% - 0.5rem);
+    	padding-top: 0.5rem;
+}
+
+#latencyData {
+	text-align: center;
+	font-weight: bold;
+	width: 12%;
+}
+
+#otherData {
+	font-size: 12px;
+	font-weight: normal !important;
+}
+
+.alert {
+	background: red;
+	color: white;
+}
+
+.warn {
+	background: orange;
+	color: white;
+}
+
+#informationBox {
+    margin-left: auto;
+    margin-right: auto;
+    padding: 4px;
+    text-transform: none !important;
+}
+

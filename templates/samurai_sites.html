@@ -1,0 +1,341 @@
+{% extends 'menu.html' %}
+{% block content %}
+<template id="gridTemplate">
+    <div class="container">
+        <div class="row">
+            <div class="col-6"> <!-- Make a smaller table since we only have two columns - 6 = half the width of the screen-->
+                <h1>Samurai Sites</h1>
+                <br><br>
+                <button type="button" class="btn btn-success btn-sm" @click="toggleAddSite()" style="width: 125px;">Add New Samurai Site</button>
+                <br><br>
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">Site</th>
+                            <th scope="col">Region</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="row in samurai_sites" :key="row.id">
+                            <td class="">{%raw%}{{ row.location }}{%endraw%}</td>
+                            <td class="">{%raw%}{{ findRegionName(row.region) }}{%endraw%}</td>
+                            <td class="">
+                                <div v-if="row.location.startsWith('_')">
+                                    <!-- don't show the button for these items -->
+                                </div>
+                                <div v-else>
+                                    <button type="button" class="btn btn-warning btn-sm" @click="toggleEditData(row)" style="width: 125px;">Change Region</button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div> <!-- end column -->
+        </div> <!-- end row -->
+    </div> <!-- end container -->
+
+<!-- edit data modal -->
+<div ref="editData" class="modal fade" :class="{ show: activeEditData, 'd-block': activeEditData }" tabindex="-1"role="dialog">
+    <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Site</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" @click="handleEditCancel">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div> <!-- end modal header-->
+            <div class="modal-body" ref="modalBodyRef">
+                <form>
+                    <div class= "container"> 
+                        <div class = "row">
+                            <div class = "col"> 
+                                <div class="mb-2">
+                                    <label >Region</label>                                    
+                                    <select class="form-select" v-model="editData.region">
+                                        <option v-for="region in samurai_regions" :key="region.id" :value="region.id">{%raw%}{{ region.name }}{%endraw%}</option>
+                                    </select>
+                                </div>
+                                <br>
+                            </div> <!-- end first column -->
+                        </div> <!-- end row -->
+                    </div> <!-- end container -->
+                    <!-- submit and reset buttons -->
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-primary btn-sm" @click="handleEditSiteSubmit">Submit</button>
+                    </div>
+                    <!-- cancel button -->
+                    <div class="btn-group" role="group" style="position: absolute; bottom: 16px; right: 16px;">
+                        <button type="button" class="btn btn-warning btn-sm" @click="handleEditCancel">Cancel</button>
+                    </div>
+                </form>
+            </div> <!-- end modal body -->
+        </div> <!-- end modal content -->
+    </div> <!-- end modal dialog -->
+</div> <!-- end ref="editData" -->
+<div v-if="activeEditData" class="modal-backdrop fade show"></div>
+
+<!-- add data modal -->
+<div ref="addData" class="modal fade" :class="{ show: activeAddData, 'd-block': activeAddData }" tabindex="-1"role="dialog">
+    <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Site</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" @click="handleAddCancel">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div> <!-- end modal header-->
+            <div class="modal-body" ref="modalBodyRef">
+                <form>
+                    <div class= "container"> 
+                        <div class = "row">
+                            <div class = "col"> 
+                                <div class="mb-2">
+                                    <label >Site Mnemonic:</label>
+                                    <input type="text" class="form-control" id="addSiteName" v-model="addData.location" placeholder="3 or 4 letter site code">
+                                </div>
+                                <div class="mb-2">
+                                    <label >Region</label>                                    
+                                    <select class="form-select" v-model="addData.region">
+                                        <option v-for="region in samurai_regions" :key="region.id" :value="region.id">{%raw%}{{ region.name }}{%endraw%}</option>
+                                    </select> 
+                                </div>
+                                <br>
+                            </div> <!-- end first column -->
+                        </div> <!-- end row -->
+                    </div> <!-- end container -->
+                    <!-- submit and reset buttons -->
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-primary btn-sm" @click="handleAddSiteSubmit">Submit</button>
+                    </div>
+                    <!-- cancel button -->
+                    <div class="btn-group" role="group" style="position: absolute; bottom: 16px; right: 16px;">
+                        <button type="button" class="btn btn-warning btn-sm" @click="handleAddCancel">Cancel</button>
+                    </div>
+                </form>
+            </div> <!-- end modal body -->
+        </div> <!-- end modal content -->
+    </div> <!-- end modal dialog -->
+</div> <!-- end ref="addData" -->
+<div v-if="activeAddData" class="modal-backdrop fade show"></div>
+
+{% include "vue_utility_modal_are_you_sure.html" %}
+{% include "vue_utility_modal_alert.html" %}
+
+</div> <!-- end container -->
+</template>
+
+<script type="module">
+    import { createApp } from 'https://unpkg.com/petite-vue?module'
+    import 'https://unpkg.com/axios/dist/axios.min.js'
+ 
+    const samurai_get_sites_endpoint = "/samurai/sites_info/getData";
+    const samurai_update_site_endpoint = "/samurai/sites_info/updateData"; //need to add /<id> to this in the PUT
+    const samurai_get_regions_endpoint = "/samurai/region_info";
+
+    function app() {
+        return {
+            data() {
+                    return { 
+                        activeAddData: false
+                    }
+            },
+            $template: '#gridTemplate',
+            modalAlert: { title: '', body: '', button:'OK'},
+            tokenExpiredAlert: {
+                title: "Your API Token Has Expired",
+                body: "You will need to logout and log back in to reset your token.",
+                body2: "You will need to logout and log back in to reset your token. <br><br> <a href='/login?next=/config/global/irp'>Logout</a>",
+                button: "OK"},
+            siteStringEmptyAlert: {
+                title: "Site name cannot be empty",
+                body: "Please check your data and resubmit",
+                button: "OK"},
+            areYouSure: {
+                title: 'WARNING - DATA WILL BE REMOVED',
+                body: 'This action will delete data.  Are you sure?',
+                button:'Yes, proceed.',
+                action:undefined},
+            samurai_regions: [],
+            samurai_sites: [],
+            activeAddData: false,
+            activeEditData: false,
+            addData: {location: "", region: 1},
+            editData: {id: "", region: ""},
+            defultData: {id: "", region: 1, location: ""},
+            deleteData: {id: '' },
+
+            activate_modal_alert(title, message, button, action){
+                this.modalAlert.title = title;
+                this.modalAlert.displayed = true;
+                this.modalAlert.button = button;
+                var el = document.getElementById('modalAlert');
+                var bel = new bootstrap.Modal(el);
+                bel.show();
+                this.modalAlert.active = bel;
+                var modalBody = document.getElementById('modalBody');
+                modalBody.innerHTML = message;
+            },
+            dismiss_modal_alert(){
+                if (this.modalAlert.displayed) {
+                    this.modalAlert.displayed=false;
+                    this.modalAlert.active.hide();
+                }
+            },
+            findRegionName(region){
+                for (var i = 0; i < this.samurai_regions.length; i++) {
+                    if (this.samurai_regions[i].id == region) {
+                        return this.samurai_regions[i].name;
+                    }
+                }
+                //If there is no match in the list
+                return "Region Not Found";
+            },
+            add_site_data(payload) {
+                const path = samurai_update_site_endpoint;
+                axios.post(path, payload).then((response) => {
+                    //console.log(response.data)
+                    this.get_samurai_site_data();
+                }).catch((error) => {
+                    console.error(error.response.data);
+                    this.get_data();
+                });
+            },
+            edit_site_data(payload) {                
+                const path = samurai_update_site_endpoint+"/"+payload.id;
+                axios.put(path, payload).then((response) => {
+                    //console.log(response.data)
+                    this.get_samurai_site_data();
+                }).catch((error) => {
+                    console.error(error.response.data);
+                    this.get_data();
+                });
+            },
+            get_samurai_site_data() {
+                /*
+                {
+                "id": 198,
+                "lat": 40.1819,
+                "lng": -77.2352,
+                "location": "ADA",
+                "region": 1,
+                "remap_id": null,
+                "state": 0
+                }
+                */
+                const path = samurai_get_sites_endpoint;
+                axios.get(path).then((response) => {
+                    this.samurai_sites = response.data;
+                    //console.log(this.samurai_sites);
+                }).catch((error) => {
+                    console.error(error.response.data);
+                })
+            },
+            get_samurai_region_data() {
+                /*
+                {
+                "description": "Default Asia Locations",
+                "factor": 1.0,
+                "id": 4,
+                "name": "Asia"
+                }
+                */
+                const path = samurai_get_regions_endpoint;
+                axios.get(path).then((response) => {
+                    this.samurai_regions = response.data;
+                    //console.log(this.samurai_regions);
+                }).catch((error) => {
+                    console.error(error.response.data);
+                })
+            },
+            get_data() {                
+                this.get_samurai_site_data();
+                this.get_samurai_region_data();
+            },
+            handleEditReset() {
+                this.initEditForm()
+            },
+            handleEditCancel() {
+                this.toggleEditData();
+            },
+            handleAddCancel() {
+                this.toggleAddSite();
+            },
+            handleAddSiteSubmit() {
+                const payload = {
+                    location: this.addData.location.trim(),
+                    region: this.addData.region
+                }
+                if (payload.location != "") {
+                    this.toggleAddSite();
+                    this.add_site_data(payload);
+                    this.resetAddData();
+                } else {
+                    this.activate_modal_alert(this.siteStringEmptyAlert.title, this.siteStringEmptyAlert.body, this.siteStringEmptyAlert.button)
+                }
+            },            
+            handleEditSiteSubmit() {
+                const payload = {
+                    id: this.editData.id,
+                    region: this.editData.region
+                }
+                this.toggleEditData();
+                this.edit_site_data(payload);
+            },
+            handleDelete(row) {
+                if (row) {
+                    this.deleteData.id = row.id;
+                    this.delete_data();
+                }
+            },
+            resetAddData() {
+                this.addData = this.defultData;
+            },
+            toggleAddSite() {
+                const body = document.querySelector('body');
+                this.activeAddData = !this.activeAddData;
+                if (this.activeAddData) {
+                        body.classList.add('modal-open');
+                } else {
+                        body.classList.remove('modal-open');
+                }
+            },
+            toggleEditData(row) {
+                if (row) {
+                    this.editData = row;
+                }
+                const body = document.querySelector('body');
+                this.activeEditData = !this.activeEditData;
+                if (this.activeEditData) {
+                        body.classList.add('modal-open');
+                } else {
+                        body.classList.remove('modal-open');
+                }
+            },
+            are_you_sure(action,id){
+                this.areYouSure.displayed=true
+                var el = document.getElementById('modalAreYouSure');
+                var bel = new bootstrap.Modal(el);
+                bel.show();
+                this.areYouSure.active = bel;
+                this.areYouSure.action=action
+                this.areYouSure.id=id
+            },
+            dismiss_are_you_sure(value){
+                if (this.areYouSure.displayed) {
+                    this.areYouSure.result = value;
+                    if (value) {
+                        this.areYouSure.action(this.areYouSure.id)
+                    }
+                    this.areYouSure.displayed=false;
+                    this.areYouSure.active.hide();
+                }
+            },
+            mounted() {
+                this.get_data();
+                }
+            }
+        }
+createApp({app}).mount()
+</script>
+<div v-scope="app()" @vue:mounted="mounted"></div>
+{% endblock %}

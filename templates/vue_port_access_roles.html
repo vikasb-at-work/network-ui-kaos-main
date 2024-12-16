@@ -1,0 +1,938 @@
+{% extends 'menu.html' %}
+{% block content %}
+<!-- link in vue.css for the slider round properties -->
+<link href="/css/vue.css" rel="stylesheet" type="text/css" media="all">
+
+<template id="gridTemplate">
+    <div class="container">
+        <div class="row">
+            <div class="col"> <!-- how wide the whole table is-->
+                <h1>Port-Access Roles</h1>
+                <hr><br><br>
+                <button type="button" @click="toggleAddData" class="btn btn-success btn-sm">Add Port-Access Role</button>
+                <br><br>
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">Name</th>
+                            <th scope="col">Description</th>
+                            <th scope="col">Access VLAN</th>
+                            <th scope="col">Trunk VLANs native</th>
+                            <th scope="col">Trunk VLANs allowed</th>
+                            <th scope="col">Gateway Zone</th>
+                            <th scope="col">Gateway Role</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="row in port_access_roles" :key="row.id">
+                            <td>{%raw%}{{row.name}}{%endraw%}</td>
+                            <td>{%raw%}{{row.description}}{%endraw%}</td>
+                            <td v-if="row.vlan_access_id !== '0'">{%raw%}{{row.vlan_access_id}}{%endraw%}</td>
+                            <td v-else></td> <!-- Leave this cell empty if the data is 0 -->
+                            <td v-if="row.vlan_trunk_native_id !== '0'">{%raw%}{{row.vlan_trunk_native_id}}{%endraw%}</td>
+                            <td v-else></td> <!-- Leave this cell empty if the data is 0 -->
+                            <td v-if="row.id != 1">{%raw%}{{row.vlan_trunk_allowed_id.output}}{%endraw%}</td>
+                            <td v-else>{Same as CX-LUR-VOICE}</td>
+                            <td v-if="row.gateway_zone != '0'">{%raw%}{{ getZoneName(row.gateway_zone) }}{%endraw%}</td>
+                            <td v-else></td> <!-- Leave this cell empty if the data is None-->
+                            <td>{%raw%}{{row.gateway_role}}{%endraw%}</td>
+                            <td>
+                                <div v-if="row.id != 1" class="btn-group" role="group">
+                                    <button type="button" @click="toggleEditData(row)" class="btn btn-warning btn-sm">View\Update</button>
+                                    <button type="button" @click="are_you_sure(handleDelete,row)" class="btn btn-danger btn-sm">Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div> <!-- end column -->
+        </div> <!-- end row -->
+    </div> <!-- end container -->
+
+<!--add data modal -->
+    <div ref="addData" class="modal fade" :class="{ show: activeAddData, 'd-block': activeAddData }" tabindex="-1"role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add a new Global Port Access Role
+                        <!-- link to Aruba documentation -->
+                        &nbsp;
+                        <a href="https://www.arubanetworks.com/techdocs/AOS-CX/10.12/HTML/security_6200-6300-6400/Content/Chp_Port_acc/Port_acc_rol_cmds/por-acc-rol-fl.htm" target="_blank">
+                            <i class="fas fa-question-circle"></i>
+                        </a>
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" @click="handleAddCancel">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div> <!-- end modal header-->
+                <div class="modal-body" ref="modalBodyRef">
+                    <form>
+                        <div class= "container"> 
+                            <div class = "row">
+                                <div class = "col"> <!-- style="border:1px solid red;"-->
+                                    <div class="mb-3"> <!-- name field-->
+                                        <label for="addRoleName" class="form-label">Name:</label>
+                                        <input type="text" maxlength="64" class="form-control" id="addRoleName" v-model="addData.name" placeholder="Enter a role name">
+                                    </div>
+                                    <div class="mb-3"> <!-- description field-->
+                                        <label for="addRoleDescription" class="form-label">Description:</label>
+                                        <input type="text" class="form-control" id="addRoleDescription" v-model="addData.description" placeholder="Enter a description">
+                                    </div>
+                                    <div class="row row-cols-2"> <!-- new pair of columns inside this column-->
+                                        <div class = "col"> <!-- begin first column -->
+                                            <div class="mb-3"> <!-- gateway zone field-->
+                                                <label for="addRoleGatewayZone" class="form-label">Gateway Zone:</label>
+                                                <select type="text" class="form-select" id="addRoleGatewayZone" v-model="addData.gateway_zone">
+                                                    <option value="0" selected>None</option>
+                                                    <option v-for="row in gateway_zones" :value="row.zone_number">{%raw%}{{ row.zone_name }}{%endraw%}</option>
+                                                </select>
+                                            </div>
+                                        </div> <!-- end column-->
+                                        <div class = "col"> <!-- begin second column-->
+                                            <div class="mb-3"> <!-- gateway role field-->
+                                                <label for="addRoleGatewayRole" class="form-label">Gateway Role:</label>
+                                                <input v-if="addData.gateway_zone == '0'" type="text" class="form-control" id="addRoleGatewayRole" v-model="addData.gateway_role"
+                                                    placeholder="Role for UBT" disabled>
+                                                <input v-else type="text" class="form-control" id="addRoleGatewayRole" v-model="addData.gateway_role" placeholder="Role for UBT">
+                                            </div>
+                                        </div> <!-- end column -->
+                                    </div> <!-- end row -->
+                                    <div class="mb-3"> <!-- associate policy field -->
+                                        <label for="addRoleAssociatePolicy" class="form-label">Associate Policy:</label>
+                                        <input type="text" maxlength="64" class="form-control" id="addRoleAssociatePolicy" v-model="addData.associate_policy" placeholder="Enter a policy">
+                                    </div>
+                                    <div class="mb-3"> <!-- associate captive-portal-profile field -->
+                                        <label for="addRoleAssociateCPP" class="form-label">Associate Captive Portal Profile:</label>
+                                        <input type="text" maxlength="64" class="form-control" id="addRoleAssociateCPP" v-model="addData.associate_captive_portal_profile" placeholder="Enter a profile">
+                                    </div>
+                                    <div class="mb-3 "> <!-- access vlan field-->
+                                        <label for="addRoleAccessVlanbyID" class="form-label">Access VLAN: (1-4094 or { variable })</label>
+                                        <input type="text" maxlength="64" class="form-control" id="addRoleAccessVlanbyID" v-model="addData.vlan_access_id" placeholder="Enter an access vlan"> 
+                                    </div>
+                                    <div class="mb-3"> <!-- trunk vlan native field-->
+                                        <label for="addRoleNativeTrunkVlanbyID" class="form-label">Trunk VLAN native: (1-4094 or { variable })</label>
+                                        <input type="text" class="form-control" id="addRoleNativeTrunkVlanbyID" v-model="addData.vlan_trunk_native_id" placeholder="Enter a native vlan for the trunk">
+                                    </div>
+                                    <div class="mb-3"> <!-- Trunk VLAN Allowed Picker -->
+                                        <div class="mb-3" style="background-color: #ccc; padding: 4px; width: 375px; border-radius: 0.25rem;"> <!-- outside grey box-->
+                                            <label for="addVlan" class="form-label">Trunk VLANs allowed (1-4094)</label>
+                                            <div class="btn-group" role="group">
+                                                <select class="form-select" multiple style="width: 341px; height: 50px; border-radius: 0.25rem;" v-model="internal_vlan_selected" id="addVlan">
+                                                    <option v-for="vlan in addData.internal_vlans"> {%raw%}{{vlan}}{%endraw%}</option>
+                                                </select>
+                                                <button type="button" style="height: 50px; width: 27px" class="btn btn-danger btn-sm" 
+                                                    @click="vlan_input=internal_vlan_selected[0]; addData.internal_vlans.splice(addData.internal_vlans.indexOf(internal_vlan_selected[0]),1);">
+                                                    -
+                                                </button>
+                                            </div>
+                                            <div class="btn-group" role="group" style="margin-top: 10px;">
+                                                <input type="text" class="form-control" id="vlanInput" v-model="vlan_input" placeholder="Enter VLAN number" style="width: 341px">
+                                                <button type="button" class="btn btn-primary btn-sm"
+                                                    @click.prevent="let input_isvalid = validateAddVlanToList(vlan_input, 'add'); if (input_isvalid) {addData.internal_vlans.push(vlan_input); vlan_input='';}">
+                                                    +
+                                                </button>
+                                            </div>
+                                        </div>            
+                                    </div> <!-- end vlan picker-->
+                                    <div class="mb-3"> <!-- stp admin edge port field -->
+                                        <div class="btn-group" role="group">
+                                            <label class="switch">
+                                                <input type="checkbox" id="addRoleSTPAdminEdgePort" @click="toggleCheckbox" v-model="addData.stp_admin_edge_port">
+                                                    <div class="slider round"></div>
+                                            </label>
+                                            <label for="addRoleSTPAdminEdgePort">STP Admin Edge Port ({%raw%}{{ addData.stp_admin_edge_port }}{%endraw%})</label>
+                                        </div>
+                                    </div>
+                                </div> <!-- end first column -->
+                                <div class = "col" style="border-left: 1px dashed #333;"> <!-- begin second column --> <!--  style="border:1px solid blue;" -->
+                                    <div class="mb-3"> <!-- auth mode field -->
+                                        <label for="addRoleAuthMode" class="form-label">Authentication Mode:</label>
+                                        <select type="text" class="form-select" id="addRoleAuthMode" v-model="addData.auth_mode">
+                                            <option value="None" selected>None</option>
+                                            <option value="client-mode">client-mode</option>
+                                            <option value="device-mode">device-mode</option>
+                                            <option value="multi-domain">multi-domain</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3"> <!-- trust mode field -->
+                                        <label for="addRoleTrustMode" class="form-label">Trust Mode:</label>
+                                        <select type="text" class="form-select" id="addRoleTrustMode" v-model="addData.trust_mode">
+                                            <option value="" selected>Unused</option>
+                                            <option value="none" >none</option>
+                                            <option value="dscp">dscp</option>
+                                            <option value="cos">cos</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3"> <!-- device traffic class field -->
+                                        <label for="addRoleTrafficClass" class="form-label">Device Traffic Class:</label>
+                                        <select type="text" class="form-select" id="addRoleTrafficClass" v-model="addData.device_traffic_class">
+                                            <option value="None" selected>None</option>
+                                            <option value="Voice">Voice</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3"> <!-- poe priority field -->
+                                        <label for="addRolePoePriority" class="form-label">PoE Priority:</label>
+                                        <select type="text" class="form-select" id="addRolePoePriority" v-model="addData.poe_priority">
+                                            <option value="None" selected>None</option>
+                                            <option value="critical">critical</option>
+                                            <option value="high">high</option>
+                                            <option value="low">low</option>
+                                        </select>  
+                                    </div>
+                                    <div class="mb-3"> <!-- cache reauth period field -->
+                                        <label for="addRoleCachedReauthPeriod" class="form-label">Cached Reauthentication Period: (min: 30 seconds)</label>
+                                        <input type="text" maxlength="64" class="form-control" id="addRoleCachedReauthPeriod" v-model="addData.cached_reauth_period"
+                                            placeholder="Range: 30 to 4294967295">
+                                    </div>
+                                    <div class="mb-3"> <!-- reauth period field -->
+                                        <label for="addRoleReauthPeriod" class="form-label">Reauthentication Period: (min: 1 second)</label>
+                                        <input type="text" maxlength="64" class="form-control" id="addRoleReauthPeriod" v-model="addData.reauth_period"
+                                            placeholder="Range: 1 to 4294967295">
+                                    </div>
+                                    <div class="mb-3"> <!-- client inactivity timer field -->
+                                        <label for="addRoleClientInactivity" class="form-label">Client Inactivity Timer: (min: 300 seconds)</label>
+                                        <input type="text" maxlength="64" class="form-control" id="addRoleClientInactivity" v-model="addData.client_inactivity"
+                                            placeholder="Range: 300 to 4294967295">
+                                    </div>
+                                    <div class="mb-3"> <!-- session timeout field -->
+                                        <label for="addRoleSessionTimeout" class="form-label">Session Timeout: (min: 1 second)</label>
+                                        <input type="text" maxlength="64" class="form-control" id="addRoleSessionTimeout" v-model="addData.session_timeout"
+                                            placeholder="Range: 1 to 4294967295">
+                                        <!-- <input type="hidden" id="editData" v-model="editData.id"> -->
+                                    </div>
+                                    <div class="mb-3"> <!-- mut field -->
+                                        <label for="addRoleMTU" class="form-label">MTU (68 to 9198):</label>
+                                        <input type="text" maxlength="64" class="form-control" id="addRoleMTU" v-model="addData.mtu"
+                                            placeholder="Enter an MTU for the role">
+                                    </div>
+                                </div> <!-- end second column -->
+                            </div> <!-- end row -->
+                        </div> <!-- end container -->
+                        <!-- submit and reset buttons -->
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-primary btn-sm" @click="handleAddSubmit">Submit</button>
+                            <button type="button" class="btn btn-danger btn-sm"  @click="handleAddReset">Reset</button>
+                        </div>
+                        <!-- cancel button -->
+                        <div class="btn-group" role="group" style="position: absolute; bottom: 16px; right: 16px;">
+                            <button type="button" class="btn btn-warning btn-sm" @click="handleAddCancel">Cancel</button>
+                        </div>
+                    </form>
+                </div> <!-- end modal body -->
+            </div> <!-- end modal content -->
+        </div> <!-- end modal dialog -->
+    </div> <!-- end ref="addData" -->
+
+    <div v-if="activeAddData" class="modal-backdrop fade show"></div>
+
+<!-- edit data modal -->
+<div ref="editData" class="modal fade" :class="{ show: activeEditData, 'd-block': activeEditData }" tabindex="-1"role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit a Global Port Access Role
+                    <!-- link to Aruba documentation -->
+                    &nbsp;
+                    <a href="https://www.arubanetworks.com/techdocs/AOS-CX/10.12/HTML/security_6200-6300-6400/Content/Chp_Port_acc/Port_acc_rol_cmds/por-acc-rol-fl.htm" target="_blank">
+                        <i class="fas fa-question-circle"></i>
+                    </a>
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" @click="handleEditCancel">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div> <!-- end modal header-->
+            <div class="modal-body" ref="modalBodyRef">
+                <form>
+                    <div class= "container"> 
+                        <div class = "row">
+                            <div class = "col"> <!-- style="border:1px solid red;"-->
+                                <div class="mb-3"> <!-- name field-->
+                                    <label for="editRoleName" class="form-label">Name:</label>
+                                    <input type="text" maxlength="64" class="form-control" id="editRoleName" v-model="editData.name" placeholder="Enter a role name">
+                                </div>
+                                <div class="mb-3"> <!-- description field-->
+                                    <label for="editRoleDescription" class="form-label">Description:</label>
+                                    <input type="text" class="form-control" id="editRoleDescription" v-model="editData.description" placeholder="Enter a description">
+                                </div>
+                                <div class="row row-cols-2"> <!-- new pair of columns inside this column-->
+                                    <div class = "col"> <!-- begin first column -->
+                                        <div class="mb-3"> <!-- gateway zone field-->
+                                            <label for="editRoleGatewayZone" class="form-label">Gateway Zone:</label>
+                                            <select type="text" class="form-select" id="editRoleGatewayZone" v-model="editData.gateway_zone">
+                                                <option value="0" selected>None</option>
+                                                <option v-for="row in gateway_zones" :value="row.zone_number">{%raw%}{{ row.zone_name }}{%endraw%}</option>
+                                            </select>
+                                        </div>
+                                    </div> <!-- end column-->
+                                    <div class = "col"> <!-- begin second column-->
+                                        <div class="mb-3"> <!-- gateway role field-->
+                                            <label for="editRoleGatewayRole" class="form-label">Gateway Role:</label>
+                                            <input v-if="editData.gateway_zone == '0'" type="text" class="form-control" id="editRoleGatewayRole" 
+                                                v-model="editData.gateway_role" placeholder="Role for UBT" disabled>
+                                            <input v-else type="text" class="form-control" id="editRoleGatewayRole" v-model="editData.gateway_role" 
+                                                placeholder="Role for UBT">
+                                        </div>
+                                    </div> <!-- end column -->
+                                </div> <!-- end row -->
+                                <div class="mb-3"> <!-- associate policy field -->
+                                    <label for="editRoleAssociatePolicy" class="form-label">Associate Policy:</label>
+                                    <input type="text" maxlength="64" class="form-control" id="editRoleAssociatePolicy" v-model="editData.associate_policy"
+                                        placeholder="Enter a policy">
+                                </div>
+                                <div class="mb-3"> <!-- associate captive-portal-profile field -->
+                                    <label for="editRoleAssociateCPP" class="form-label">Associate Captive Portal Profile:</label>
+                                    <input type="text" maxlength="64" class="form-control" id="editRoleAssociateCPP"
+                                        v-model="editData.associate_captive_portal_profile" placeholder="Enter a profile">
+                                </div>
+                                <div class="mb-3 "> <!-- access vlan field-->
+                                    <label for="editRoleAccessVlanbyID" class="form-label">Access VLAN: (1-4094 or { variable })</label>
+                                    <input type="text" maxlength="64" class="form-control" id="editRoleAccessVlanbyID" v-model="editData.vlan_access_id"
+                                    placeholder="Enter an access vlan"> 
+                                </div>
+                                <div class="mb-3"> <!-- trunk vlan native field-->
+                                    <label for="editRoleNativeTrunkVlanbyID" class="form-label">Trunk VLAN native: (1-4094 or { variable })</label>
+                                    <input type="text" maxlength="64" class="form-control" id="editRoleNativeTrunkVlanbyID"
+                                        v-model="editData.vlan_trunk_native_id" placeholder="Enter a native vlan for the trunk">
+                                </div>
+                                <div class="mb-3"> <!-- Trunk VLAN Allowed Picker -->
+                                    <div class="mb-3" style="background-color: #ccc; padding: 4px; width: 375px; border-radius: 0.25rem;"> <!-- outside grey box-->
+                                        <label for="editVlan" class="form-label">Trunk VLANs allowed (1-4094)</label>
+                                        <div class="btn-group" role="group">
+                                            <select class="form-select" multiple style="width: 341px; height: 50px; border-radius: 0.25rem;" v-model="internal_vlan_selected">
+                                                <option v-for="vlan in editData.internal_vlans"> {%raw%}{{vlan}}{%endraw%}</option>
+                                            </select>
+                                            <button type="button" style="height: 50px; width: 27px" class="btn btn-danger btn-sm" 
+                                                @click="vlan_input=internal_vlan_selected[0]; editData.internal_vlans.splice(editData.internal_vlans.indexOf(internal_vlan_selected[0]),1);">
+                                                -
+                                            </button>
+                                        </div>
+                                        <div class="btn-group" role="group" style="margin-top: 10px;">
+                                            <input type="text" class="form-control" id="vlan" v-model="vlan_input" placeholder="Enter VLAN number" style="width: 341px">
+                                            <button type="button" class="btn btn-primary btn-sm"
+                                                @click.prevent="let input_isvalid = validateAddVlanToList(vlan_input, 'edit'); if (input_isvalid) {editData.internal_vlans.push(vlan_input); vlan_input='';}">
+                                                +
+                                            </button>
+                                        </div>
+                                    </div>            
+                                </div> <!-- end vlan picker-->
+                                <div class="mb-3"> <!-- stp admin edge port field -->
+                                    <div class="btn-group" role="group">
+                                        <label class="switch">
+                                            <input type="checkbox" id="editRoleSTPAdminEdgePort" @click="toggleCheckbox" v-model="editData.stp_admin_edge_port">
+                                                <div class="slider round"></div>
+                                        </label>
+                                        <label for="editRoleSTPAdminEdgePort">STP Admin Edge Port ({%raw%}{{ editData.stp_admin_edge_port }}{%endraw%})</label>
+                                    </div>
+                                </div>
+                            </div> <!-- end first column -->
+                            <div class = "col" style="border-left: 1px dashed #333;"> <!-- begin second column --> <!--  style="border:1px solid blue;" -->
+                                <div class="mb-3"> <!-- auth mode field -->
+                                    <label for="editRoleAuthMode" class="form-label">Authentication Mode:</label>
+                                    <select type="text" class="form-select" id="editRoleAuthMode" v-model="editData.auth_mode">
+                                        <option value="None" selected>None</option>
+                                        <option value="client-mode">client-mode</option>
+                                        <option value="device-mode">device-mode</option>
+                                        <option value="multi-domain">multi-domain</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3"> <!-- trust mode field -->
+                                    <label for="editRoleTrustMode" class="form-label">Trust Mode:</label>
+                                    <select type="text" class="form-select" id="editRoleTrustMode" v-model="editData.trust_mode">
+                                        <option value="" selected>Unused</option>
+                                        <option value="none" >none</option>
+                                        <option value="dscp">dscp</option>
+                                        <option value="cos">cos</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3"> <!-- device traffic class field -->
+                                    <label for="editRoleTrafficClass" class="form-label">Device Traffic Class:</label>
+                                    <select type="text" class="form-select" id="editRoleTrafficClass" v-model="editData.device_traffic_class">
+                                        <option value="None" selected>None</option>
+                                        <option value="Voice">Voice</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3"> <!-- poe priority field -->
+                                    <label for="editRolePoePriority" class="form-label">PoE Priority:</label>
+                                    <select type="text" class="form-select" id="editRolePoePriority" v-model="editData.poe_priority">
+                                        <option value="None" selected>None</option>
+                                        <option value="critical">critical</option>
+                                        <option value="high">high</option>
+                                        <option value="low">low</option>
+                                    </select>  
+                                </div>
+                                <div class="mb-3"> <!-- cache reauth period field -->
+                                    <label for="editRoleCachedReauthPeriod" class="form-label">Cached Reauthentication Period: (min: 30 seconds)</label>
+                                    <input type="text" maxlength="64" class="form-control" id="editRoleCachedReauthPeriod" 
+                                        v-model="editData.cached_reauth_period" placeholder="Range: 30 to 4294967295">
+                                </div>
+                                <div class="mb-3"> <!-- reauth period field -->
+                                    <label for="editRoleReauthPeriod" class="form-label">Reauthentication Period: (min: 1 second)</label>
+                                    <input type="text" maxlength="64" class="form-control" id="editRoleReauthPeriod" v-model="editData.reauth_period"
+                                        placeholder="Range: 1 to 4294967295">
+                                </div>
+                                <div class="mb-3"> <!-- client inactivity timer field -->
+                                    <label for="editRoleClientInactivity" class="form-label">Client Inactivity Timer: (min: 300 seconds)</label>
+                                    <input type="text" maxlength="64" class="form-control" id="editRoleClientInactivity" v-model="editData.client_inactivity"
+                                        placeholder="Range: 300 to 4294967295">
+                                </div>
+                                <div class="mb-3"> <!-- session timeout field -->
+                                    <label for="editRoleSessionTimeout" class="form-label">Session Timeout: (min: 1 second)</label>
+                                    <input type="text" maxlength="64" class="form-control" id="editRoleSessionTimeout" v-model="editData.session_timeout"
+                                        placeholder="Range: 1 to 4294967295">
+                                    <!-- <input type="hidden" id="editData" v-model="editData.id"> -->
+                                </div>
+                                <div class="mb-3"> <!-- mut field -->
+                                    <label for="editRoleMTU" class="form-label">MTU (68 to 9198):</label>
+                                    <input type="text" maxlength="64" class="form-control" id="editRoleMTU" v-model="editData.mtu"
+                                        placeholder="Enter an MTU for the role">
+                                </div>
+                            </div> <!-- end second column -->
+                        </div> <!-- end row -->
+                    </div> <!-- end container -->
+                    <!-- submit and reset buttons -->
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-primary btn-sm" @click="handleEditSubmit">Submit</button>
+                        <button type="button" class="btn btn-danger btn-sm"  @click="handleEditReset">Reset</button>
+                    </div>
+                    <!-- cancel button -->
+                    <div class="btn-group" role="group" style="position: absolute; bottom: 16px; right: 16px;">
+                        <button type="button" class="btn btn-warning btn-sm" @click="handleEditCancel">Cancel</button>
+                    </div>
+                </form>
+            </div> <!-- end modal body -->
+        </div> <!-- end modal content -->
+    </div> <!-- end modal dialog -->
+</div> <!-- end ref="editData" -->
+<div v-if="activeEditData" class="modal-backdrop fade show"></div>
+
+{% include "vue_utility_modal_are_you_sure.html" %}
+{% include "vue_utility_modal_alert.html" %}
+
+</div> <!-- end container -->
+</template>
+
+<script type="module">
+    import { createApp } from 'https://unpkg.com/petite-vue?module'
+    import 'https://unpkg.com/axios/dist/axios.min.js'
+ 
+    let api_host = ""
+    
+    if ('{{auth.env}}' === 'Production'){
+        api_host = "https://kaos.backend-network-api.genmills.com";
+    } else {
+        api_host = "https://network-api-kaos-nonprod.k8s.genmills.com";
+    }
+
+    let endpoint = api_host + "/api/v1/config/ip/switch-port-access-role";
+    let auth_endpoint = api_host + "/v1/auth/token";
+    let gateway_zone_endpoint = api_host + "/api/v1/config/ip/port-access-role-gateway-zone";
+
+//    if ("{{ auth['host_version'] }}" != 2 ) {
+//        console.log("auth backend_host", "{{ auth['backend_host'] }}");
+//        
+//        endpoint = "{{ auth['backend_host'] }}" + endpoint;
+//        auth_endpoint = "{{ auth['backend_host'] }}" + auth_endpoint;
+//        gateway_zone_endpoint = "{{ auth['backend_host'] }}" + gateway_zone_endpoint;
+//	}
+
+    function app() {
+        return {
+            data() {
+                    return { 
+                        activeAddData: false
+                    }
+            },
+            $template: '#gridTemplate',
+            port_access_roles: [],
+            modalAlert: { title: '', body: '', button:'OK'},
+            tokenExpiredAlert: {
+                title: "Your API Token Has Expired",
+                body: "You will need to logout and log back in to reset your token.",
+                body2: "You will need to logout and log back in to reset your token. <br><br> <a href='/login?next=/config/global/par'>Logout</a>",
+                button: "OK"},
+            areYouSure: {
+                title: 'WARNING - DATA WILL BE REMOVED',
+                body: 'This action will delete data.  Are you sure?',
+                button:'Yes, proceed.',
+                action:undefined},
+            activeAddData: false,
+            addData: {internal_vlans: [], name: '', id: '', description: '', stp_admin_edge_port: false, vlan_trunk_allowed_name: "", vlan_trunk_allowed_id: 0,
+                auth_mode: "None", trust_mode: "", cached_reauth_period: "", private_vlan: "", poe_priority: "None", reauth_period: "", vlan_trunk_native_name: "",
+                client_inactivity: "", gateway_zone: 0, gateway_role: "", device_traffic_class: "None", associate_policy: "", associate_captive_portal_profile: "", 
+                associate_macsec_policy: "", vlan_trunk_native_id: "", mtu: "", session_timeout: "", vlan_access_name: "", vlan_access_id: ""},
+            activeEditData: false,
+            editData: {internal_vlans: [], name: '', id: '', description: '', stp_admin_edge_port: false, vlan_trunk_allowed_name: "", vlan_trunk_allowed_id: 0,
+                auth_mode: "None", trust_mode: "", cached_reauth_period: "", private_vlan: "", poe_priority: "None", reauth_period: "", vlan_trunk_native_name: "",
+                client_inactivity: "", gateway_zone: 0, gateway_role: "", device_traffic_class: "None", associate_policy: "", associate_captive_portal_profile: "", 
+                associate_macsec_policy: "", vlan_trunk_native_id: "", mtu: "", session_timeout: "", vlan_access_name: "", vlan_access_id: ""},
+            deleteData: {id: '' },
+            internal_vlan_selected: 0,
+            vlan_input: "",
+            validity: {},
+            gateway_zones: [],
+            auth_token: "{{ auth["api_token"] }}",
+
+            activate_modal_alert(title, message, button, action){
+                this.modalAlert.title = title;
+                this.modalAlert.displayed = true;
+                this.modalAlert.button = button;
+                var el = document.getElementById('modalAlert');
+                var bel = new bootstrap.Modal(el);
+                bel.show();
+                this.modalAlert.active = bel;
+                var modalBody = document.getElementById('modalBody');
+                modalBody.innerHTML = message;
+            },
+            dismiss_modal_alert(){
+                if (this.modalAlert.displayed) {
+                    this.modalAlert.displayed=false;
+                    this.modalAlert.active.hide();
+                }
+            },
+            validateAddVlanToList(input, mode) {
+                let notInList;
+
+                if (mode ==="add") {
+                    notInList = this.addData.internal_vlans.indexOf(input);
+                } else if (mode === "edit") {
+                    notInList = this.editData.internal_vlans.indexOf(input);
+                }
+                //console.log("notInList", notInList);
+                //console.log("!notInList", !notInList);
+                //console.log("edit internal_vlans", this.editData.internal_vlans)
+                //console.log("add internal_vlans", this.addData.internal_vlans)
+                if (notInList === -1) { //new item is not in the current list
+                    if (this.isVlanValid(input)) {
+                        return true;
+                    } else {
+                        this.activate_modal_alert("VLAN not valid","The entered VLAN is not in the valid range.","OK");
+                        return false;
+                    }
+                } else {
+                    this.activate_modal_alert("VLAN not valid","The entered VLAN is already in the list.","OK");
+                    return false;
+                }
+            },
+            add_data(payload) {
+                const path = endpoint;
+                const headers = {
+                                "Content-Type": "application/json",
+                                "Accept": "application/json, text/plain, */*",
+                                "Authorization": this.auth_token
+                                }
+
+                axios.post(path, payload, { headers }).then((response) => {
+                    //console.log(response.data);
+                    this.get_data(); 
+                    }).catch((error) => {
+                        console.error(error.response.data);
+                        if (error.response.data === "Token is invalid") {
+                            this.activate_modal_alert(this.tokenExpiredAlert.title,
+                                                      this.tokenExpiredAlert.body2,
+                                                      this.tokenExpiredAlert.button);
+                        }
+                        this.get_data();
+                    });
+            },
+            edit_data(payload) {
+                const path = endpoint+"?id="+this.editData.id;
+                const headers = {
+                                "Content-Type": "application/json",
+                                "Accept": "application/json, text/plain, */*",
+                                "Authorization": this.auth_token
+                                }
+
+                axios.put(path, payload, { headers }).then((response) => {
+                    //console.log(response.data);
+                    this.get_data();
+                    }).catch((error) => {
+                        console.error(error.response.data);
+                        if (error.response.data === "Token is invalid") {
+                            this.activate_modal_alert(this.tokenExpiredAlert.title,
+                                                      this.tokenExpiredAlert.body2,
+                                                      this.tokenExpiredAlert.button);
+                        }
+                        this.get_data();
+                    });
+            },
+            delete_data(payload) {
+                const path = endpoint+"?id="+this.deleteData.id;
+                const headers = {
+                                "Content-Type": "application/json",
+                                "Accept": "application/json, text/plain, */*",
+                                "Authorization": this.auth_token
+                                }
+
+                axios.delete(path, { headers }).then((response) => {
+                    //console.log(response);
+                    this.get_data();
+                    }).catch((error) => {
+                        console.error(error.response.data);
+                        if (error.response.data === "Token is invalid") {
+                            this.activate_modal_alert(this.tokenExpiredAlert.title,
+                                                      this.tokenExpiredAlert.body2,
+                                                      this.tokenExpiredAlert.button);
+                        }
+                        this.get_data();
+                    });
+            },
+            get_data() {
+                const path = endpoint;
+                axios.get(path).then((response) => {
+                    this.port_access_roles = response.data;
+                    
+                    for (let i = 0; i < this.port_access_roles.length; i++) {
+                        //remove the brackets from the ouptut
+                        this.port_access_roles[i].vlan_trunk_allowed_id.output = this.port_access_roles[i].vlan_trunk_allowed_id.join(', ');
+                    }
+                    }).catch((error) => {
+                        console.error(error.response.data);
+                    })
+            },
+            get_gateway_zone() {
+                axios.get(gateway_zone_endpoint).then((response) => {
+                    //console.log(response);
+                    this.gateway_zones = response.data;
+                    //console.log(this.gateway_zones)
+                }).catch((error) => {
+                    console.error(error.response.data);
+                })
+            },
+            handleAddReset() {
+                this.initAddForm()
+            },
+            handleEditReset() {
+                this.initEditForm()
+            },
+            handleAddSubmit() {
+                const payload = {
+                    //replace " " with "_" and make it all uppercase
+                    name: this.addData.name.replace(/\s/g, "_").toUpperCase(),
+                    description: this.addData.description,
+                    //description: this.addData.description !== "" ? this.addData.description: undefined,
+                    //vlan_trunk_allowed_name: this.addData.vlan_trunk_allowed_name,
+                    vlan_trunk_allowed_id: this.addData.internal_vlans.map(vlan => parseInt(vlan)),
+                    auth_mode: this.addData.auth_mode,
+                    trust_mode: this.addData.trust_mode,
+                    cached_reauth_period: parseInt(this.addData.cached_reauth_period) || 0,
+                    //private_vlan: this.addData.private_vlan,
+                    poe_priority: this.addData.poe_priority,
+                    reauth_period: parseInt(this.addData.reauth_period) || 0,
+                    //vlan_trunk_native_name: this.addData.vlan_trunk_native_name,
+                    client_inactivity: parseInt(this.addData.client_inactivity) || 0,
+                    gateway_zone: parseInt(this.addData.gateway_zone) || 0,
+                    gateway_role: this.addData.gateway_role,
+                    device_traffic_class: this.addData.device_traffic_class,
+                    associate_policy: this.addData.associate_policy,
+                    associate_captive_portal_profile: this.addData.associate_captive_portal_profile,
+                    //associate_macsec_policy: this.addData.associate_macsec_policy,
+                    vlan_trunk_native_id: this.addData.vlan_trunk_native_id || "0",
+                    stp_admin_edge_port: this.addData.stp_admin_edge_port,
+                    mtu: parseInt(this.addData.mtu) || 0,
+                    session_timeout: parseInt(this.addData.session_timeout) || 0,
+                    //vlan_access_name: this.addData.vlan_access_name,
+                    vlan_access_id: this.addData.vlan_access_id || "0"
+                }
+                //id = 0 if it is a new role
+                let nameExists = this.doesNameExistinList(payload.name, 0);
+                //console.log("nameExists", nameExists)
+
+                if (payload.name != "") {
+                    if (!nameExists) {
+                        if (this.validatePayload(payload)) {
+                                    //make sure these two go to the db as strings since I keep them as numbers to validate them
+                                    payload.vlan_access_id = payload.vlan_access_id.toString();
+                                    payload.vlan_trunk_native_id = payload.vlan_trunk_native_id.toString();
+                                    this.toggleAddData();
+                                    this.add_data(payload);
+                                    this.initAddForm();
+                        } else {
+                            let msgBody = "The following fields have invalid data:<br><br>";
+                            for (let item in this.validity) {
+                                if (!this.validity[item].isvalid) {
+                                    msgBody += this.validity[item].field + "<br>";
+                                }
+                            }
+                            this.activate_modal_alert("Field Validation Error", msgBody + "<br>Please check your data and resubmit", "OK");
+                        }
+                    } else {
+                        this.activate_modal_alert("Field Validation Error", "The input name must be unique", "OK");
+                    }
+                } else {
+                this.activate_modal_alert("Field Validation Error", "The Name field is rquired and cannot be empty", "OK");       
+                }
+            },
+            doesNameExistinList(role_name, id) {
+                //checks to make sure the Name is unique in the list
+                //id=0 means it is coming from the add modal and is a new role that doesn't have a db entry
+                for (let i=0; i < this.port_access_roles.length; i++) {
+                    if (role_name === this.port_access_roles[i].name && (id !== this.port_access_roles[i].id || id === 0)) {
+                        return true;
+                    }
+                }
+                return false;
+            },
+            validatePayload(payload) {
+                //Handle data validation
+                this.validity = {
+                    name: {isvalid: false, field: "Name"},
+                    vlan_access_id: {isvalid: false, field: "Access VLAN"},
+                    vlan_trunk_native_id: {isvalid: false, field: "Trunk VLAN native"},
+                    cached_reauth_period: {isvalid: false, field: "Cached Reauthentication Period"},
+                    reauth_period: {isvalid: false, field: "Reauthentication Period"},
+                    client_inactivity: {isvalid: false, field: "Client Inactivity Timer"},
+                    mtu: {isvalid: false, field: "MTU"},
+                    session_timeout: {isvalid: false, field: "Session Timeout"},
+                };
+                //name is not an empty string
+                this.validity.name.isvalid = payload.name !== "";
+                //session_timeout = Range: 1 to 4294967295. A timeout of less than 60 seconds is not recommended
+                this.validity.session_timeout.isvalid = this.isValueInRange(payload.session_timeout, 1);
+                this.validity.session_timeout.isvalid = this.validity.session_timeout.isvalid || payload.session_timeout === 0;
+                //cached_reauth_period =  Range: 30 to 4294967295
+                this.validity.cached_reauth_period.isvalid = this.isValueInRange(payload.cached_reauth_period, 30);
+                this.validity.cached_reauth_period.isvalid = this.validity.cached_reauth_period.isvalid || payload.cached_reauth_period === 0;
+                //reauth_period = Range: 1 to 4294967295
+                this.validity.reauth_period.isvalid = this.isValueInRange(payload.reauth_period, 1);
+                this.validity.reauth_period.isvalid = this.validity.reauth_period.isvalid || payload.reauth_period === 0;
+                //client_inactivity = Range: 300 to 4,294,967,295
+                this.validity.client_inactivity.isvalid = this.isValueInRange(payload.client_inactivity, 300);
+                this.validity.client_inactivity.isvalid = this.validity.client_inactivity.isvalid || payload.client_inactivity === 0;
+                //mtu = 68 to 9198
+                this.validity.mtu.isvalid = this.isMtuValid(payload.mtu);
+                this.validity.mtu.isvalid = this.validity.mtu.isvalid || payload.mtu === 0;
+                //vlan_access_id = range 1 to 4094
+                this.validity.vlan_access_id.isvalid = this.isVlanValid(payload.vlan_access_id);
+                this.validity.vlan_access_id.isvalid = this.validity.vlan_access_id.isvalid || payload.vlan_access_id === "0";
+                //vlan_trunk_native_id = range: 1 to 4094
+                this.validity.vlan_trunk_native_id.isvalid = this.isVlanValid(payload.vlan_trunk_native_id);
+                this.validity.vlan_trunk_native_id.isvalid = this.validity.vlan_trunk_native_id.isvalid || payload.vlan_trunk_native_id === "0";
+                /*
+                console.log(`name: ${payload.name} - ${this.validity.name.isvalid}`);
+                console.log(typeof payload.name);
+                console.log(`mtu: ${payload.mtu} - ${this.validity.mtu.isvalid}`);
+                console.log(typeof payload.mtu);
+                console.log(`cached_reauth_period:${payload.cached_reauth_period} - ${this.validity.cached_reauth_period.isvalid}`);
+                console.log(typeof payload.cached_reauth_period);
+                console.log(`reauth_period: ${payload.reauth_period} - ${this.validity.reauth_period.isvalid}`);
+                console.log(typeof payload.reauth_period);
+                console.log(`vlan_trunk_native_id: ${payload.vlan_trunk_native_id} - ${this.validity.vlan_trunk_native_id.isvalid}`);
+                console.log(typeof payload.vlan_trunk_native_id);
+                console.log(`session_timeout: ${payload.session_timeout} - ${this.validity.session_timeout.isvalid}`);
+                console.log(typeof payload.session_timeout);
+                console.log(`vlan_access_id: ${payload.vlan_access_id} - ${this.validity.vlan_access_id.isvalid}`);
+                console.log(typeof payload.vlan_access_id);
+                console.log(`client_inactivity: ${payload.client_inactivity} - ${this.validity.client_inactivity.isvalid}`);
+                console.log(typeof payload.client_inactivity);
+                */
+                return (this.validity.cached_reauth_period.isvalid && this.validity.reauth_period.isvalid && 
+                    this.validity.client_inactivity.isvalid && this.validity.vlan_trunk_native_id.isvalid &&
+                    this.validity.mtu.isvalid && this.validity.session_timeout.isvalid && this.validity.vlan_access_id.isvalid);
+            },
+            isVlanValid(value) {
+                //integer between 1 and 4094
+                //const vlan_range_regex = /^\b(409[0-4]|40[0-8]\d|[1-3]\d{3}|\d{2,3}|[1-9])\b$/;
+                const variable_regex = /^\{[^{}]*\}$/;
+                //console.log("value", value);
+                //console.log("Variable regex.test", variable_regex.test(value))
+                return variable_regex.test(value) || (value >= 1 && value <= 4094);
+            },
+            isMtuValid(value) {
+                //integer between 68 and 9198
+                //const mtu_range_regex = /^\b(919[0-8]|91[0-8]\d|90\d\d|[1-8]\d{3}|\d{3}|[7-9]\d|6[8-9])\b$/;
+                return value >= 68 && value <= 9198; 
+            },
+            isValueInRange(value, lower_limit) {
+                const upper_limit = 4294967295;
+                return Number.isInteger(value) && value >= lower_limit && value <= upper_limit;
+            },
+            
+            handleEditCancel() {
+                this.toggleEditData();
+                this.vlan_input = "";
+            },
+            handleAddCancel() {
+                //Sets the scroll for the modal back to the top so when you open it again it wont be at the bottom
+                //Neither of these options work
+                //const modalBodyRef = this.$refs.modalBodyRef;
+                //console.log("modalBodyRef", modalBodyRef)
+                //if (modalBodyRef) {
+                //    modalBodyRef.scrollIntoView({ behavior: 'smooth', block: 'start'});
+                //}
+                // --OR--
+                //window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+                
+                //resets the add form and closes it
+                this.initAddForm();
+                this.toggleAddData();
+            },
+            handleEditSubmit() {
+                const payload = {
+                    id:  this.editData.id,
+                    //replace " " with "_" and make it all uppercase
+                    name: this.editData.name.replace(/\s/g, "_").toUpperCase(),
+                    description: this.editData.description,
+                    //vlan_trunk_allowed_name: this.editData.vlan_trunk_allowed_name,
+                    vlan_trunk_allowed_id: this.editData.internal_vlans.map(vlan => parseInt(vlan)),
+                    auth_mode: this.editData.auth_mode,
+                    trust_mode: this.editData.trust_mode,
+                    cached_reauth_period: parseInt(this.editData.cached_reauth_period) || 0,
+                    //private_vlan: this.editData.private_vlan,
+                    poe_priority: this.editData.poe_priority,
+                    reauth_period: parseInt(this.editData.reauth_period) || 0,
+                    //vlan_trunk_native_name: this.editData.vlan_trunk_native_name,
+                    client_inactivity: parseInt(this.editData.client_inactivity) || 0,
+                    gateway_zone: parseInt(this.editData.gateway_zone) || 0,
+                    gateway_role: this.editData.gateway_role,
+                    device_traffic_class: this.editData.device_traffic_class,
+                    associate_policy: this.editData.associate_policy,
+                    associate_captive_portal_profile: this.editData.associate_captive_portal_profile,
+                    //associate_macsec_policy: this.editData.associate_macsec_policy,
+                    vlan_trunk_native_id: this.editData.vlan_trunk_native_id || "0",
+                    stp_admin_edge_port: this.editData.stp_admin_edge_port,
+                    mtu: parseInt(this.editData.mtu) || 0,
+                    session_timeout: parseInt(this.editData.session_timeout) || 0,
+                    //vlan_access_name: this.editData.vlan_access_name,
+                    vlan_access_id: this.editData.vlan_access_id || "0"
+                }
+                
+                let nameExists = this.doesNameExistinList(payload.name, payload.id);
+                //console.log("nameExists", nameExists);
+                
+                if (payload.name != "") { 
+                    if (!nameExists) {
+                        if (this.validatePayload(payload)) {
+                            payload.vlan_access_id = payload.vlan_access_id.toString();
+                            payload.vlan_trunk_native_id = payload.vlan_trunk_native_id.toString();
+                            this.toggleEditData();
+                            //console.log(payload);                                
+                            this.edit_data(payload);
+                            this.initEditForm();
+                        } else {
+                            let msgBody = "The following fields have invalid data:<br><br>";
+                            for (let item in this.validity) {
+                                if (!this.validity[item].isvalid) {
+                                    msgBody += this.validity[item].field + "<br>";
+                                }
+                            }
+                            this.activate_modal_alert("Field Validation Error", msgBody + "<br>Please check your data and resubmit", "OK");
+                        }
+                    } else {
+                        this.activate_modal_alert("Field Validation Error", "The input name must be unique", "OK");
+                    }
+                } else {
+                    this.activate_modal_alert("Field Validation Error", "The Name field is rquired and cannot be empty", "OK");       
+                }
+            },
+            handleDelete(row) {
+                if (row) {
+                    this.deleteData.id = row.id;
+                    this.delete_data();
+                }
+            },
+            initAddForm() {
+                this.addData = {internal_vlans: [], name: '', id: '', description: '', stp_admin_edge_port: false, vlan_trunk_allowed_name: "",
+                    vlan_trunk_allowed_id: 0, auth_mode: "None", trust_mode: "", cached_reauth_period: "", private_vlan: "", poe_priority: "None",
+                    reauth_period: "", vlan_trunk_native_name: "", client_inactivity: "", gateway_zone: 0, gateway_role: "", associate_policy: "",
+                    associate_captive_portal_profile: "", associate_macsec_policy: "", vlan_trunk_native_id: "", mtu: "", session_timeout: "", 
+                    vlan_access_name: "", vlan_access_id: "", device_traffic_class: "None"};
+                this.vlan_input = "";
+            },
+            initEditForm() {
+                this.editData = {internal_vlans: [], name: '', id: '', description: '', stp_admin_edge_port: false, vlan_trunk_allowed_name: "",
+                    vlan_trunk_allowed_id: 0, auth_mode: "None", trust_mode: "", cached_reauth_period: "", private_vlan: "", poe_priority: "None",
+                    reauth_period: "", vlan_trunk_native_name: "", client_inactivity: "", gateway_zone: 0, gateway_role: "", associate_policy: "",
+                    associate_captive_portal_profile: "", associate_macsec_policy: "", vlan_trunk_native_id: "", mtu: "", session_timeout: "", 
+                    vlan_access_name: "", vlan_access_id: "", device_traffic_class: "None"};
+                this.vlan_input = "";
+            },
+            toggleAddData() {
+                const body = document.querySelector('body');
+                this.activeAddData = !this.activeAddData;
+                if (this.activeAddData) {
+                    body.classList.add('modal-open');
+                    this.$nextTick(() => {
+                        document.getElementById("addRoleName").focus();
+                    });
+                } else {
+                    body.classList.remove('modal-open');
+                }
+            },
+            toggleEditData(row) {
+                if (row) {
+                    //console.log(this.editData);
+                    this.editData.name = row.name;
+                    this.editData.id = row.id;
+                    this.editData.description = row.description;
+                    this.editData.vlan_trunk_allowed_name = row.vlan_trunk_allowed_name;
+                    this.editData.internal_vlans = row.vlan_trunk_allowed_id;
+                    this.editData.auth_mode = row.auth_mode;
+                    this.editData.trust_mode = row.trust_mode;
+                    this.editData.cached_reauth_period = row.cached_reauth_period;
+                    this.editData.private_vlan = row.private_vlan;
+                    this.editData.poe_priority = row.poe_priority;
+                    this.editData.reauth_period = row.reauth_period;
+                    this.editData.vlan_trunk_native_name = row.vlan_trunk_native_name;
+                    this.editData.client_inactivity = row.client_inactivity;
+                    this.editData.gateway_role = row.gateway_role;
+                    this.editData.device_traffic_class = row.device_traffic_class;
+                    this.editData.associate_policy = row.associate_policy;
+                    this.editData.associate_captive_portal_profile = row.associate_captive_portal_profile;
+                    this.editData.associate_macsec_policy = row.associate_macsec_policy;
+                    this.editData.vlan_trunk_native_id = row.vlan_trunk_native_id;
+                    this.editData.stp_admin_edge_port = row.stp_admin_edge_port;
+                    this.editData.mtu = row.mtu;
+                    this.editData.session_timeout = row.session_timeout;
+                    this.editData.vlan_access_id = row.vlan_access_id;
+                    this.editData.vlan_access_name = row.vlan_access_name;
+                    this.editData.gateway_zone = row.gateway_zone
+                }
+                const body = document.querySelector('body');
+                this.activeEditData = !this.activeEditData;
+                if (this.activeEditData) {
+                        body.classList.add('modal-open');
+                } else {
+                        body.classList.remove('modal-open');
+                }
+            },
+            getZoneName(num) {
+            //Set the gateway_zone name so I can use it in the frontend table
+                for (let i = 0; i < this.gateway_zones.length; i++) {
+                    if (num == this.gateway_zones[i].zone_number) {
+                        return this.gateway_zones[i].zone_name
+                    }
+                }
+            },
+            are_you_sure(action,id){
+                this.areYouSure.displayed=true
+                var el = document.getElementById('modalAreYouSure');
+                var bel = new bootstrap.Modal(el);
+                bel.show();
+                this.areYouSure.active = bel;
+                this.areYouSure.action=action
+                this.areYouSure.id=id
+            },
+            dismiss_are_you_sure(value){
+                if (this.areYouSure.displayed) {
+                    this.areYouSure.result = value;
+                    if (value) {
+                        this.areYouSure.action(this.areYouSure.id)
+                    }
+                    this.areYouSure.displayed=false;
+                    this.areYouSure.active.hide();
+                }
+            },
+            toggleCheckbox(event) {
+                this.checkbox = !this.checkbox;
+            },
+            mounted() {
+                this.get_data();
+                this.get_gateway_zone();
+                }
+            }
+        }
+createApp({app}).mount()
+</script>
+<div v-scope="app()" @vue:mounted="mounted"></div>
+{% endblock %}

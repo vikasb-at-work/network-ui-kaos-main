@@ -1,0 +1,123 @@
+<style>
+	/* css for wider columns so they don't wrap*/
+	.wider-ip_route {
+		min-width: 80px;
+	}
+	.wider-ip_nexthop {
+		min-width: 105px;
+	}
+	.wider-outgoing_interface {
+		min-width: 100px;
+	}
+	.wider-vrf {
+		min-width: 60px;
+	}
+	.wider-tag {
+		min-width: 60px;
+	}
+	.wider-distance {
+		min-width: 105px;
+	}
+  .wider-description {
+		min-width: 100px;
+	}
+  .wider-blackhole {
+		min-width: 105px;
+	}
+  .wider-reject {
+		min-width: 80px;
+	}
+  .wider-bfd {
+		min-width: 65px;
+	}
+</style>
+<!--data modal - switch routes-->
+<div
+ref="switch_routeData"
+class="modal fade"
+:class="{ show: switch_activeRouteData, 'd-block': switch_activeRouteData }"
+tabindex="-1"
+role="dialog">
+<div class="modal-dialog modal-xl" role="document">
+<div class="modal-content">
+  <div class="modal-header">
+    <h5 class="modal-title">Static Routes</h5>
+    <button
+      type="button"
+      class="close"
+      data-dismiss="modal"
+      aria-label="Close"
+      @click="switch_toggleRoutes">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  <div class="modal-body">
+
+<div class="container">
+    <div class="row">
+      <div class="col-sm-10">
+        <button type="button" @click="switch_toggleModalRouteAdd(true)" class="btn btn-success btn-sm">Add Route</button>
+        <br><br>
+        <table class="table table-hover">
+          <thead>
+            <tr>
+				<th v-for="(c, index) in cols.routes" :key=index scope="col"  :class="{'wider-ip_route': c.name === 'ip_route',
+                                                                               'wider-ip_nexthop': c.name === 'ip_nexthop',
+                                                                               'wider-outgoing_interface': c.name === 'outgoing_interface',
+                                                                               'wider-vrf': c.name === 'vrf',
+                                                                               'wider-tag': c.name === 'tag',
+                                                                               'wider-distance': c.name === 'distance',
+                                                                               'wider-description': c.name === 'description',
+                                                                               'wider-blackhole': c.name === 'blackhole',
+                                                                               'wider-reject': c.name === 'reject',
+                                                                               'wider-bfd': c.name === 'bfd',
+                                                                              }">
+					<div>{%raw%}{{c.text}}{%endraw%}
+					  <template v-if="sort.column === c.name && sort.by === 'asc'">
+						<i class="fa-solid fa-sort-up" @click="sort={column: c.name, by: 'desc'}"></i>
+					  </template>
+					  <template v-else-if="sort.column === c.name && sort.by === 'desc'">
+						<i class="fa-solid fa-sort-down" @click="sort={column: c.name, by: ''}"></i>
+					  </template>
+					  <template v-else>
+						<i class="fa-solid fa-sort" @click="sort={column: c.name, by: 'asc'}"></i>
+					  </template>
+					</div>
+				   </div>
+				  </div>
+				</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(row, index) in routes_filtered_data" :key="index">
+              <td>{%raw%}{{row.ip_route}}{%endraw%}</td>
+              <td>{%raw%}{{row.ip_nexthop}}{%endraw%}</td>
+              <td>{%raw%}{{row.outgoing_interface}}{%endraw%}</td>
+              <td>{%raw%}{{row.vrf}}{%endraw%}</td>
+              <td>{%raw%}{{row.tag}}{%endraw%}</td>
+              <td>{%raw%}{{row.distance}}{%endraw%}</td>
+              <td>{%raw%}{{row.description}}{%endraw%}</td>
+              <td>{%raw%}{{row.blackhole}}{%endraw%}</td>
+              <td>{%raw%}{{row.reject}}{%endraw%}</td>
+              <td>{%raw%}{{row.bfd}}{%endraw%}</td>
+              <td>
+                <div class="btn-group" role="group">
+                  <button type="button" @click="switch_toggleEditRouteData(row)" class="btn btn-warning btn-sm">Update</button>
+                  <button type="button" @click="switch_toggleCloneRouteData(row)" class="btn btn-success btn-sm">Clone</button>
+                  <button type="button" @click="are_you_sure(switch_handleDeleteRouteData,row)" class="btn btn-danger btn-sm">Delete</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+</div>
+  </div>
+</div>
+</div>
+</div>
+<div v-if="switch_activeRouteData" class="modal-backdrop fade show"></div>
+<!-- include other modals -->
+{% include 'vue_switch_modal_route_add.html' %}

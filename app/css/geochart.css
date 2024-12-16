@@ -1,0 +1,7 @@
+#chart_div {
+	display: block;
+	margin: 0 auto;
+	height: 90vh;
+	top: -40px;
+	position: relative;
+}

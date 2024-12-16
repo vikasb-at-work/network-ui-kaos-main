@@ -1,0 +1,74 @@
+<!--data modal - switch vars-->
+<div
+ref="switch_varsData"
+class="modal fade"
+:class="{ show: switch_activeVarsData, 'd-block': switch_activeVarsData }"
+tabindex="-1"
+role="dialog">
+<div class="modal-dialog modal-xl" role="document">
+<div class="modal-content">
+  <div class="modal-header">
+    <h5 class="modal-title">Switch Variables</h5>
+    <button
+      type="button"
+      class="close"
+      data-dismiss="modal"
+      aria-label="Close"
+      @click="switch_toggleVars">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  <div class="modal-body">
+
+<div class="container">
+    <div class="row">
+      <div class="col-sm-10">
+
+        <button type="button" @click="switch_toggleModalDeviceVarsAdd (true)" class="btn btn-success btn-sm">Add Variable</button>
+        <br><br>
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th v-for="(c, index) in cols.vars" :key=index scope="col">
+                    <div>{%raw%}{{c.text}}{%endraw%}
+                      <template v-if="sort.column === c.name && sort.by === 'asc'">
+                        <i class="fa-solid fa-sort-up" @click="sort={column: c.name, by: 'desc'}"></i>
+                      </template>
+                      <template v-else-if="sort.column === c.name && sort.by === 'desc'">
+                        <i class="fa-solid fa-sort-down" @click="sort={column: c.name, by: ''}"></i>
+                      </template>
+                      <template v-else>
+                        <i class="fa-solid fa-sort" @click="sort={column: c.name, by: 'asc'}"></i>
+                      </template>
+                    </div>
+                   </div>
+                  </div>
+                </th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(row, index) in switch_vars_filtered_data" :key="index">
+              <td>{%raw%}{{row.name}}{%endraw%}</td>
+              <td>{%raw%}{{row.value}}{%endraw%}</td>
+              <td>{%raw%}{{row.description}}{%endraw%}</td>
+              <td>
+                <div class="btn-group" role="group">
+                  <button type="button" @click="switch_toggleEditVarsData (row)" class="btn btn-warning btn-sm">Update</button>
+                  <button type="button" @click="are_you_sure(switch_handleDeleteVarsData, row)" class="btn btn-danger btn-sm">Delete</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+</div>
+  </div>
+</div>
+</div>
+</div>
+<div v-if="switch_activeVarsData" class="modal-backdrop fade show"></div>
+<!-- include other modals -->
+{% include 'vue_switch_modal_multi_add.html' %}

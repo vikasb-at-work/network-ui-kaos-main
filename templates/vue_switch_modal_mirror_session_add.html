@@ -1,0 +1,144 @@
+<!--add data modal - add or edit mirror session from list-->
+<div
+ref="switch_ModalMirrorSessionAddData"
+class="modal fade"
+:class="{ show: switch_activeModalMirrorSessionAddData, 'd-block': switch_activeModalMirrorSessionAddData }"
+tabindex="-1"
+role="dialog">
+<div class="modal-dialog modal-xl" role="document">
+<div class="modal-content">
+  <div class="modal-header">
+	<h5 class="modal-title">Mirror Session</h5>
+	<button
+	  type="button"
+	  class="close"
+	  data-dismiss="modal"
+	  aria-label="Close"
+	  @click="switch_toggleModalMirrorSessionAdd">
+	  <span aria-hidden="true">&times;</span>
+	</button>
+  </div>
+  <div class="modal-body">
+	<form>
+     <div class="btn-group" role="group">
+          <label class="form-label">Session {%raw%}{{switch_sessionData.session}}{%endraw%}</label>
+      <div class="mb-3" style="border-left: 1px dashed #333; margin-left: 20px; padding-left: 10px;">
+            <label class="switch">
+              <input type="checkbox" @click="toggleCheckbox" id="enabled" v-model="switch_sessionData.enable">
+              <div class="slider round"></div>
+                  </label><label for="enabled">Enabled ({%raw%}{{switch_sessionData.enable}}{%endraw%})</label>
+      </div>
+      </div>
+      <div class="mb-3">
+        <label for="addComment" class="form-label">Comment</label>
+        <input
+          type="text"
+          class="form-control"
+          id="addComment"
+          v-model="switch_sessionData.comment"
+          placeholder="Enter a comment/description for this session"/>
+      </div>
+      <div class="mb-3" style="background: #cccccc">
+		 <div style="background:#aaaaaa">
+			<label>Sources (SHIFT+Select, CONTROL+Select, any combination of all 3)</label>
+		 </div>
+
+         <div class="btn-group" role="group">
+             <div class="mb-3" style="margin-left: 20px">
+                 <label for="addInterface">Interfaces</label>
+				 <select type=text class="form-control" id="addSourceInterface" v-model="switch_sessionData.source_interface" multiple="multiple" style="width: 200px; font-family: courier, courier new, serif;">
+					<option v-for="v in switch_interfaces_rxtx" v-bind:value="v.value">{%raw%}{{v.name}}{%endraw%}</option>
+				 </select>
+             </div>
+
+             <div class="mb-3" style="margin-left: 20px">
+                 <label for="addLAGs">LAGs</label>
+				 <select type=text class="form-control" id="addSourceLag" v-model="switch_sessionData.source_lag" multiple="multiple" style="width: 400px; font-family: courier, courier new, serif;">
+					<option v-for="v in switch_lags_rxtx" v-bind:value="v.value">{%raw%}{{v.name}}{%endraw%}</option>
+				 </select>
+             </div>
+
+			 <div class="mb-3" style="margin-left: 20px">
+				 <label for="addVLANs">VLANs</label>
+				 <select class="form-control" id="addSourceVlan" v-model="switch_sessionData.source_vlan" multiple="multiple" style="width: 400px; font-family: courier, courier new, serif;">
+					<option v-for="v in switch_vlans_rxtx" v-bind:value="v.value">{%raw%}{{v.name}}{%endraw%}</option>
+				 </select>
+             </div>
+        </div>
+      </div>	
+
+	  <div class="mb-3">
+          <label>Destination Type
+          <ul class="toggle-switch-inline">
+              <li v-for="(item, index) in switch_destinationtypes" :key=index>
+              <input :id="item.name + '_select_dest_type'" :value="item.value" name="toggle_select_dest_type" type="radio" @change="switch_sessionData.cpu=true" v-on:click="switch_toggle_select_dest_type">
+              <label v-if="item.value == switch_sessionData.selected_dest_type" class="btn-primary" :for="item.value + '_select_dest_type'" type=radio>
+                  {%raw%}{{ item.name }}{%endraw%}
+              </label>
+              <label v-else :for="item.name + '_select_dest_type'" type=radio>
+                  {%raw%}{{ item.name }}{%endraw%}
+              </label>
+              </li>
+            </ul>
+          </label>
+      </div>
+      <div class="mb-3" v-if="switch_sessionData.selected_dest_type==0" class="fade show">
+          <div class="mb-3">
+             <div class="btn-group" role="group">
+                <label for="addDestInterfaces" class="form-label">Destination Interfaces</label>
+                <select type="text" class="form-control" id="addDestInterfaces" v-model="switch_sessionData.destination" multiple="multiple" style="font-family: courier, courner-new, serif;">
+                    <option disabled>Required - select destination(s)</option>
+                    <option v-for="v in switch_interfaces" v-bind:value="v.value">{%raw%}{{v.name}}{%endraw%}</option>
+                </select>
+             </div>
+         </div>
+      </div>	
+      <div class="mb-3" v-if="switch_sessionData.selected_dest_type==1" class="fade show">
+		<div class="btn-group" role="group">
+      	<div class="mb-3">
+        	<label for="addTunnelIp" class="form-label">Tunnel IP</label>
+	        <input type="text" class="form-control" id="addTunnelIp" v-model="switch_sessionData.destination_tunnel_ip" placeholder="Enter a destination tunnel IP" size=200/>
+    	</div>
+      	<div class="mb-3">
+        	<label for="addTunnelSourceIp" class="form-label">Tunnel Source IP</label>
+	        <input type="text" class="form-control" id="addTunnelSourceIp" v-model="switch_sessionData.destination_tunnel_source" placeholder="Enter a destination tunnel source IP" size=200/>
+    	</div>
+		</div>
+		<div class="btn-group" role="group">
+      	<div class="mb-3">
+        	<label for="addTunnelVrf" class="form-label">Tunnel VRF (leave blank for default)</label>
+	        <input type="text" class="form-control" id="addTunnelVrf" v-model="switch_sessionData.destination_tunnel_vrf" placeholder="VRF of destination tunnel" size=200/>
+    	</div>
+      	<div class="mb-3">
+        	<label for="addTunnelDscp" class="form-label">Tunnel DSCP</label>
+	        <input type="text" class="form-control" id="addTunnelDscp" v-model="switch_sessionData.destination_tunnel_dscp" placeholder="DSCP of tunnel (0-63)" size=50/>
+    	</div>
+		</div>
+	  </div>
+      <div class="mb-3" v-if="switch_sessionData.selected_dest_type==2" class="fade show">
+          <label class="switch">
+              <input type="checkbox" @click="toggleCheckbox" @change="switch_sessionData.cpu=true" id="enabled" v-model="switch_sessionData.cpu">
+              <div class="slider round"></div>
+                  </label><label for="enabled">Enabled ({%raw%}{{switch_sessionData.cpu}}{%endraw%})</label>
+	  </div>
+
+	  <div class="btn-group" role="group">
+		<button
+		  type="button"
+		  class="btn btn-primary btn-sm"
+		  @click="switch_handleModalMirrorSessionAddSubmit">
+		  Submit
+		</button>
+		<button
+		  type="button"
+		  class="btn btn-danger btn-sm"
+		  @click="switch_toggleModalMirrorSessionAdd">
+		  Cancel
+		</button>
+	  </div>
+	</form>
+  </div>
+</div>
+</div>
+</div>
+<div v-if="switch_activeModalMirrorSessionAddData" class="modal-backdrop fade show"></div>

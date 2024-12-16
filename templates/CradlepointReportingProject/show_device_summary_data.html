@@ -1,0 +1,33 @@
+<STYLE>
+	.align-right {
+		text-align: right;
+	}
+</STYLE>
+<h4> {{CP_DICT.CP_Name}} </h4>
+<table>
+    <tr>
+        <td>Date first seen:</td><td class="align-right">{{CP_DICT.Date_First_Seen}}</td>
+    </tr>
+	<tr>
+		<td>Date last seen:</td><td class="align-right">{{CP_DICT.Date_Last_Seen}}</td>
+	</tr>
+	<tr>
+        <td>Total Usage (MB):</td><td class="align-right">{{"{:,.2f}".format(CP_DICT.Total_Usage)}}</td>
+    </tr>
+    <tr>
+        <td>Number of Entries:</td><td class="align-right">{{"{:,.2f}".format(CP_DICT.Count)}}</td>
+    </tr>
+    <tr>
+        <td>All Time Daily Avg (MB):  </td><td class="align-right">{{"{:,.2f}".format(CP_DICT.Average_Usage)}}</td>
+    </tr>
+	<tr>
+		<td>100 Day Daily Avg (MB):</td><td class="align-right">{{"{:,.2f}".format(CP_DICT.Xday_Average_Usage)}}</td>
+	</tr>
+    <tr>
+        <td>Highest 24hr Usage:</td><td class="align-right">{{"{:,.2f}".format(CP_DICT.Highest_Usage)}}</td>
+    <tr>
+        <td>Date of Highest Use: &nbsp</td><td class="align-right">{{CP_DICT.Date_Highest_Usage}}</td>
+    </tr>
+
+</table>
+

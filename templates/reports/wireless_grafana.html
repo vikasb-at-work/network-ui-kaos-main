@@ -1,0 +1,55 @@
+{% extends 'menu.html' %}
+{% block content %}
+<link href="/css/samurai.css" rel="stylesheet" type="text/css" media="all">
+<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.3/css/jquery.dataTables.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css">
+<STYLE>
+	
+	.my-chart {
+		height: 20px;
+		width: 100px;
+		color: white;
+		padding-top: 10px;
+		padding-right: 5px;
+		text-align: right;
+		font-weight: bold;
+	}
+</STYLE>
+<main class="container-xxl">
+    <!--<form action="" method="post">
+    <div class="row mb-3">
+        <div class="col-auto">
+          <input type="input" name="compliantversion" id="compliantversion" class="form-control" placeholder="CompliantVersion">
+        </div>
+        <div class="col-sm">
+        <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+    </div>
+    </form>-->
+    <div class="row">
+    <div class="col d-flex bg-body rounded shadow justify-content-center align-items-center">
+			<iframe src="https://mgomtgrafanap1.genmills.com:3000/d-solo/dduxerfcmgqgwf/wireless-compliance-dashboard?orgId=1&from=1730377489490&to=1730399089490&theme=light&panelId=1" width="1300" height="450" frameborder="0"></iframe>
+    </div>
+	</div>
+	<div class="row-auto">
+		&nbsp;
+	</div>
+    <div class="row">
+       <div class="col-sm-4 d-flex bg-body rounded shadow justify-content-center align-items-center">
+		<iframe src="https://mgomtgrafanap1.genmills.com:3000/d-solo/dduxerfcmgqgwf/wireless-compliance-dashboard?orgId=1&from=1730377536387&to=1730399136387&theme=light&panelId=3" width="420" height="325" frameborder="0"></iframe>
+    	</div>
+        <div class="col-sm-8 d-flex bg-body rounded shadow justify-content-center align-items-center">
+			<iframe src="https://mgomtgrafanap1.genmills.com:3000/d-solo/dduxerfcmgqgwf/wireless-compliance-dashboard?orgId=1&from=1730377575546&to=1730399175547&theme=light&panelId=2" width="900" height="325" frameborder="0"></iframe>
+        </div>
+    </div>
+	<div class="row-auto">
+		&nbsp;
+	</div>
+	<footer class="text-center mt-3">
+		<p> If the grafana dashboard does not load tiles, please visit https://mgomtgrafanap1.genmills.com:3000 and allow the certificate and refresh the KAOS page. Thanks"</p>
+	</footer>
+</main>
+
+{% endblock %}
+

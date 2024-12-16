@@ -1,0 +1,121 @@
+{% extends 'CradlepointReportingProject/base.html' %}
+
+{% block crp_content %}
+  <style>
+    .column {
+      float: left;
+      margin-right: 0;
+    }
+    .left {
+      width: 52%;
+    }
+    .right{
+      width: 48%;
+    }
+    .row::after {
+      content: "";    
+      display: table;
+      clear: both;
+    }
+  </style>
+
+</head>
+<body>
+    <h2>All devices by day</h2>
+    <br>
+    <div class="row">
+        <div class="column left" id="date input">
+            <form>
+                <h4></h4>
+                <label for="dateInput">Input a date to report on:</label>
+                <input type="date" id="dateInput">
+                
+            </form>
+            <br>
+            <form>
+              <strong>Sort by:</strong>
+              <label>Name&nbsp;</label><input type="radio" name="sort_by" value="Name"> 
+              <label>Usage&nbsp;</label><input type="radio" name="sort_by" value="Usage" checked>
+        
+              <strong>Sort order:</strong>
+              <label>Ascending&nbsp;</label><input type="radio" name="sort_order" value="ASC"> 
+              <label>Decending&nbsp;</label><input type="radio" name="sort_order" value="DESC" checked>
+            </form>
+            <br>
+            <button class="btn btn-outline-secondary" type="submit" id="executeButton">Show Usage by Day</button>
+            <div id="error_message">
+            <!-- Any error messages get stuff into here -->
+            </div>
+          </div>
+
+        <div class="column right" id="device_usage">
+        <!-- Device info will get stuffed in here after a device selection is made -->
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script type="text/javascript">
+
+    var option1, option2
+
+    function executeReport() {
+      var selectedDay = document.getElementById("dateInput").value;
+      getSelectedOptions();
+
+      //console.log("SelectedDay")
+      //console.log(selectedDay)
+            
+      // Figure out how to put "No data" on the screen
+      
+      if (selectedDay == "") {
+        console.log("selectedDay is empty")
+        // puts a message in the error message box
+        document.getElementById("error_message").innerHTML = '<br><p style="color:red;"><strong>Please select a date</strong></p>'
+        
+      } else {
+        console.log("selectedDay is not empty")
+        // clears out anything in the error message box
+        document.getElementById("error_message").innerHTML = ""
+        
+        axios.get('/crp/all_devices_by_day_data', {
+        params: {
+            day: selectedDay,
+            sort_by_value: option1.value,
+            sort_order_value: option2.value
+        }
+        })
+        .then(function (response) {
+          document.getElementById("device_usage").innerHTML = response.data;
+        })
+        .catch(function (error) {
+          console.log(error);
+        });
+      }
+    }
+    function getSelectedOptions() {
+      option1 = document.querySelector('input[name="sort_by"]:checked');
+      option2 = document.querySelector('input[name="sort_order"]:checked');
+
+      //console.log(option1)
+      //console.log(option2)
+    }
+
+    //add event listener to the Execute button
+    document.getElementById('executeButton').addEventListener('click', executeReport);
+    
+    /*
+    // Add event listener to the radio buttons to toggle the minDataUsageInput visibility
+    var sortRadioButtons = document.querySelectorAll('input[name="sort_by"]');
+    sortRadioButtons.forEach(function (radioButton) {
+      radioButton.addEventListener('change', function() {
+        getSelectedOptions();
+      });
+    });
+    */
+
+    // Initially, disable the minDataUsageInput since "Date" is checked by default
+    // getSelectedOptions();
+  </script>
+   
+{% endblock %}

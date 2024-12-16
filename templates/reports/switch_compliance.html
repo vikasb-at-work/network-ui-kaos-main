@@ -1,0 +1,97 @@
+{% extends 'menu.html' %}
+{% block content %}
+<link href="/css/samurai.css" rel="stylesheet" type="text/css" media="all">
+<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.3/css/jquery.dataTables.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css">
+<STYLE>
+	.ui-buttonset {
+		color: inherit;
+		float: right;
+		text-align: right;
+		padding-top: 0.25em;
+		margin: 0;
+		padding: 0;
+		display: block;
+		font-weight: normal;
+		-webkit-font-smoothing: inherit;
+	}
+	.ui-button, a.ui-button, a:link.ui-button {
+		color: black;
+		line-height: normal;
+		margin-right: 0.1em;
+		veritcal-align: middle;
+		user-select: none;
+		overflow: visible;
+		-webkit-font-smoothing: inherit;
+	}
+	.my-chart {
+		height: 20px;
+		width: 100px;
+		color: white;
+		padding-top: 10px;
+		padding-right: 5px;
+		text-align: right;
+		font-weight: bold;
+	}
+</STYLE>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<h3 align="left">Switch Compliance Summary</h3>
+     <div id="content_1" class="inv">
+      <table id="switches" class="display" style="width:40%">
+         <thead>
+            <td>
+               <b>Switch Model/Family</b>
+            </td>
+            <td>
+               <b>Non-Compliant</b>
+            </td>
+			<td>
+				<b>Total</b>
+			</td>
+			<td>
+				<b>Compliance Chart</b>
+			</td>
+         </thead>
+         <tbody>
+         {% for switch in all_switches %}
+         <tr data-id="{{ switch.product }}">
+            <td id="{{ switch.product }}"> {{ switch.product }}</td>
+		    <td id="{{ switch.product }}-noncompliant"> {{switch.noncompliant}}</td>
+			<td id="{{ switch.product }}-count"> {{ switch.total }}</td>
+			<td id="{{ switch.product }}-chart">
+				<div class=my-chart id="{{switch.product}}-chart-id" style="background: linear-gradient(to right,blue 0%, blue {{ ((1-(switch.noncompliant/switch.total))*100)|round|int}}%, orange 0%, orange {{ (((switch.noncompliant/switch.total))*100)|round|int}}%)">{{ ((1-(switch.noncompliant/switch.total))*100)|round|int }}%</div>
+			</td>
+         </tr>
+         {% endfor %}
+         </tbody>
+      </table>
+
+   </div>
+
+
+<script src="https://code.jquery.com/jquery-3.3.1.js"></script>
+<script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap4.min.js"></script>
+<script>
+$(document).ready(function() {
+	var table=$('table.display').DataTable({
+				        lengthMenu: [
+				            [-1, 10, 25, 50],
+				            ["All", 10, 25, 50],
+				        ],
+						order: [[1, 'desc']],
+						columnDefs: [
+						    {"type" : "html", "targets" : 0},
+							{"type" : "html-num", "targets" : 1},
+							{"type" : "html-num", "targets" : 2},
+							{"type" : "html-num-fmt", "targets" : 3}
+						]
+				    });
+	$('#switches tbody').on('click', 'tr', function() {
+		var data=table.row(this).data();
+		window.open("/samurai?deviceModel="+encodeURIComponent(data[0]), "_blank")
+	});
+} );
+</script>
+{% endblock %}

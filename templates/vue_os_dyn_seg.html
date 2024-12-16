@@ -1,0 +1,1373 @@
+{% extends 'menu.html' %}
+{% block content %}
+<HEAD>
+	<!--<link rel="canonical" href="https://getbootstrap.com/docs/3.4/examples/starter-template/">-->
+	<link rel="canonical" href="https://getbootstrap.com/docs/5.3/examples/cheatsheet/">
+	<link href="https://getbootstrap.com/docs/5.3/dist/css/bootstrap-theme.min.css" rel="stylesheet">
+	<link href="https://getbootstrap.com/docs/5.3/examples/sticky-footer-navbar/sticky-footer-navbar.css" rel="stylesheet">
+    <link rel="canonical" href="https://getbootstrap.com/docs/5.3/examples/dashboard/">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3">
+    <link href="/docs/5.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link href="dashboard.css" rel="stylesheet">
+    <link href="/css/vue.css" rel="stylesheet" type="text/css" media="all">
+	<SCRIPT src="/js/jquery-3.6.0.min.js"></SCRIPT>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+	<style>
+	.btn-group-xs > .btn, .btn-xs {
+ 	 padding: .25rem .4rem;
+  	font-size: .875rem;
+  	line-height: .5;
+  	border-radius: .2rem;
+	}
+	.json-textarea {
+	color: #0ec846;
+	background-color: #2f2b2b;
+	pointer-events: none;
+	}
+  .container-fluid {
+    background-color: rgb(252, 252, 255);
+  }
+  .overflow-auto {
+    width: 100vw;
+    overflow-x: auto;
+    width: 100%;
+  }
+  .overflow-auto iframe {
+    width: 100%;
+    border: none;
+  }
+  .select2-selection { overflow: hidden;}
+  .select2-selection__rendered {
+    white-space: normal;
+    word-break: break-all;
+  }
+	</style>
+
+<body>
+<template id="dynsegDashboard">
+<div class="container-fluid">
+ <div class="row">
+  <div class="sidebar border border-right col-sm p-0 bg-body-tertiary">
+    <div class="offcanvas-sm bg-body-tertiary" id="sidebarMenu" aria-labelledby="sidebarMenuLabel">
+    <div class="offcanvas-body d-md-flex flex-column p-0 pt-lg-3 overflow-y-auto">
+      <ul class="nav flex-column">
+        <li class="nav-item">
+          <a class="nav-link d-flex gap-2 active align-items-center" aria-current="page" href="#">
+            <span data-feather="home"></span>
+            <b>Dashboard</b>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link d-flex gap-2 align-items-center" href="#">
+            <span data-feather="file"></span>
+            <b>Fetch VLANs</b>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link d-flex gap-2 align-items-center" href="#">
+            <span data-feather="shopping-cart"></span>
+            <b>Generate Configs</b>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link d-flex gap-2 align-items-center" href="#">
+            <span data-feather="users"></span>
+            <b>Add to Clearpass</b>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link d-flex gap-2 align-items-center" href="#">
+            <span data-feather="bar-chart-2"></span>
+            <b>Roles Configuration</b>
+          </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link d-flex gap-2 align-items-center" href="#">
+              <span data-feather="bar-chart-2"></span>
+              <b>Code upgrade</b>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link d-flex gap-2 align-items-center" href="#">
+              <span data-feather="bar-chart-2"></span>
+              <b>Tests</b>
+            </a>
+          </li>
+      </ul>
+    </div>
+    </div>
+  </div>
+
+<main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+<div class="row">
+    <div class="col-auto my-2 w-75 p-2 bg-body rounded shadow">
+        <iframe class="col-auto w-100" src="https://172.16.219.224:3000/d-solo/ady6rutms02dce/aos-dynamic-segmentation?orgId=1&from=1689778004000&to=1726169404000&panelId=1" width="1075" height="450" frameborder="0"></iframe> </div>
+    <div class="col-auto">
+    </div>
+   <div class="col-sm my-2 p-2 bg-body rounded shadow">
+    <div class="row">
+        <iframe class="col-auto w-100" src="https://172.16.219.224:3000/d-solo/ady6rutms02dce/aos-dynamic-segmentation?orgId=1&from=1689778004000&to=1726169404000&theme=light&panelId=2" width="500" height="250" frameborder="0"></iframe>
+    </div>
+    <div class="row"></div>
+    <div class="row">
+        <iframe class="col-auto w-100" src="https://mgomtgrafanap1.genmills.com:3000/d-solo/ady6rutms02dce/aos-dynamic-segmentation?orgId=1&from=1689778004000&to=1726169404000&theme=light&panelId=3" width="500" height="200" frameborder="0"></iframe>
+    </div>
+    </div>
+</div>
+<div class="row justify-content-md-center w-100">
+<div class="table-responsive col-auto bg-primary-subtle bg-gradient mt-1 mb-0 rounded w-25">
+    <table class="table table-borderless table-sm">
+        <thead>
+            <tr>
+                <th scope="col"><b>&nbsp;</b></th>
+            </tr>
+        </thead>
+        <tbody class = "pt-0 pb-0 mb-1">
+            <tr>
+                <td>
+                <div class="input-group">
+                    <label class="input-group-text" for="inputGroupSelect01">Select Site &nbsp;&nbsp;&nbsp;</label>
+                    <select class="form-select" name="sitename" id="sitename" v-model="selectedSite" @change="fetchClearpassData">
+                    {% for site in sites %}
+                    <option value={{ site }}>{{ site }}</option>
+                    {% endfor %}
+                    </select>
+                </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+&nbsp;
+<div class="col-auto">
+&nbsp;&nbsp;
+</div>
+<div class="col d-flex p-2 flex-grow-2 bg-body rounded">
+    <table class="table table-borderless table-sm">
+        <thead>
+            <tr>
+                <th scope="col"><b>Primary ClearPass</b></th>
+                <th scope="col"><b>Secondary ClearPass</b></th>
+                <th scope="col"><b>Primary Controller</b></th>
+                <th scope="col"><b>Secondary Controller</b></th>
+                <th scope="col"><b>Captive Portal URL</b></th>
+                <th scope="col"><b>&nbsp;</b></th>
+            </tr>
+        </thead>
+    <tbody class="pt-0 pb-0 mb-0">
+        <tr class="pb-0 mb-0">
+            <td>
+                <input type="input" class="form-control w-75" name="primary_clearpass_ip" id="primary_clearpass_ip" v-model="primary_clearpass_ip" placeholder="Primary Clearpass IP">
+                </td>
+                <td>
+                <input type="input" class="form-control w-75" name="secondary_clearpass_ip" id="secondary_clearpass_ip" v-model="secondary_clearpass_ip" placeholder="Secondary clearpass IP">
+                </td>
+                <td>
+                <input type="input" class="form-control w-75" name="pcontroller" id="pcontroller" v-model="p_controller_ip" placeholder="Primary Controller IP">
+                </td>
+                <td>
+                <input type="input" class="form-control w-75" name="scontroller" id="scontroller" v-model="s_controller_ip" placeholder="Secondary Controller IP">
+            </td>
+            <td>
+                <input type="input" class="form-control w-100" name="cp_url" id="cp_url" v-model="cp_url" placeholder="Captive Portal URL">
+            </td>
+            <td>&nbsp;&nbsp;</td>
+        </tr>
+    </tbody>
+</table>
+</div>
+</div>
+<div>
+    <div class="row bg-body my-2 rounded shadow">
+        <ul class="nav nav-tabs">
+            <li class="nav-item">
+              <a class="nav-link" :class="{ active: activeTab === 'ADMIN' }" aria-current="page" @click="setActiveTab('ADMIN')">Admin Switches</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" :class="{ active: activeTab === 'RFMGMT' }" @click="setActiveTab('RFMGMT')">RF Switches</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" :class="{ active: activeTab === 'SECURITY' }" @click="setActiveTab('SECURITY')">Security</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" :class="{ active: activeTab === 'CORE-CUSTOM' }" aria-current="page" @click="setActiveTab('CORE-CUSTOM')">Core-Custom</a>
+              </li>
+          </ul>
+        <div class="col"> <!-- how wide the whole table is-->
+            <div>
+            &nbsp;
+            </div>
+            <button type="button" @click="toggleAddData" class="btn btn-outline-primary btn-sm">Add +</button>
+            <br><br>
+            <table class="table table-responsive">
+                <thead>
+                    <tr>
+                        <th scope="col">Name</th>
+                        <th scope="col">Mgmt-IP or HostName</th>
+                        <th scope="col">Model</th>
+                        <th scope="col">OOBM</th>
+                        <th scope="col">DataBand-IP</th>
+                        <th scope="col">Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="row in os_dyn_seg_data" :key="row.id">
+                        <td>{%raw%}{{row.switch_name}}{%endraw%}</td>
+                        <td>{%raw%}{{row.mgmt_ip}}{%endraw%}</td>
+                        <td>{%raw%}{{row.model}}{%endraw%}</td>
+                        <td>{%raw%}{{row.oobm}}{%endraw%}</td>
+                        <td>{%raw%}{{row.data_ip}}{%endraw%}</td>
+                        <td>{%raw%}{{row.status}}{%endraw%}</td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <!--<button type="button" @click="toggleEditData(row)" class="btn btn-warning btn-sm">Edit/Submit</button>-->
+                                <button type="button" class="btn btn-outline-secondary" @click="toggleEditData(row)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil" viewBox="0 0 16 16">
+                                    <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325"></path>
+                                    </svg>
+                                    <span class="visually-hidden">Button</span>
+                                  </button>
+                                  <button type="button" class="btn btn-outline-secondary" @click="pushPubSub(row, 'generate')">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-zip-fill" viewBox="0 0 16 16">
+                                        <path d="M5.5 9.438V8.5h1v.938a1 1 0 0 0 .03.243l.4 1.598-.93.62-.93-.62.4-1.598a1 1 0 0 0 .03-.243"></path>
+                                        <path d="M9.293 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.707A1 1 0 0 0 13.707 4L10 .293A1 1 0 0 0 9.293 0M9.5 3.5v-2l3 3h-2a1 1 0 0 1-1-1m-4-.5V2h-1V1H6v1h1v1H6v1h1v1H6v1h1v1H5.5V6h-1V5h1V4h-1V3zm0 4.5h1a1 1 0 0 1 1 1v.938l.4 1.599a1 1 0 0 1-.416 1.074l-.93.62a1 1 0 0 1-1.109 0l-.93-.62a1 1 0 0 1-.415-1.074l.4-1.599V8.5a1 1 0 0 1 1-1"></path>
+                                        </svg>
+                                        <span class="visually-hidden">Button</span>
+                                    </button>
+                                <button type="button" @click="pushPubSub(row, 'push')" class="btn btn-outline-primary btn-sm">Publish</button>
+                                <button type="button" @click="are_you_sure(handleDelete,row)" class="btn btn-outline-danger btn-sm">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div> <!-- end column -->
+    </div> <!-- end row -->
+</div>
+
+<!--add data modal -->
+<div ref="addData" id="addDataModal" class="modal fade" :class="{ show: activeAddData, 'd-block': activeAddData }" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content w-100">
+            <div class="modal-header">
+                <h5 class="modal-title">Add the data params for config
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" @click="handleAddCancel">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div> <!-- end modal header-->
+            <div class="modal-body w-100 rounded" ref="modalBodyRef">
+                <form>
+                <div class="row">
+                    <table class="table table-borderless">
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <div class="form-check col-auto mx-2">
+                                        <label class="form-check-label mx-3" for="flexCheckDefault">
+                                          Please check if the device is not added to Clearpass
+                                        </label>
+                                        <input class="form-check-input" type="checkbox" value="clearpass" v-model="addData.add_to_clearpass" name="addtoClearpass" id="addtoClearpass">
+                                    </div>
+                                <td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="form-switch col-auto mx-1">
+                                        <input class="form-check-input" type="checkbox" role="switch" v-model="addData.oobm" name="OOBEnabled" id="OOBEnabled">
+                                        <label class="form-check-label mx-2" for="flexSwitchCheckChecked">Is OOB Enabled</label>
+                                    </div> 
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="form-switch col-auto mx-1">
+                                        <input class="form-check-input" type="checkbox" role="switch" v-model="addData.base_config" name="BaseConfigProvision" id="BaseConfigProvision" autocomplete="off">
+                                        <label class="form-check-label mx-2" for="flexSwitchCheckChecked">Provision Base configs (Is the switch freshly plugged?)</label>
+                                        <button type="button" class="btn btn-outline-info btn-xs" data-mdb-toggle="tooltip" data-mdb-placement="right" title="If this is selected please enter IP address since base config not provisioned and if want to use IP Address for data traffic other than OOBM(required)">?</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="input-group col-auto mb-3 mx-1">
+                                    <div class="w-50">
+                                    <input type="text" class="form-control" name="switchidentifier" v-model="addData.switch_name" id="switchidentifier" placeholder="Switch hostname as identifier">
+                                    </div>
+                                    <div class="w-50">
+                                    <input type="text" v-show="addData.base_config" class="form-control" name="dataIPAddress" v-model="addData.data_ip" id="dataIPAddress" placeholder="Data-band IP Format Example:192.168.1.10/24">
+                                    </div>
+                                </div></td>
+                                </tr>
+                            <tr>
+                                <td>
+                                    <div class="col-auto mx-1">
+                                    Select Model
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <select class="col-auto form-select mx-1 w-100" name="modeltype" id="modeltype" v-model="addData.model">
+                                        <option value="5406Rzl2">5406Rzl2</option>
+                                        <option value="5406zl">5406zl</option>
+                                        <option value="5400R2">5400R2</option>
+                                        <option value="2930F">2930F</option>
+                                        <option value="2930M">2930M</option>
+                                        <option value="3810M">3810M</option>
+                                        <option value="5400">5400</option>
+                                        <option value="2920">2920</option>
+                                        <option value="3800">3800</option>
+                                        <option value="2620">2620</option>
+                                        <option value="2530">2530</option>
+                                        <option value="2540">2540</option>
+                                      </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="col-auto mx-1 w-100">
+                                    <input type="text" class="form-control w-100" name="SwitchIP" id="SwitchIP" v-model="addData.mgmt_ip" placeholder="Switch Hostname or mgmt IP with subnet mask: Format 192.168.1.1/24">
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="input-group mb-3 col-auto w-100 mx-1">
+                                        <input type="text" class="form-control" name="useremail" id="useremail" v-model="addData.user_email" placeholder="Enter you email for audit and reports">
+                                        <span class="input-group-text">@</span>
+                                        <input type="text" class="form-control" name="domaingenmills" id="domaingenmills" placeholder="genmills.com">
+                                      </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="col-auto mx-1">
+                                    Provide custom access-role
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="input-group mb-3 col-auto w-100 mx-1">
+                                        <!--<multiselect v-model="pre_selected_roles" tag-placeholder="Add this as new role" placeholder="Search or add a role" label="name" track-by="name" :options="access_roles" :multiple="true" :taggable="true" @tag="addProfileRoles"></multiselect>-->
+                                        <select id="select2-multiple-input-sm" v-model="addData.access_role_profiles" class="js-example-responsive" style="width: 765px;" multiple>
+                                            <option v-for="row in access_roles" :value="row.name">
+                                                {%raw%}{{ row.name }}{%endraw%}
+                                            </option>
+                                        </select>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="form-check col-auto mx-2">
+                                        <label class="form-check-label mx-3" for="flexCheckDefault">
+                                            Auto detect VLANs on the switch
+                                          </label>
+                                        <input class="form-check-input" type="checkbox" value="autodetectvlan" v-model="addData.auto_detect_vlan" name="autodetectVlans" id="autodetectVlans">
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                <div class="form mx-1" v-if="!addData.auto_detect_vlan">
+                                <div class="form-group row">
+                                <div class="col-md">
+                                    <div class="row">
+                                        &nbsp;
+                                        &nbsp;
+                                    </div>
+                                    <div class="form-group row">
+                                    <label class="ml-1 mt-1 col-sm-4">
+                                    ACCESS
+                                    </label>
+                                    <div class="col-sm">
+                                    <input type="number" min="1" max="4094" name="access_vlan" v-model="addData.access_vlan" id="access_vlan" class="form-control" placeholder="Access VLAN">
+                                    </div>
+                                    </div>
+                                &nbsp;
+                                &nbsp;
+                                <div class="row">
+                                </div>
+                                <div class="form-group row">
+                                    <label class="ml-1 mt-1 col-sm-4">
+                                    SOURCED
+                                    </label>
+                                    <div class="col-sm">
+                                    <input type="input" placeholder="Sourced Radius VLAN" v-model="addData.sourced_vlan" name="sourcedvlan" id="sourcedvlan" class="form-control col-sm-2">
+                                    </div>
+                                </div>
+                                </div>
+                                <div class="col-md"> <!-- Trunk VLAN Allowed Picker -->
+                                    <div class="mb-3" style="background-color: #ccc; padding: 4px; width: 375px; border-radius: 0.25rem;"> <!-- outside grey box-->
+                                        <label for="addVlan" class="form-label">Trunk VLANs allowed (1-4094)</label>
+                                        <div class="btn-group" role="group">
+                                            <select class="form-select" multiple style="width: 341px; height: 50px; border-radius: 0.25rem;" v-model="tagged_vlan_selected" id="addVlan">
+                                                <option v-for="vlan in addData.tagged_vlan_ids"> {%raw%}{{vlan}}{%endraw%}</option>
+                                            </select>
+                                            <button type="button" style="height: 50px; width: 27px" class="btn btn-danger btn-sm" 
+                                                @click="vlan_input=tagged_vlan_selected[0]; addData.tagged_vlan_ids.splice(addData.tagged_vlan_ids.indexOf(tagged_vlan_selected[0]),1);">
+                                                -
+                                            </button>
+                                        </div>
+                                        <div class="btn-group" role="group" style="margin-top: 10px;">
+                                            <input type="text" class="form-control" id="vlanInput" v-model="vlan_input" placeholder="Enter VLAN number" style="width: 341px">
+                                            <button type="button" class="btn btn-primary btn-sm"
+                                                @click.prevent="let input_isvalid = validateAddVlanToList(vlan_input, 'add'); if (input_isvalid) {addData.tagged_vlan_ids.push(vlan_input); vlan_input='';}">
+                                                +
+                                            </button>
+                                        </div>
+                                    </div>            
+                                </div>
+                                </div>
+                                </div>
+                                <!--<div class="form mx-1" v-if="!addData.auto_detect_vlan" v-show="activeTab === 'RFMGMT'">
+                                    <div class="form-group row">
+                                    <label class="ml-1 mt-1 col-sm-4">
+                                        RF_MGMT VLAN
+                                    </label>
+                                    <div class="col-sm-2">
+                                    <input type="input" name="access_vlan" v-model="addData.access_vlan" id="access_vlan" class="form-control" placeholder="RF Mgmt VLAN">
+                                    </div>
+                                    </div>
+                                    <div class="form-group row">
+                                    <label class="ml-1 mt-1 col-sm-4">
+                                        RF TAGGED VLANS
+                                    </label>
+                                    <div class="col-sm-2">
+                                    <input type="input" placeholder="Tagged VLANs" v-model="addData.tagged_vlan_ids" name="tagged_vlan_ids" id="tagged_vlan_ids" class="form-control">
+                                    </div>
+                                    </div>
+                                    <div class="form-group row">
+                                    <label class="ml-1 mt-1 col-sm-4">
+                                        SOURCED VLAN
+                                    </label>
+                                    <div class="col-sm-2">
+                                    <input type="input" placeholder="Sourced Radius VLAN" v-model="addData.sourced_vlan" name="sourcedvlan" id="sourcedvlan" class="form-control">
+                                    </div>
+                                    </div>
+                                </div>-->
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    </div>
+                    <div class="row">
+                      &nbsp;
+                    </div>
+                      &nbsp;
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-primary btn-sm" @click="handleAddSubmit">Submit</button>
+                        <button type="button" class="btn btn-secondary btn-sm"  @click="handleAddReset">Reset</button>
+                    </div>
+                    <!-- cancel button -->
+                    <div class="btn-group" role="group" style="position: absolute; bottom: 16px; right: 16px;">
+                        <button type="button" class="btn btn-warning btn-sm" @click="handleAddCancel">Cancel</button>
+                    </div>
+                    </form>
+                    <!--<script type="text/javascript">
+                        
+                    </script>-->
+
+                    <!--<div class="col-auto my-3 w-50 p-3 bg-body rounded shadow">
+                     <h4> JSON provided </h4>
+                     <!-<div class="my-3 h-100 w-100 p-3 bg-light bg-gradient rounded shadow">-->
+                     <!--<textarea class="form-control json-textarea" id="json-textarea" name="json-textarea" rows=4>
+                      {% if response %}
+                      {{ response | tojson(indent=4) }}
+                      {% endif %}
+                     </textarea>
+                    </div>-->
+
+            </div> <!-- end modal body -->
+        </div> <!-- end modal content -->
+    </div> <!-- end modal dialog -->
+</div> <!-- end ref="addData" -->
+
+<div ref="editData" id="editDataModal" class="modal fade" :class="{ show: activeEditData, 'd-block': activeEditData }" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content w-100">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit the data params for config
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" @click="handleEditCancel">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div> <!-- end modal header-->
+            <div class="modal-body w-100 rounded" ref="modalBodyRef">
+                <form>
+                <div class="row">
+                    <table class="table table-borderless">
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <div class="form-check col-auto mx-2">
+                                        <label class="form-check-label mx-3" for="flexCheckDefault">
+                                          Please check if the device is not added to Clearpass
+                                        </label>
+                                        <input class="form-check-input" type="checkbox" value="clearpass" v-model="editData.add_to_clearpass" name="addtoClearpass" id="addtoClearpass">
+                                    </div>
+                                <td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="form-switch col-auto mx-1">
+                                        <input class="form-check-input" type="checkbox" role="switch" v-model="editData.oobm" name="OOBEnabledEdit" id="OOBEnabledEdit">
+                                        <label class="form-check-label mx-2" for="flexSwitchCheckChecked">Is OOB Enabled</label>
+                                    </div> 
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="form-switch col-auto mx-1">
+                                        <input class="form-check-input" type="checkbox" role="switch" v-model="editData.base_config" name="BaseConfigProvision" id="BaseConfigProvision" autocomplete="off">
+                                        <label class="form-check-label mx-2" for="flexSwitchCheckChecked">Provision Base configs (Is the switch freshly plugged?)</label>
+                                        <button type="button" class="btn btn-outline-info btn-xs" data-mdb-toggle="tooltip" data-mdb-placement="right" title="If this is selected please enter IP address since base config not provisioned and if want to use IP Address for data traffic other than OOBM(required)">?</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="input-group col-auto mb-3 mx-1">
+                                    <div class="w-50">
+                                    <input type="text" class="form-control" name="switchidentifier" v-model="editData.switch_name" id="switchidentifier" placeholder="Switch hostname as identifier">
+                                    </div>
+                                    <div class="w-50">
+                                    <input type="text" v-show="editData.base_config" class="form-control" name="dataIPAddress" v-model="editData.data_ip" id="dataIPAddress" placeholder="Data-band IP Format Example:192.168.1.10/24">
+                                    </div>
+                                </div></td>
+                                </tr>
+                            <tr>
+                                <td>
+                                    <div class="col-auto mx-1">
+                                    Select Model
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <select class="col-auto form-select mx-1 w-100" name="modeltype" id="modeltype" v-model="editData.model">
+                                        <option value="5406Rzl2">5406Rzl2</option>
+                                        <option value="5406zl">5406zl</option>
+                                        <option value="5400R2">5400R2</option>
+                                        <option value="2930F">2930F</option>
+                                        <option value="2930M">2930M</option>
+                                        <option value="3810M">3810M</option>
+                                        <option value="5400">5400</option>
+                                        <option value="2920">2920</option>
+                                        <option value="3800">3800</option>
+                                        <option value="2620">2620</option>
+                                        <option value="2530">2530</option>
+                                        <option value="2540">2540</option>
+                                      </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="col-auto mx-1 w-100">
+                                    <input type="text" class="form-control w-100" name="SwitchIP" id="SwitchIP" v-model="editData.mgmt_ip" placeholder="Switch Hostname or mgmt IP with subnet mask: Format 192.168.1.1/24">
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="input-group mb-3 col-auto w-100 mx-1">
+                                        <input type="text" class="form-control" name="useremail" id="useremail" v-model="editData.user_email" placeholder="Enter you email for audit and reports">
+                                        <span class="input-group-text">@</span>
+                                        <input type="text" class="form-control" name="domaingenmills" id="domaingenmills" placeholder="genmills.com">
+                                      </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="col-auto mx-1">
+                                    Provide custom access-role
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="input-group mb-3 col-auto w-100 mx-1">
+                                        <!--<multiselect v-model="pre_selected_roles" tag-placeholder="Add this as new role" placeholder="Search or add a role" label="name" track-by="name" :options="access_roles" :multiple="true" :taggable="true" @tag="addProfileRoles"></multiselect>-->
+                                        <select id="select2-multiple-input-sm-edit" v-model="editData.access_role_profiles" class="form-select input-sm select2-multiple js-example-responsive" style="width: 760 px" multiple>
+                                            <option v-for="row in access_roles" :value="row.name">
+                                                {%raw%}{{ row.name }}{%endraw%}
+                                            </option>
+                                        </select>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="form-check col-auto mx-2">
+                                        <label class="form-check-label mx-3" for="flexCheckDefault">
+                                            Auto detect VLANs on the switch
+                                          </label>
+                                        <input class="form-check-input" type="checkbox" v-model="editData.auto_detect_vlan" name="editautodetectVlans" id="editautodetectVlans">
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                <div class="form mx-1" v-if="!editData.auto_detect_vlan">
+                                <div class="row">
+                                &nbsp;
+                                &nbsp;
+                                </div>
+                                <div class="form-group row">
+                                <div class="col-md">
+                                    <div class="form-group row">
+                                    <label class="ml-1 mt-1 col-sm-4">
+                                    ACCESS
+                                    </label>
+                                    <div class="col-sm">
+                                    <input type="number" min="1" max="4094" name="access_vlanedit" v-model="editData.access_vlan" id="access_vlanedit" class="form-control" placeholder="Access VLAN">
+                                    </div>
+                                    </div>
+                                &nbsp;
+                                &nbsp;
+                                <div class="row">
+                                </div>
+                                <div class="form-group row">
+                                    <label class="ml-1 mt-1 col-sm-4">
+                                    SOURCED
+                                    </label>
+                                    <div class="col-sm">
+                                    <input type="input" placeholder="Sourced Radius VLAN" v-model="editData.sourced_vlan" name="sourcedvlanedit" id="sourcedvlanedit" class="form-control col-sm-2">
+                                    </div>
+                                </div>
+                                </div>
+                                <div class="col-md"> <!-- Trunk VLAN Allowed Picker -->
+                                    <div class="mb-3" style="background-color: #ccc; padding: 4px; width: 375px; border-radius: 0.25rem;"> <!-- outside grey box-->
+                                    <label for="addVlan" class="form-label">Trunk VLANs allowed (1-4094)</label>
+                                    <div class="btn-group" role="group">
+                                    <select id="vlans-selected-area" v-model="tagged_vlan_selected" class="form-select js-example-responsive" style="width: 341px; height: 50px; border-radius: 0.25rem;" multiple>
+                                        <option v-for="vlan in editData.tagged_vlan_ids" :key="vlan">
+                                            {%raw%}{{ vlan }}{%endraw%}
+                                        </option>
+                                    </select>
+                                    <button type="button" style="height: 50px; width: 27px" class="btn btn-danger btn-sm" 
+                                                @click="vlan_input=tagged_vlan_selected[0]; editData.tagged_vlan_ids.splice(editData.tagged_vlan_ids.indexOf(tagged_vlan_selected[0]),1);">
+                                                -
+                                    </button>
+                                    </div>
+                                    <div class="btn-group" role="group" style="margin-top: 10px;">
+                                        <input type="text" class="form-control" id="vlanInput" v-model="vlan_input" placeholder="Enter VLAN number" style="width: 341px">
+                                        <button type="button" class="btn btn-primary btn-sm"
+                                            @click.prevent="let input_isvalid = validateAddVlanToList(vlan_input, 'edit'); if (input_isvalid) {editData.tagged_vlan_ids.push(vlan_input); vlan_input='';}">
+                                            +
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>  
+                                </div>
+                                </div>
+                                <!--<div class="form mx-1" v-if="!editData.auto_detect_vlan" v-show="activeTab === 'RFMGMT'">
+                                    <div class="form-group row">
+                                    <label class="ml-1 mt-1 col-sm-4">
+                                        RF_MGMT VLAN
+                                    </label>
+                                    <div class="col-sm-2">
+                                    <input type="input" name="access_vlan" v-model="editData.access_vlan" id="access_vlan" class="form-control" placeholder="RF Mgmt VLAN">
+                                    </div>
+                                    </div>
+                                    <div class="form-group row">
+                                    <label class="ml-1 mt-1 col-sm-4">
+                                        RF TAGGED VLANS
+                                    </label>
+                                    <div class="col-sm-2">
+                                    <input type="input" placeholder="Tagged VLANs" v-model="editData.tagged_vlan_ids" name="tagged_vlan_ids" id="tagged_vlan_ids" class="form-control">
+                                    </div>
+                                    </div>
+                                    <div class="form-group row">
+                                    <label class="ml-1 mt-1 col-sm-4">
+                                        SOURCED VLAN
+                                    </label>
+                                    <div class="col-sm-2">
+                                    <input type="input" placeholder="Sourced Radius VLAN" v-model="editData.sourced_vlan" name="sourcedvlan" id="sourcedvlan" class="form-control">
+                                    </div>
+                                    </div>
+                                </div>-->
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    </div>
+                    <div class="row">
+                      &nbsp;
+                    </div>
+                      &nbsp;
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-primary btn-sm" @click="handleEditSubmit">Submit</button>
+                        <button type="button" class="btn btn-secondary btn-sm"  @click="handleEditReset">Reset</button>
+                    </div>
+                    <!-- cancel button -->
+                    <div class="btn-group" role="group" style="position: absolute; bottom: 16px; right: 16px;">
+                        <button type="button" class="btn btn-warning btn-sm" @click="handleEditCancel">Cancel</button>
+                    </div>
+                    </form>
+                    <!--<script type="text/javascript">
+                        
+                    </script>-->
+
+                    <!--<div class="col-auto my-3 w-50 p-3 bg-body rounded shadow">
+                     <h4> JSON provided </h4>
+                     <!-<div class="my-3 h-100 w-100 p-3 bg-light bg-gradient rounded shadow">-->
+                     <!--<textarea class="form-control json-textarea" id="json-textarea" name="json-textarea" rows=4>
+                      {% if response %}
+                      {{ response | tojson(indent=4) }}
+                      {% endif %}
+                     </textarea>
+                    </div>-->
+
+            </div> <!-- end modal body -->
+        </div> <!-- end modal content -->
+    </div> <!-- end modal dialog -->
+</div> <!-- end ref="editData" -->
+
+<div v-if="activeAddData" class="modal-backdrop fade show"></div>
+<div v-if="activeEditData" class="modal-backdrop fade show"></div>
+
+{% include "vue_utility_modal_are_you_sure.html" %}
+{% include "vue_utility_modal_alert.html" %}
+</main>
+</div>
+</div>
+</template>
+</body>
+
+
+<script type="module">
+    import { createApp } from 'https://unpkg.com/petite-vue?module'
+    import 'https://unpkg.com/axios/dist/axios.min.js'
+
+    console.log('{{auth.env}}');
+    let endpoint;
+    let auth_endpoint;
+    let cp_site_profile_endpoint;
+    let access_role_endpoint;
+    let pubsub_endpoint;
+    const cp_region_endpoint = '/rest/v1/config/cp/regions';
+    if ('{{auth.env}}' === 'Production'){
+        endpoint = "https://kaos.backend-network-api.genmills.com/api/v1/pre-config/switch-dynamic-segmentation";
+        auth_endpoint = "https://kaos.backend-network-api.genmills.com/api/v1/auth/token";
+        cp_site_profile_endpoint = "https://kaos.backend-network-api.genmills.com/api/v1/config/cp/siteprofile";
+        access_role_endpoint = "https://kaos.backend-network-api.genmills.com/api/v1/config/ip/switch-port-access-role";
+        pubsub_endpoint = "https://kaos.backend-network-api.genmills.com/api/v1/post-to-pubsub";
+    }else{
+        endpoint = "https://network-api-kaos-nonprod.k8s.genmills.com/api/v1/pre-config/switch-dynamic-segmentation";
+        auth_endpoint = "https://network-api-kaos-nonprod.k8s.genmills.com/api/v1/auth/token";
+        cp_site_profile_endpoint = "https://network-api-kaos-nonprod.k8s.genmills.com/api/v1/config/cp/siteprofile";
+        access_role_endpoint = "https://network-api-kaos-nonprod.k8s.genmills.com/api/v1/config/ip/switch-port-access-role";
+        pubsub_endpoint = "https://network-api-kaos-nonprod.k8s.genmills.com/api/v1/post-to-pubsub";
+    };
+    
+    function app() {
+        return {
+            data() {
+                    return { 
+                        activeTab: 'ADMIN',
+                        activeAddData: false,
+                        activeEditData: false,
+                        selectedSite: 'MGO',
+                        pre_selected_roles: [
+                            { name: 'CX-LUR-REDIRECT'},
+                            { name: 'UBT-LUR-GMIpc'},
+                            { name: 'CRITICAL-1'}
+                        ],
+                    };
+            },
+            $template: '#dynsegDashboard',
+            os_dyn_seg_data: [],
+            pre_selected_roles: [
+                            { name: 'CX-LUR-REDIRECT'},
+                            { name: 'UBT-LUR-GMIpc'},
+                            { name: 'CRITICAL-1'}
+            ],
+            selectedSite: 'MGO',
+            activeTab: 'ADMIN',
+            primary_clearpass_ip: "",
+            secondary_clearpass_ip: "",
+            controller: false,
+            p_controller_ip: "",
+            s_controller_ip: "",
+            cp_url: "",
+            cp_site_profile_data: [],
+            access_roles: [],
+            vlan_input: "",
+            deleteData: {id: '' },
+            tagged_vlan_selected: [0],
+            modalAlert: { title: '', body: '', button:'OK'},
+            tokenExpiredAlert: {
+                title: "Your API Token Has Expired",
+                body: "You will need to logout and log back in to reset your token.",
+                body2: "You will need to logout and log back in to reset your token. <br><br> <a href='/logout'>Logout</a>",
+                button: "OK"},
+            areYouSure: {
+                title: 'WARNING - DATA WILL BE REMOVED',
+                body: 'This action will delete data.  Are you sure?',
+                button:'Yes, proceed.',
+                action:undefined},
+            activeAddData: false,
+            addData: {
+                base_config: false,
+                oobm: true,
+                mgmt_ip: "",
+                access_vlan: 0,
+                add_to_clearpass: true,
+                switch_name: "",
+                data_ip: "",
+                tagged_vlan_ids: [],
+                model: "",
+                user_email: "",
+                sourced_vlan: 1,
+                auto_detect_vlan: true,
+                access_role_profiles: [''],
+                id: 0
+              },
+            editData: {
+                base_config: false,
+                oobm: true,
+                mgmt_ip: "",
+                access_vlan: 0,
+                add_to_clearpass: true,
+                switch_name: "",
+                data_ip: "",
+                tagged_vlan_ids: [],
+                model: "",
+                user_email: "",
+                sourced_vlan: 1,
+                auto_detect_vlan: true,
+                access_role_profiles: [''],
+                id: 0
+            },
+            activeEditData: false,
+            validity: {},
+            auth_token: "{{ auth["api_token"] }}",
+            setActiveTab(tabName) {
+                this.activeTab = tabName;
+                // this.os_dyn_seg_data = [];
+                this.get_data();
+            },
+            activate_modal_alert(title, message, button, action){
+                this.modalAlert.title = title;
+                this.modalAlert.displayed = true;
+                this.modalAlert.button = button;
+                var el = document.getElementById('modalAlert');
+                var bel = new bootstrap.Modal(el);
+                bel.show();
+                this.modalAlert.active = bel;
+                var modalBody = document.getElementById('modalBody');
+                modalBody.innerHTML = message;
+            },
+            dismiss_modal_alert(){
+                if (this.modalAlert.displayed) {
+                    this.modalAlert.displayed=false;
+                    this.modalAlert.active.hide();
+                }
+            },
+            addProfileRoles(newRole){
+                const role = {
+                    name: newRole
+                }
+                this.access_roles.push(role);
+                this.pre_selected_roles.push(role);
+            },
+            handleDelete(row) {
+                if (row) {
+                    this.deleteData.id = row.id;
+                    this.delete_data();
+                }
+            },
+            delete_data(payload) {
+                const path = endpoint+"?id="+this.deleteData.id;
+                const headers = {
+                                "Content-Type": "application/json",
+                                "Accept": "application/json, text/plain, */*",
+                                "Authorization": this.auth_token
+                                }
+
+                axios.delete(path, { headers }).then((response) => {
+                    //console.log(response);
+                    this.get_data();
+                    }).catch((error) => {
+                        console.error(error.response.data);
+                        if (error.response.data === "Token is invalid") {
+                            this.activate_modal_alert(this.tokenExpiredAlert.title,
+                                                      this.tokenExpiredAlert.body2,
+                                                      this.tokenExpiredAlert.button);
+                        }
+                        this.get_data();
+                    });
+            },
+            pushPubSub(row, operations) {
+                const path = pubsub_endpoint;
+                const headers = {
+                                "Content-Type": "application/json",
+                                "Accept": "application/json, text/plain, */*",
+                                "Authorization": this.auth_token
+                                }
+                let payload = {
+                    "program-type": "aos-dyn-seg",
+                    "inner-payload": {"switch_name": row.switch_name,
+                              	      "operations": operations}
+                }
+                console.log(payload)
+                axios.post(path, payload, { headers }).then((response) => {
+                    //console.log(response.data);
+                    // this.os_dyn_seg_data = [];
+                    this.activate_modal_alert("Update", "Triggered the requested operation on the automation server", "OK") 
+                    }).catch((error) => {
+                        console.error(error.response.data);
+                        if (error.response.data === "Token is invalid") {
+                            this.activate_modal_alert(this.tokenExpiredAlert.title,
+                                                      this.tokenExpiredAlert.body2,
+                                                      this.tokenExpiredAlert.button);
+                        }
+                        //this.get_data();
+                    });
+            },
+            add_data(payload) {
+                const path = endpoint;
+                const headers = {
+                                "Content-Type": "application/json",
+                                "Accept": "application/json, text/plain, */*",
+                                "Authorization": this.auth_token
+                                }
+
+                axios.post(path, payload, { headers }).then((response) => {
+                    //console.log(response.data);
+                    // this.os_dyn_seg_data = [];
+                    this.get_data(); 
+                    }).catch((error) => {
+                        console.error(error.response.data);
+                        if (error.response.data === "Token is invalid") {
+                            this.activate_modal_alert(this.tokenExpiredAlert.title,
+                                                      this.tokenExpiredAlert.body2,
+                                                      this.tokenExpiredAlert.button);
+                        }
+                        this.get_data();
+                    });
+            },
+            edit_data(payload, id) {
+                const path = endpoint+"?id="+id;
+                const headers = {
+                                "Content-Type": "application/json",
+                                "Accept": "application/json, text/plain, \*\/*",
+                                "Authorization": this.auth_token
+                                }
+
+                axios.put(path, payload, { headers }).then((response) => {
+                    //console.log(response.data);
+                    this.get_data();
+                    }).catch((error) => {
+                        console.error(error.response.data);
+                        if (error.response.data === "Token is invalid") {
+                            this.activate_modal_alert(this.tokenExpiredAlert.title,
+                                                      this.tokenExpiredAlert.body,
+                                                      this.tokenExpiredAlert.button);
+                        }
+                        this.get_data();
+                    });
+            },
+            get_data() {
+                this.os_dyn_seg_data = [];
+                const path = endpoint;
+                console.log("site_name", this.selectedSite);
+                console.log("site_name", this.activeTab);
+                let path1 = `${path}?switch_type=${this.activeTab}&site_name=${this.selectedSite}`;
+                //{{auth.env|lower}}
+                axios.get(path1).then((response) => {
+                    this.os_dyn_seg_data = response.data;
+                    for (let i = 0; i < this.os_dyn_seg_data.length; i++) {
+                        //remove the brackets from the ouptut
+                        this.os_dyn_seg_data[i].tagged_vlan_ids.output = this.os_dyn_seg_data[i].tagged_vlan_ids.join(', ');
+                    }
+                    }).catch((error) => {
+                        console.error(error.response.data);
+                        console.error(error.response);
+                    })
+            },
+            handleAddReset() {
+                this.initAddForm()
+            },
+            validateAddVlanToList(input, mode) {
+                let notInList;
+                if (mode ==="add") {
+                    notInList = this.addData.tagged_vlan_ids.indexOf(input);
+                } else if (mode === "edit") {
+                    notInList = this.editData.tagged_vlan_ids.indexOf(input);
+                }
+                //console.log("notInList", notInList);
+                //console.log("!notInList", !notInList);
+                //console.log("edit internal_vlans", this.editData.internal_vlans)
+                //console.log("add internal_vlans", this.addData.internal_vlans)
+                if (notInList === -1) { //new item is not in the current list
+                    if (this.isVlanValid(input)) {
+                        return true;
+                    } else {
+                        this.activate_modal_alert("VLAN not valid","The entered VLAN is not in the valid range.","OK");
+                        return false;
+                    }
+                } else {
+                    this.activate_modal_alert("VLAN not valid","The entered VLAN is already in the list.","OK");
+                    return false;
+                }
+            },
+            isVlanValid(value) {
+                //integer between 1 and 4094
+                //const vlan_range_regex = /^\b(409[0-4]|40[0-8]\d|[1-3]\d{3}|\d{2,3}|[1-9])\b$/;
+                const variable_regex = /^\{[^{}]*\}$/;
+                //console.log("value", value);
+                //console.log("Variable regex.test", variable_regex.test(value))
+                return variable_regex.test(value) || (value >= 1 && value <= 4094);
+            },
+            handleEditReset() {
+                this.initEditForm()
+            },
+            handleAddSubmit() {
+                if (this.addData.p_controller_ip){
+                    this.addData.controller = true;
+                } else {
+                    this.addData.controller = false;
+                }
+                var selectedProfile = $('#select2-multiple-input-sm').select2('data');
+                var selectedIds = selectedProfile.length === 0 ? [""]: selectedProfile.map(function(item){
+                    return item.id;
+                })
+                console.log(this.addData.tagged_vlan_ids);
+                const payload = {
+                    add_to_clearpass: this.addData.add_to_clearpass,
+                    base_config: this.addData.base_config,
+                    oobm: this.addData.oobm,
+                    site_name: this.selectedSite,
+                    switch_type: this.activeTab,
+                    model: this.addData.model,
+                    user_email: this.addData.user_email,
+                    mgmt_ip: this.addData.mgmt_ip,
+                    data_ip: this.addData.data_ip,
+                    controller: this.addData.controller,
+                    switch_name: this.addData.switch_name,
+                    primary_clearpass_ip: this.primary_clearpass_ip,
+                    secondary_clearpass_ip: this.secondary_clearpass_ip,
+                    p_controller_ip: this.p_controller_ip,
+                    s_controller_ip: this.s_controller_ip,
+                    cp_url: this.cp_url,
+                    auto_vlan_detection: this.addData.auto_detect_vlan,
+                    access_vlan: parseInt(this.addData.access_vlan, 10),
+                    tagged_vlan_ids: this.addData.tagged_vlan_ids.map(vlan => parseInt(vlan)),
+                    sourced_vlan: parseInt(this.addData.sourced_vlan, 10),
+                    custom_profiles: selectedIds
+                }
+
+                let nameExists = this.doesNameExistinList(payload.switch_name, 0);
+                console.log(payload)
+                if (payload.mgmt_ip != "" && payload.switch_name != "") {
+                    if (!nameExists){
+                        if (payload.primary_clearpass_ip != "" && payload.secondary_clearpass_ip != "" && payload.primary_clearpass_ip != payload.secondary_clearpass_ip) {
+                            this.toggleAddData();
+                            this.add_data(payload);
+                            this.initAddForm();
+                        } else {
+                            this.activate_modal_alert("Field Validation Error", "Clearpass IPs are same, please edit the data", "OK");
+                        }
+                    } else {
+                        this.activate_modal_alert("Field Validation Error", "The Switch Name already exists", "OK"); 
+                    }
+                    /*if (this.validatePayload(payload)) {
+                        pass
+                    } else {
+                        let msgBody = "The following fields have invalid data:<br><br>";
+                        for (let item in this.validity) {
+                            if (!this.validity[item].isvalid) {
+                                msgBody += this.validity[item].field + "<br>";
+                            }
+                        }
+                        this.activate_modal_alert("Field Validation Error", msgBody + "<br>Please check your data and resubmit", "OK");
+                    }*/
+                    } else {
+                        this.activate_modal_alert("Field Validation Error", "The Switch Name field is rquired and cannot be empty", "OK");       
+                }
+            },
+            handleEditSubmit () {
+                if (this.editData.p_controller_ip){
+                    this.editData.controller = true;
+                } else {
+                    this.editData.controller = false;
+                }
+                var selectedProfile = $('#select2-multiple-input-sm-edit').select2('data');
+                var selectedIds = selectedProfile.length === 0 ? [""]: selectedProfile.map(function(item){
+                    return item.id;
+                })
+                console.log("")
+                const payload = {
+                    add_to_clearpass: this.editData.add_to_clearpass,
+                    base_config: this.editData.base_config,
+                    oobm: this.editData.oobm,
+                    site_name: this.selectedSite,
+                    switch_type: this.activeTab,
+                    model: this.editData.model,
+                    user_email: this.editData.user_email,
+                    mgmt_ip: this.editData.mgmt_ip,
+                    data_ip: this.editData.data_ip,
+                    controller: this.editData.controller,
+                    switch_name: this.editData.switch_name,
+                    primary_clearpass_ip: this.primary_clearpass_ip,
+                    secondary_clearpass_ip: this.secondary_clearpass_ip,
+                    p_controller_ip: this.p_controller_ip,
+                    s_controller_ip: this.s_controller_ip,
+                    cp_url: this.cp_url,
+                    auto_vlan_detection: this.editData.auto_detect_vlan,
+                    access_vlan: parseInt(this.editData.access_vlan, 10),
+                    tagged_vlan_ids: this.editData.tagged_vlan_ids.map(vlan => parseInt(vlan)),
+                    sourced_vlan: parseInt(this.editData.sourced_vlan, 10),
+                    custom_profiles: selectedIds
+                }
+                console.log(payload)
+                let nameExists = this.doesNameExistinList(payload.switch_name, this.editData.id);
+                //console.log("nameExists", nameExists);
+                
+                if (payload.switch_name != "") { 
+                    if (!nameExists) {
+                        if (payload.mgmt_ip != "") {
+                            if (payload.primary_clearpass_ip != "" && payload.secondary_clearpass_ip != "" && payload.primary_clearpass_ip != payload.secondary_clearpass_ip) {
+                                this.toggleEditData();
+                                console.log(payload);                                
+                                this.edit_data(payload, this.editData.id);
+                                this.initEditForm();
+                            } else {
+                                this.activate_modal_alert("Field Validation Error", "Clearpass IPs are same, please edit the data", "OK");
+                            }
+                        } else {
+                            this.activate_modal_alert("Field Validation Error", msgBody + "<br>Please check your data and resubmit", "OK");
+                        }
+                    } else {
+                        this.activate_modal_alert("Field Validation Error", "The input name must be unique", "OK");
+                    }
+                } else {
+                    this.activate_modal_alert("Field Validation Error", "The Switch Name field is rquired and cannot be empty", "OK");       
+                }
+            },
+            doesNameExistinList(switch_name, id) {
+                for (let i=0; i < this.os_dyn_seg_data.length; i++) {
+                    if (switch_name === this.os_dyn_seg_data[i].switch_name && (id !== this.os_dyn_seg_data[i].id || id === 0)) {
+                        return true;
+                    }
+                }
+                return false;
+            },
+            handleEditCancel() {
+                this.toggleEditData();
+                this.vlan_input = "";
+            },
+            handleAddCancel() {
+                //Sets the scroll for the modal back to the top so when you open it again it wont be at the bottom
+                //Neither of these options work
+                //const modalBodyRef = this.$refs.modalBodyRef;
+                //console.log("modalBodyRef", modalBodyRef)
+                //if (modalBodyRef) {
+                //    modalBodyRef.scrollIntoView({ behavior: 'smooth', block: 'start'});
+                //}
+                // --OR--
+                //window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+                
+                //resets the add form and closes it
+                this.initAddForm();
+                this.toggleAddData();
+                this.vlan_input = "";
+            },
+            initAddForm() {
+                this.addData = {
+                    base_config: true,
+                    oobm: true,
+                    mgmt_ip: "",
+                    access_vlan: 0,
+                    add_to_clearpass: true,
+                    switch_name: "",
+                    data_ip: "",
+                    tagged_vlan_ids: [],
+                    model: "",
+                    user_email: "",
+                    sourced_vlan: 0,
+                    auto_detect_vlan: true,
+                    access_role_profiles: [],
+                    id: 0
+                  };
+                $('#select2-multiple-input-sm').val([]).trigger('change');
+                this.vlan_input = "";
+            },
+            initEditForm() {
+                this.editData = {
+                    base_config: true,
+                    oobm: true,
+                    mgmt_ip: "",
+                    access_vlan: 0,
+                    add_to_clearpass: true,
+                    switch_name: "",
+                    data_ip: "",
+                    tagged_vlan_ids: [],
+                    model: "",
+                    user_email: "",
+                    sourced_vlan: 0,
+                    auto_detect_vlan: true,
+                    access_role_profiles: [],
+                    id: 0
+                  };
+                $('#select2-multiple-input-sm-edit').val([]).trigger('change');
+                $('#vlans-selected-area').val([]).trigger('change');
+                this.vlan_input = "";
+            },
+            toggleAddData() {
+                const body = document.querySelector('body');
+                this.activeAddData = !this.activeAddData;
+                if (this.activeAddData) {
+                body.classList.add('modal-open');
+                $('#select2-multiple-input-sm').val([]).trigger('change');
+                } else {
+                body.classList.remove('modal-open');
+                }
+            },
+            toggleEditData(row) {
+                if (row) {
+                    console.log(row);
+                    console.log(row.custom_profiles);
+                    this.editData.id = row.id;
+                    this.editData.add_to_clearpass=row.add_to_clearpass;
+                    this.editData.base_config = row.base_config;
+                    this.editData.oobm = row.oobm;
+                    this.editData.model = row.model;
+                    this.editData.user_email = row.user_email;
+                    this.editData.mgmt_ip = row.mgmt_ip;
+                    this.editData.data_ip = row.data_ip;
+                    this.editData.switch_name = row.switch_name;
+                    this.editData.auto_detect_vlan = row.auto_vlan_detection;
+                    this.editData.access_vlan = row.access_vlan;
+                    this.editData.sourced_vlan = row.sourced_vlan;
+                    this.editData.tagged_vlan_ids = row.tagged_vlan_ids;
+                    this.editData.access_role_profiles = row.custom_profiles;
+                    let new_tagged_list;
+                    new_tagged_list = [];
+                    if (Array.isArray(row.tagged_vlan_ids)){
+                        row.tagged_vlan_ids.forEach(function(id) {
+                            new_tagged_list.push(String(id));
+                        });
+                    };
+                    this.editData.tagged_vlan_ids = new_tagged_list;
+                    console.log(this.editData.tagged_vlan_ids);
+                    // console.log(new_tagged_list);
+                    console.log(Array.isArray(this.editData.tagged_vlan_ids));
+                }
+                //console.log("reached_here");
+                console.log(this.editData.access_role_profiles);
+                const body = document.querySelector('body');
+                this.activeEditData = !this.activeEditData;
+                if (this.activeEditData) {
+                        body.classList.add('modal-open');
+                        //console.log("ok I am here");
+                        $('#select2-multiple-input-sm-edit').val(this.editData.access_role_profiles).trigger('change');
+                        //console.log("now ok I am here");
+                        $('#vlans-selected-area').val(this.editData.tagged_vlan_ids).trigger('change');
+                        console.log(this.access_roles);
+                } else {
+                        body.classList.remove('modal-open');
+                }
+            },
+            are_you_sure(action,id){
+                this.areYouSure.displayed=true
+                var el = document.getElementById('modalAreYouSure');
+                var bel = new bootstrap.Modal(el);
+                bel.show();
+                this.areYouSure.active = bel;
+                this.areYouSure.action=action
+                this.areYouSure.id=id
+            },
+            dismiss_are_you_sure(value){
+                if (this.areYouSure.displayed) {
+                    this.areYouSure.result = value;
+                    if (value) {
+                        this.areYouSure.action(this.areYouSure.id)
+                    }
+                    this.areYouSure.displayed=false;
+                    this.areYouSure.active.hide();
+                }
+            },
+            toggleCheckbox(event) {
+                this.checkbox = !this.checkbox;
+            },
+            fetch_role_profiles(){
+                axios.get(access_role_endpoint).then((response) => {
+                    this.access_roles = response.data;
+                    console.log(this.access_roles);
+                }).catch((error) => {
+                    console.error(error.response.data);
+                })
+            },
+            fetchClearpassData(){
+                if (!this.selectedSite) return;
+                console.log("changed the site");
+                this.addData.access_role_profiles = this.pre_selected_roles;
+                console.log(this.addData);
+                const path = `${cp_site_profile_endpoint}?site=${this.selectedSite}`;
+                this.os_dyn_seg_data = [];
+                axios.get(path).then((response) => {
+                    this.cp_site_profile_data = response.data[0];
+                    console.log(this.cp_site_profile_data);
+                    this.primary_clearpass_ip = this.cp_site_profile_data.primary_ip;
+                    this.secondary_clearpass_ip = this.cp_site_profile_data.secondary_ip;
+                    this.cp_url = this.cp_site_profile_data.region_data.cluster_url;
+                    this.controller = false;
+                    this.p_controller_ip = "";
+                    this.s_controller_ip = "";
+                    if (this.cp_site_profile_data.controller1_ip) {
+                        this.controller = true;
+                        this.p_controller_ip = this.cp_site_profile_data.controller1_ip;
+                    }
+                    if (this.cp_site_profile_data.controller2_ip) {
+                        this.s_controller_ip = this.cp_site_profile_data.controller2_ip;
+                    }
+                    }).catch((error) => {
+                        console.error(error.response.data);
+                    })
+                this.fetch_role_profiles();
+                this.get_data();
+            },
+            mounted() {
+                this.fetchClearpassData();
+                // $('.js-example-responsive').select2('data', this.pre_selected_roles);
+                /*$(document).ready(function() {
+                    $('.js-example-responsive').select2(
+                        {
+                            width: '100%',
+                            dropdownParent: $("#addDataModal")
+                        }
+                ).on('select2:change', (e) => {
+                    this.addData.access_role_profiles = e.params.data.id;
+                });
+                });*/
+                $('#select2-multiple-input-sm').select2(
+                        {
+                            dropdownParent: $("#addDataModal")
+                        }
+                );
+                $('#select2-multiple-input-sm-edit').select2(
+                        {
+                            dropdownParent: $("#editDataModal")
+                        }
+                );
+                $('#vlans-selected-area').select2(
+                        {
+                            dropdownParent: $("#editDataModal")
+                        }
+                );
+
+                }
+            }
+        }
+createApp({app}).mount()
+</script>
+<div v-scope="app()" @vue:mounted="mounted"></div>
+{% endblock %}
+

@@ -1,0 +1,19 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: "network-ui-kaos"
+  description: "KAOS network automation tool"
+  annotations:
+    genmills.com/maintenance-number: "1291"
+    genmills.com/stac-application-name: "network-ui-kaos"
+    genmills.com/servicenow-support-group: "GLOBAL NETWORK SUPPORT DISTLIST <DLIST17607425@genmills.com>"
+    genmills.com/primary-owner: "Steve.Long@genmills.com"
+    genmills.com/secondary-owner: "PriteshLaxman.Patil@genmills.com"
+    genmills.com/solution-manager: "Steve.Long@genmills.com"
+    genmills.com/support-email: "DLIST39398467@genmills.com"
+    github.com/project-slug: "gmi-platform/network-ui-kaos"
+
+spec:
+  type: website
+  owner: undefined
+  lifecycle: production

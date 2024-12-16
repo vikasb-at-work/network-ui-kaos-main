@@ -1,0 +1,82 @@
+# description: Deploys a branch to an environment named <app>-<branch> that is dynamically created when a PR is opened or updated for that branch.
+name: Deploy Nonprod
+on:
+  pull_request:
+
+jobs:
+  # Example application tests
+  #tests:
+  #  runs-on: gcp
+  #  steps:
+  #    - run: mytestcommand --mytestarg 1
+  #      shell: bash
+
+  # Converts the repository name into a kebab case safe name that can be used in DNS names and container names.
+  repo-name:
+    runs-on: gcp
+    outputs:
+      safeRepoName: ${{steps.kebabcase.outputs.kebabRepository}}
+    steps:
+      - id: kebabcase
+        uses: gmi-actions/kebabcase@v1
+  
+  # Builds your container image
+  build-container:
+    needs:
+    - repo-name
+    #- tests
+    uses: gmi-actions/build-container/.github/workflows/build-container.yml@v1
+    with:
+      container_name: ${{ needs.repo-name.outputs.safeRepoName }}
+    secrets: inherit
+  
+  # Deploys your application to k8s-applications repository
+  deploy:
+    # Ignore dependabot PR's note only works from on: pull_request events. Switch to github.ref_name for pushes.
+    if: (!startsWith(github.head_ref, 'dependabot'))
+    environment: ${{ needs.repo-name.outputs.safeRepoName }}-${{github.head_ref}} # Will create an environment on the fly named <repo>-<branch> for deployment tracking
+    needs: 
+    - build-container
+    - repo-name
+    runs-on: gcp
+    outputs:
+      clusterMatrix: ${{steps.deploy.outputs.clusterMatrix}}
+    steps:
+    - uses: actions/checkout@v4 # Checkout is required to pull the correct catalog-info-yaml
+    - name: deploy
+      id: deploy
+      uses: gmi-actions/deployK8sApplication@v1 
+      with:
+        kubeconfig: ${{secrets.K8S_DEPLOY_KUBECONFIG}}
+        cluster_env: nonprod
+        # These are your HELM values file overrides. The below contains defaults most projects will use. The below contains defaults most projects will use. Do not forget to set your env_name Var in your environment
+        values: | 
+          image: 
+            repository: ${{needs.build-container.outputs.container_registry}}/${{needs.build-container.outputs.container_name}}
+            tag: ${{needs.build-container.outputs.container_tag}}
+          istio:
+            # Don't forget to setup your environment with Variables. This example uses a github Environment specific Variable.
+            hosts:
+              - ${{ needs.repo-name.outputs.safeRepoName }}-${{github.head_ref}}.k8s.genmills.com
+          podLabels:
+            admission.datadoghq.com/enabled: "true" # Enable Admission Controller to mutate new pods part of this deployment
+            tags.datadoghq.com/env: "dev-${{github.head_ref}}"
+            tags.datadoghq.com/service: "${{ github.event.repository.name }}"
+            tags.datadoghq.com/version: "v0.1"
+          podAnnotations:	
+            admission.datadoghq.com/python-lib.version: "v2.6.5"
+            ad.datadoghq.com/${{ github.event.repository.name }}.logs: '[{"source": "python"}]'
+
+  # Deploys your application to the cluster(S) by asking argocd in the cluster to syncronize with your git repository
+  sync:
+    # Ignore dependabot PR's note only works from on: pull_request events. Switch to github.ref_name for pushes.
+    if: (!startsWith(github.head_ref, 'dependabot'))
+    needs:
+    - repo-name
+    - deploy
+    uses: gmi-actions/deployK8sApplication/.github/workflows/sync.yml@v1
+    with:
+      matrix: ${{ needs.deploy.outputs.clusterMatrix }}
+      environment: ${{ needs.repo-name.outputs.safeRepoName }}-${{github.head_ref}} # Update deploy status of <repo>-<branch> for deployment tracking
+    secrets: inherit
+

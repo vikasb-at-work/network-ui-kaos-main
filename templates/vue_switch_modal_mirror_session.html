@@ -1,0 +1,72 @@
+<!--data modal - switch mirror sessions -->
+<div
+ref="switch_mirrorData"
+class="modal fade"
+:class="{ show: switch_activeMirrorSessionData, 'd-block': switch_activeMirrorSessionData }"
+tabindex="-1"
+role="dialog">
+<div class="modal-dialog modal-xl" role="document">
+<div class="modal-content">
+  <div class="modal-header">
+    <h5 class="modal-title">Mirror Session</h5>
+    <button
+      type="button"
+      class="close"
+      data-dismiss="modal"
+      aria-label="Close"
+      @click="switch_toggleMirrorSession">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+  <div class="modal-body">
+
+<div class="container">
+    <div class="row">
+      <div class="col-sm-10">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+				<th v-for="(c, index) in cols.mirrorSession" :key=index scope="col">
+					<div>{%raw%}{{c.text}}{%endraw%}
+					  <template v-if="sort.column === c.name && sort.by === 'asc'">
+						<i class="fa-solid fa-sort-up" @click="sort={column: c.name, by: 'desc'}"></i>
+					  </template>
+					  <template v-else-if="sort.column === c.name && sort.by === 'desc'">
+						<i class="fa-solid fa-sort-down" @click="sort={column: c.name, by: ''}"></i>
+					  </template>
+					  <template v-else>
+						<i class="fa-solid fa-sort" @click="sort={column: c.name, by: 'asc'}"></i>
+					  </template>
+					</div>
+				   </div>
+				  </div>
+				</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(row, index) in mirror_session_filtered_data" :key="index">
+              <td>{%raw%}{{row.session}}{%endraw%}</td>
+			  <td>{%raw%}{{row.comment}}{%endraw%}</td>
+			  <td>{%raw%}{{row.enable}}{%endraw%}</td>
+			  <td>{%raw%}{{row.source}}{%endraw%}</td>
+			  <td>{%raw%}{{row.dest}}{%endraw%}</td>
+			  <td>
+                <div class="btn-group" role="group">
+                  <button type="button" @click="switch_toggleEditMirrorSessionData (row)" class="btn btn-warning btn-sm">Update</button>
+                  <button type="button" @click="are_you_sure(switch_handleDeleteMirrorSessionData, row)" class="btn btn-danger btn-sm">Delete</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+</div>
+  </div>
+</div>
+</div>
+</div>
+<div v-if="switch_activeMirrorSessionData" class="modal-backdrop fade show"></div>
+<!-- include other modals -->
+{% include 'vue_switch_modal_mirror_session_add.html' %}

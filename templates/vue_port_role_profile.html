@@ -1,0 +1,1265 @@
+{% extends 'menu.html' %}
+{% block content %}
+<style>
+    .input-group-label {
+        width: 130px;
+    }   
+    .border-box {
+        border: 1px solid #ced4da; 
+        border-radius: 0.25rem; 
+        padding: 10px;
+    } 
+</style>
+<template id="gridTemplate">
+    <div class="container">
+        <div class="row">
+            <div class="col"> <!-- how wide the whole table is-->
+                <h1>Interface Profiles</h1>
+                <hr><br><br>
+                <button type="button" @click="toggleAddData" class="btn btn-success btn-sm">Add Interface Profile</button>
+                <br><br>
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">Name</th>
+                            <th scope="col">Description</th>
+                            <th scope="col">Critical Role</th>
+                            <th scope="col">Preauth Role</th>
+                            <th scope="col">Reject Role</th>
+                            <th scope="col">Auth Role</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="row in interface_role_profiles" :key="row.id">
+                            <td>{%raw%}{{row.name}}{%endraw%}</td>
+                            <td>{%raw%}{{row.description}}{%endraw%}</td>
+                            <td>{%raw%}{{row.critical_role}}{%endraw%}</td>
+                            <td>{%raw%}{{row.preauth_role}}{%endraw%}</td>
+                            <td>{%raw%}{{row.reject_role}}{%endraw%}</td>
+                            <td>{%raw%}{{row.auth_role}}{%endraw%}</td>
+                            <td>
+                                <div v-if="row.id != 1" class="btn-group" role="group">
+                                    <button type="button" @click="toggleEditData(row)" class="btn btn-warning btn-sm">View\Update</button>
+                                    <button type="button" @click="are_you_sure(handleDelete,row)" class="btn btn-danger btn-sm">Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div> <!-- end column -->
+        </div> <!-- end row -->
+    </div> <!-- end container -->
+
+<!--add data modal -->
+    <div ref="addData" class="modal fade" :class="{ show: activeAddData, 'd-block': activeAddData }" tabindex="-1"role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col">
+                                <h5 class="modal-title">Add a new Interface Profile
+                                    <!-- link to Aruba documentation -->
+                                    &nbsp;
+                                    <a href="https://www.arubanetworks.com/techdocs/AOS-CX/AOSCX-CLI-Bank/cli_6300-6400/Content/landing-pages/cx-home.htm#A"
+                                        target="_blank">
+                                        <i class="fas fa-question-circle"></i>
+                                    </a>
+                                </h5>
+                            </div>
+                            <div class="col">
+                                <div class="row">
+                                    <div class="col d-flex align-items-center justify-content-start"> 
+                                        <label for="addCloneExisting">Clone:</label>&nbsp;
+                                        <select class="form-select" id="addCloneExisting" style="width: 235px;" v-model="cloneSelected" @change="cloneExisting">
+                                            <option value="" selected>Select existing profile</option>
+                                            <option v-for="row in interface_role_profiles_filtered" :key="row.id">{%raw%}{{row.name}}{%endraw%}</option>
+                                        </select>
+                                    </div>
+                                    <div class="col d-flex align-items-center justify-content-end">
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close" @click="handleAddCancel">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div> <!-- end modal-header-->
+                <div class="modal-body" ref="modalBodyRef">
+                    <form>
+                        <div class= "container"> 
+                            <div class = "row">
+                                <div class = "col"> <!-- style="border:1px solid red;"-->
+                                    <!-- name field-->
+                                    <div class="mb-2"> 
+                                        <label for="addRoleName" class="form-label">Name (Prefix 'ALL-' 'ENT-' 'MFG-' required):</label>
+                                        <input type="text" maxlength="64" class="form-control" id="addRoleName" v-model="addData.name"
+                                            placeholder="Enter a profile name (required)">
+                                    </div>
+                                     <!-- description field-->
+                                    <div class="mb-2">
+                                        <label for="addRoleDescription" class="form-label">Description:</label>
+                                        <input type="text" class="form-control" id="addRoleDescription" v-model="addData.description" 
+                                            placeholder="Enter a description for the profile">
+                                    </div>
+                                   <!-- associate role type field-->
+                                    <div class="text-center">Associate Port-Access Role Policy<br></div>
+                                    <div class="input-group mb-2">
+                                        <span class="input-group-text input-group-label">Critical-Role:</span>
+                                        <select class="form-select" id="addCriticalRoleName" v-model="addData.critical_role">
+                                            <option value="">Not Used</option>
+                                            <option v-for="row in port_access_roles" :key="row.id">{%raw%}{{row.name}}{%endraw%}</option>
+                                        </select>
+                                    </div>
+                                    <div class="input-group mb-2">
+                                        <span class="input-group-text input-group-label">Preauth-Role:</span>
+                                        <select class="form-select" id="addPreauthRoleName" v-model="addData.preauth_role">
+                                            <option value="">Not Used</option>
+                                            <option v-for="row in port_access_roles" :key="row.id">{%raw%}{{row.name}}{%endraw%}</option>
+                                        </select>
+                                    </div>
+                                    <div class="input-group mb-2">
+                                        <span class="input-group-text input-group-label">Reject-Role:</span>
+                                        <select class="form-select" id="addRejectRoleName" v-model="addData.reject_role">
+                                            <option value="">Not Used</option>
+                                            <option v-for="row in port_access_roles" :key="row.id">{%raw%}{{row.name}}{%endraw%}</option>
+                                        </select>
+                                    </div>
+                                    <div class="input-group mb-2">
+                                        <span class="input-group-text input-group-label">Auth-Role:</span>
+                                        <select class="form-select" id="addAuthRoleName" v-model="addData.auth_role">
+                                            <option value="">Not Used</option>
+                                            <option v-for="row in port_access_roles" :key="row.id">{%raw%}{{row.name}}{%endraw%}</option>
+                                        </select>
+                                    </div>
+                                    <div class="input-group mb-2">
+                                        <span class="input-group-text input-group-label">Crit-Voice-Role:</span>
+                                        <select class="form-select" id="addCriticalVoiceRoleName" v-model="addData.critical_voice_role">
+                                            <option value="">Not Used</option>
+                                            <option v-for="row in port_access_roles" :key="row.id">{%raw%}{{row.name}}{%endraw%}</option>
+                                        </select>
+                                    </div>                                                       
+                                    <!-- begin portaccess_ps_client_limit -->
+                                    <div class="mb-3" style="padding-top: 5px; display: flex; justify-content: flex-end;"> 
+                                        <label for="addPAPSClientLimit">Choose an interface client limit:</label>
+                                        <select v-model="addData.portaccess_ps_client_limit" class="form-select" id="addPAPSClientLimit" style="width: 119px; margin-left: auto;">
+                                            <option value="0">Not Used</option>
+                                            <option v-for="number in client_limit_list">{%raw%}{{ number }}{%endraw%}</option>
+                                        </select>
+                                    </div>
+                                    <!-- begin allow_flood_traffic -->
+                                    <div class="mb-3" style="display: flex; justify-content: flex-end;"> 
+                                        <label for="addFloodTraffic">Allow flood traffic (bcast, mcast):</label>
+                                        <select v-model="addData.allow_flood_traffic" class="form-select" id="addFloodTraffic" style="width: 119px; margin-left: auto;">
+                                            <option value="0">Not Used</option>
+                                            <option value="1">Enabled</option>
+                                            <option value="2">Disabled</option>
+                                        </select>
+                                    </div>
+                                    <!-- begin portaccess_ob_method -->
+                                    <div class="mb-3" style="display: flex; justify-content: flex-end;"> 
+                                        <label for="addPortAcessAuthConc">Configure auth methods to start concurrently:</label>
+                                        <select v-model="addData.portaccess_ob_method" class="form-select" id="addPortAcessAuthConc" style="width: 122px; margin-left: auto;">
+                                            <option value="0">Not Used</option>
+                                            <option value="1">Enabled</option>
+                                            <option value="2">Disabled</option>
+                                        </select>
+                                    </div>
+                                                                        
+
+                                </div> <!-- end first column -->
+                                <div class = "col" style="border-left: 1px dashed #333;"> <!-- begin second column --> <!--  style="border:1px solid blue;" -->
+                                    <!-- begin aaa_auth_mac -->
+                                    <div class="mb-3 border-box">
+                                        <!--
+                                        enable
+                                            aaa_auth_mac = sdb.Column(sdb.Integer, default=0) 
+                                            #0=no exist #1=enable #2=cached-reauth #4=reauth
+                                        cached-reauth
+                                        reauth
+                                        Mac_auth: {auth: 0, cached_reauth: false, reauth: false}
+                                        -->
+                                        <div style="display: flex; justify-content: flex-end;"> 
+                                            <label for="addAAAAuthMac">AAA MAC Authorization:</label>
+                                            <select v-model="Mac_auth.auth" class="form-select" @change="handleMacAuthChange" id="addAAAAuthMac" style="width: 119px; margin-left: auto;">
+                                                <option value="0">Not Used</option>
+                                                <option value="1">Enabled</option>
+                                            </select>
+                                        </div>
+                                        <!-- begin cached-reauth requires aaa_auth_mac to be enabled -->                    
+                                        <div class="form-check form-switch" style="display: flex; justify-content: flex-end;">
+                                            <label style="width: 250px; text-align: right;" class="form-check-label" for="addAAAAuthMacCachedReauth">Cached Reauth:</label>
+                                            <input v-if="Mac_auth.auth == '1'" style="float:none; margin-left: auto;" class="form-check-input" type="checkbox" id="addAAAAuthMacCachedReauth" v-model="Mac_auth.cached_reauth">
+                                            <input v-else             disabled style="float:none; margin-left: auto;" class="form-check-input" type="checkbox" id="addAAAAuthMacCachedReauth" v-model="Mac_auth.cached_reauth">
+                                        </div>
+                                        <!-- begin reauth requires aaa_auth_mac to be enabled -->                    
+                                        <div class="form-check form-switch" style="display: flex; justify-content: flex-end;">
+                                            <label style="width: 250px; text-align: right;" class="form-check-label" for="addAAAAuthMacReauth">Reauth:</label>                            
+                                            <input v-if="Mac_auth.auth == '1'" style="float:none; margin-left: auto;" class="form-check-input" type="checkbox" id="addAAAAuthMacReauth" v-model="Mac_auth.reauth">
+                                            <input v-else             disabled style="float:none; margin-left: auto;" class="form-check-input" type="checkbox" id="addAAAAuthMacReauth" v-model="Mac_auth.reauth">
+                                        </div>
+                                    </div>
+                                    <!-- begin aaa_auth_dot1x_auth -->
+                                    <div class="mb-3 border-box">
+                                        <!--
+                                        enable
+                                            aaa_auth_dot1x = sdb.Column(sdb.Integer, default=0)
+                                            #0=no exist #1=enable #2=cached-reauth #4=reauth #5=canned-eap-success 
+                                        cached_reauth
+                                        reauth
+                                        canned_eap_success
+                                        Dot1x: {auth: 0, cached_reauth: false, reauth: false, canned_eap_success: false}
+                                        -->
+                                        <div style="display: flex; justify-content: flex-end;"> 
+                                            <label for="addAAAAuthD1x">AAA 802.1x Authorization:</label>
+                                            <select v-model="Dot1x.auth" class="form-select" @change="handleDot1xAuthChange" id="addAAAAuthD1x" style="width: 119px; margin-left: auto;">
+                                                <option value="0">Not Used</option>
+                                                <option value="1">Enabled</option>
+                                            </select>
+                                        </div>
+                                        <!-- begin aaa_auth_dot1x_cached_reauth - requires aaa_auth_dot1x to be enabled -->                    
+                                        <div class="form-check form-switch" style="display: flex; justify-content: flex-end;">
+                                            <label style="width: 250px; text-align: right;" class="form-check-label" for="addAAAAuthdot1xCachedReauth">Cached Reauth:</label>
+                                            <input v-if="Dot1x.auth == '1'" style="float:none; margin-left: auto;" class="form-check-input" type="checkbox" id="addAAAAuthdot1xCachedReauth" v-model="Dot1x.cached_reauth">
+                                            <input v-else          disabled style="float:none; margin-left: auto;" class="form-check-input" type="checkbox" id="addAAAAuthdot1xCachedReauth" v-model="Dot1x.cached_reauth">
+                                        </div>
+                                        <!-- begin aaa_auth_dot1x_reauth - requires aaa_auth_dot1x to be enabled -->                    
+                                        <div class="form-check form-switch" style="display: flex; justify-content: flex-end;">
+                                            <label style="width: 250px; text-align: right;" class="form-check-label" for="addAAAAuthD1xReauth">Reauth:</label>
+                                            <input v-if="Dot1x.auth == '1'" style="float:none; margin-left: auto;" class="form-check-input" type="checkbox" id="addAAAAuthD1xReauth" v-model="Dot1x.reauth">
+                                            <input v-else          disabled style="float:none; margin-left: auto;" class="form-check-input" type="checkbox" id="addAAAAuthD1xReauth" v-model="Dot1x.reauth">
+                                        </div>
+                                        <!-- begin aaa_auth_dot1x_canned_eap_success - requires aaa_auth_dot1x to be enabled -->                    
+                                        <div class="form-check form-switch" style="display: flex; justify-content: flex-end;">
+                                            <label style="width: 250px; text-align: right;" class="form-check-label" for="addAAAAuthD1xCES">Canned EAP Success:</label>
+                                            <input v-if="Dot1x.auth == '1'" style="float:none; margin-left: auto;" class="form-check-input" type="checkbox" id="addAAAAuthD1xCES" v-model="Dot1x.canned_eap_success">
+                                            <input v-else          disabled style="float:none; margin-left: auto;" class="form-check-input" type="checkbox" id="addAAAAuthD1xCES" v-model="Dot1x.canned_eap_success">
+                                        </div>                                   
+                                    </div>
+                                </div> <!-- end second column -->
+                            </div> <!-- end row -->
+                        </div> <!-- end container -->
+                        <!-- submit and reset buttons -->
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-primary btn-sm" @click="handleAddSubmit">Submit</button>
+                            <button type="button" class="btn btn-danger btn-sm"  @click="handleAddReset">Reset</button>
+                        </div>
+                        <!-- cancel button -->
+                        <div class="btn-group" role="group" style="position: absolute; bottom: 16px; right: 16px;">
+                            <button type="button" class="btn btn-warning btn-sm" @click="handleAddCancel">Cancel</button>
+                        </div>
+                    </form>
+                </div> <!-- end modal body -->
+            </div> <!-- end modal content -->
+        </div> <!-- end modal dialog -->
+    </div> <!-- end ref="addData" -->
+
+    <div v-if="activeAddData" class="modal-backdrop fade show"></div>
+
+<!-- edit data modal -->
+<div ref="editData" class="modal fade" :class="{ show: activeEditData, 'd-block': activeEditData }" tabindex="-1"role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit an Existing Interface Profile
+                    <!-- link to Aruba documentation -->
+                    &nbsp;
+                    <a href="https://www.arubanetworks.com/techdocs/AOS-CX/AOSCX-CLI-Bank/cli_6300-6400/Content/landing-pages/cx-home.htm#A"
+                        target="_blank">
+                        <i class="fas fa-question-circle"></i>
+                    </a>
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" @click="handleEditCancel">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div> <!-- end modal header-->
+            <div class="modal-body" ref="modalBodyRef">
+                <form>
+                    <div class= "container"> 
+                        <div class = "row">
+                            <div class = "col"> <!-- style="border:1px solid red;"-->
+                                <!-- name field-->
+                                <div class="mb-2"> 
+                                    <label for="editRoleName" class="form-label">Name (Prefix 'ALL-' 'ENT-' 'MFG-' required):</label>
+                                    <input type="text" maxlength="64" class="form-control" id="editRoleName" v-model="editData.name"
+                                        placeholder="Enter a profile name (Required)">
+                                </div>
+                                 <!-- description field-->
+                                <div class="mb-2">
+                                    <label for="editRoleDescription" class="form-label">Description:</label>
+                                    <input type="text" class="form-control" id="editRoleDescription" v-model="editData.description"
+                                        placeholder="Enter a description for the profile">
+                                </div>
+                               <!-- associate role type field-->
+                                <div class="text-center">Associate Port-Access Role Policy<br></div>
+                                <div class="input-group mb-2">
+                                    <span class="input-group-text input-group-label">Critical-Role:</span>
+                                    <select class="form-select" id="editCriticalRoleName" v-model="editData.critical_role">
+                                        <option value="">Not Used</option>
+                                        <option v-for="row in port_access_roles" :key="row.id">{%raw%}{{row.name}}{%endraw%}</option>
+                                    </select>
+                                </div>
+                                <div class="input-group mb-2">
+                                    <span class="input-group-text input-group-label">Preauth-Role:</span>
+                                    <select class="form-select" id="editPreauthRoleName" v-model="editData.preauth_role">
+                                        <option value="">Not Used</option>
+                                        <option v-for="row in port_access_roles" :key="row.id">{%raw%}{{row.name}}{%endraw%}</option>
+                                    </select>
+                                </div>
+                                <div class="input-group mb-2">
+                                    <span class="input-group-text input-group-label">Reject-Role:</span>
+                                    <select class="form-select" id="editRejectRoleName" v-model="editData.reject_role">
+                                        <option value="">Not Used</option>
+                                        <option v-for="row in port_access_roles" :key="row.id">{%raw%}{{row.name}}{%endraw%}</option>
+                                    </select>
+                                </div>
+                                <div class="input-group mb-2">
+                                    <span class="input-group-text input-group-label">Auth-Role:</span>
+                                    <select class="form-select" id="editAuthRoleName" v-model="editData.auth_role">
+                                        <option value="">Not Used</option>
+                                        <option v-for="row in port_access_roles" :key="row.id">{%raw%}{{row.name}}{%endraw%}</option>
+                                    </select>
+                                </div>
+                                <div class="input-group mb-2">
+                                    <span class="input-group-text input-group-label">Crit-Voice-Role:</span>
+                                    <select class="form-select" id="editCriticalVoiceRoleName" v-model="editData.critical_voice_role">
+                                        <option value="">Not Used</option>
+                                        <option v-for="row in port_access_roles" :key="row.id">{%raw%}{{row.name}}{%endraw%}</option>
+                                    </select>
+                                </div>                                                       
+                                <!-- begin portaccess_ps_client_limit -->
+                                <div class="mb-3" style="padding-top: 5px; display: flex; justify-content: flex-end;"> 
+                                    <label for="editPAPSClientLimit">Choose an interface client limit:</label>
+                                    <select v-model="editData.portaccess_ps_client_limit" class="form-select" id="editPAPSClientLimit" style="width: 119px; margin-left: auto;">
+                                        <option value="0">Not Used</option>
+                                        <option v-for="number in client_limit_list">{%raw%}{{ number }}{%endraw%}</option>
+                                    </select>
+                                </div>
+                                <!-- begin allow_flood_traffic -->
+                                <div class="mb-3" style="display: flex; justify-content: flex-end;"> 
+                                    <label for="editFloodTraffic">Allow flood traffic (bcast, mcast):</label>
+                                    <select v-model="editData.allow_flood_traffic" class="form-select" id="editFloodTraffic" style="width: 119px; margin-left: auto;">
+                                        <option value="0">Not Used</option>
+                                        <option value="1">Enabled</option>
+                                        <option value="2">Disabled</option>
+                                    </select>
+                                </div>
+                                <!-- begin portaccess_ob_method -->
+                                <div class="mb-3" style="display: flex; justify-content: flex-end;"> 
+                                    <label for="editPortAcessAuthConc">Configure auth methods to start concurrently:</label>
+                                    <select v-model="editData.portaccess_ob_method" class="form-select" id="editPortAcessAuthConc" style="width: 122px; margin-left: auto;">
+                                        <option value="0">Not Used</option>
+                                        <option value="1">Enabled</option>
+                                        <option value="2">Disabled</option>
+                                    </select>
+                                </div>
+                                                                    
+
+                            </div> <!-- end first column -->
+                            <div class = "col" style="border-left: 1px dashed #333;"> <!-- begin second column --> <!--  style="border:1px solid blue;" -->
+                                    <!-- begin aaa_auth_mac -->
+                                    <div class="mb-3 border-box">
+                                        <!--
+                                        enable
+                                            aaa_auth_mac = sdb.Column(sdb.Integer, default=0) 
+                                            #0=no exist #1=enable #2=cached-reauth #4=reauth
+                                        cached-reauth
+                                        reauth
+                                        Mac_auth: {auth: 0, cached_reauth: false, reauth: false}
+                                        -->
+                                    <div style="display: flex; justify-content: flex-end;"> 
+                                        <label for="editAAAAuthMac">AAA MAC Authorization:</label>
+                                        <select v-model="Mac_auth.auth" class="form-select" @change="handleMacAuthChange" id="editAAAAuthMac" style="width: 119px; margin-left: auto;">
+                                            <option value="0">Not Used</option>
+                                            <option value="1">Enabled</option>
+                                        </select>
+                                    </div>
+                                    <!-- begin cached-reauth requires aaa_auth_mac to be enabled -->                    
+                                    <div class="form-check form-switch" style="display: flex; justify-content: flex-end;">
+                                        <label style="width: 250px; text-align: right;" class="form-check-label" for="editAAAAuthMacCachedReauth">Cached Reauth:</label>
+                                        <input v-if="Mac_auth.auth == '1'" style="float:none; margin-left: auto;" class="form-check-input" type="checkbox" id="editAAAAuthMacCachedReauth" v-model="Mac_auth.cached_reauth">
+                                        <input v-else             disabled style="float:none; margin-left: auto;" class="form-check-input" type="checkbox" id="editAAAAuthMacCachedReauth" v-model="Mac_auth.cached_reauth">
+                                    </div>
+                                    <!-- begin reauth requires aaa_auth_mac to be enabled -->                    
+                                    <div class="form-check form-switch" style="display: flex; justify-content: flex-end;">
+                                        <label style="width: 250px; text-align: right;" class="form-check-label" for="editAAAAuthMacReauth">Reauth:</label>
+                                        <input v-if="Mac_auth.auth == '1'" style="float:none; margin-left: auto;" class="form-check-input" type="checkbox" id="editAAAAuthMacReauth" v-model="Mac_auth.reauth">
+                                        <input v-else             disabled style="float:none; margin-left: auto;" class="form-check-input" type="checkbox" id="editAAAAuthMacReauth" v-model="Mac_auth.reauth">
+                                    </div>
+                                </div>
+                                <!-- begin aaa_auth_dot1x_auth -->
+                                <div class="mb-3 border-box">
+                                    <!--
+                                    enable
+                                        aaa_auth_dot1x = sdb.Column(sdb.Integer, default=0)
+                                        #0=no exist #1=enable #2=cached-reauth #4=reauth #5=canned-eap-success 
+                                    cached_reauth
+                                    reauth
+                                    canned_eap_success
+                                    Dot1x: {auth: 0, cached_reauth: false, reauth: false, canned_eap_success: false}
+                                    -->
+                                    <div style="display: flex; justify-content: flex-end;"> 
+                                        <label for="editAAAAuthD1x">AAA 802.1x Authorization:</label>
+                                        <select v-model="Dot1x.auth" class="form-select" @change="handleDot1xAuthChange" id="editAAAAuthD1x" style="width: 119px; margin-left: auto;">
+                                            <option value="0">Not Used</option>
+                                            <option value="1">Enabled</option>
+                                        </select>
+                                    </div>
+                                    <!-- begin aaa_auth_dot1x_cached_reauth - requires aaa_auth_dot1x to be enabled -->                    
+                                    <div class="form-check form-switch" style="display: flex; justify-content: flex-end;">
+                                        <label style="width: 250px; text-align: right;" class="form-check-label" for="editAAAAuthdot1xCachedReauth">Cached Reauth:</label>
+                                        <input v-if="Dot1x.auth == '1'" style="float:none; margin-left: auto;" class="form-check-input" type="checkbox" id="editAAAAuthdot1xCachedReauth" v-model="Dot1x.cached_reauth">
+                                        <input v-else          disabled style="float:none; margin-left: auto;" class="form-check-input" type="checkbox" id="editAAAAuthdot1xCachedReauth" v-model="Dot1x.cached_reauth">
+                                    </div>
+                                    <!-- begin aaa_auth_dot1x_reauth - requires aaa_auth_dot1x to be enabled -->                    
+                                    <div class="form-check form-switch" style="display: flex; justify-content: flex-end;">
+                                        <label style="width: 250px; text-align: right;" class="form-check-label" for="editAAAAuthD1xReauth">Reauth:</label>
+                                        <input v-if="Dot1x.auth == '1'" style="float:none; margin-left: auto;" class="form-check-input" type="checkbox" id="editAAAAuthD1xReauth" v-model="Dot1x.reauth">
+                                        <input v-else          disabled style="float:none; margin-left: auto;" class="form-check-input" type="checkbox" id="editAAAAuthD1xReauth" v-model="Dot1x.reauth">
+                                    </div>
+                                    <!-- begin aaa_auth_dot1x_canned_eap_success - requires aaa_auth_dot1x to be enabled -->                    
+                                    <div class="form-check form-switch" style="display: flex; justify-content: flex-end;">
+                                        <label style="width: 250px; text-align: right;" class="form-check-label" for="editAAAAuthD1xCES">Canned EAP Success:</label>
+                                        <input v-if="Dot1x.auth == '1'" style="float:none; margin-left: auto;" class="form-check-input" type="checkbox" id="editAAAAuthD1xCES" v-model="Dot1x.canned_eap_success">
+                                        <input v-else          disabled style="float:none; margin-left: auto;" class="form-check-input" type="checkbox" id="editAAAAuthD1xCES" v-model="Dot1x.canned_eap_success">
+                                    </div>                                    
+                                </div>
+                            </div> <!-- end second column -->
+                        </div> <!-- end row -->
+                    </div> <!-- end container -->
+                    <!-- submit and reset buttons -->
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-primary btn-sm" @click="handleEditSubmit">Submit</button>
+                        <button type="button" class="btn btn-danger btn-sm"  @click="handleEditReset">Reset</button>
+                    </div>
+                    <!-- cancel button -->
+                    <div class="btn-group" role="group" style="position: absolute; bottom: 16px; right: 16px;">
+                        <button type="button" class="btn btn-warning btn-sm" @click="handleEditCancel">Cancel</button>
+                    </div>
+                </form>
+            </div> <!-- end modal body -->
+        </div> <!-- end modal content -->
+    </div> <!-- end modal dialog -->
+</div> <!-- end ref="editData" -->
+<div v-if="activeEditData" class="modal-backdrop fade show"></div>
+
+{% include "vue_utility_modal_are_you_sure.html" %}
+{% include "vue_utility_modal_alert.html" %}
+
+</div> <!-- end container -->
+</template>
+
+<script type="module">
+    import { createApp } from 'https://unpkg.com/petite-vue?module'
+    import 'https://unpkg.com/axios/dist/axios.min.js'
+ 
+    let api_host = "";
+
+    if ('{{auth.env}}' === 'Production'){
+        api_host = "https://kaos.backend-network-api.genmills.com";
+    } else {
+        api_host = "https://network-api-kaos-nonprod.k8s.genmills.com";
+    }
+
+    let irp_endpoint = api_host + "/api/v1/config/ip/switch-port-role-profile";
+    let par_endpoint = api_host + "/api/v1/config/ip/switch-port-access-role";
+    
+//    if ("{{ auth['host_version'] }}" != 2 ) {
+//        irp_endpoint = "{{ auth['backend_host'] }}" + irp_endpoint;
+//        par_endpoint = "{{ auth['backend_host'] }}" + par_endpoint;
+//	}
+
+    function app() {
+        return {
+            data() {
+                    return { 
+                        activeAddData: false
+                    }
+            },
+            //documentation links
+                //TOP LEVEL DOCUMENTATIONN
+                //https://www.arubanetworks.com/techdocs/AOS-CX/10.12/HTML/security_6200-6300-6400/Content/Chp_Port_acc/Port_acc_gen_cmds/por-acc-con-cmd-fl-10.htm
+                //https://www.arubanetworks.com/techdocs/AOS-CX/AOSCX-CLI-Bank/cli_6300-6400/Content/landing-pages/cx-home.htm#A
+
+                //Fields in use on TWE-MDF-RF1 1/1/1
+                //**    //aaa authentication port-access critical-role CRITICAL-1
+                        //critical_role = sdb.Column(sdb.String(128), default="") <<ROLE NAME>>
+                //**    //port-access allow-flood-traffic enable
+                        //allow_flood_traffic = sdb.Column(sdb.Integer, default=0) #0-no exist #1 enable #2 disable
+                //**    //port-access onboarding-method concurrent enable
+                        //portaccess_ob_method = sdb.Column(sdb.Integer, default=0) #0 no exist #1=enable #2 = disable
+                //**    //aaa authentication port-access client-limit 2
+                        //portaccess_ps_client_limit = sdb.Column(sdb.Integer, default=0) #0 no exist    #range 1-64
+                //**    //aaa authentication port-access dot1x authenticator
+                        //enable
+                        //cached-reauth
+                            //aaa_auth_dot1x = sdb.Column(sdb.Integer, default=0) #0=no exist #1=enable #2=disable #3=enable/cached-reauth #4=enable/reauth #5=enable/canned-eap-success 
+                //**    //aaa authentication port-access mac-auth
+                        //enable
+                            //aaa_auth_mac = sdb.Column(sdb.Integer, default=0) #0 = no exist #1 = enable #2=disable
+                        //cached-reauth
+                            ////aaa_auth_mac_cached_reauth = sdb.Column(sdb.Boolean, default=False)
+
+                //Port access security violation commands
+                //https://www.arubanetworks.com/techdocs/AOS-CX/10.12/HTML/security_6200-6300-6400/Content/Chp_Port_acc/Viol_infra_port_acc_sec_cmds/Viol_infra_port_acc_sec_com.htm
+                    //portaccess_security_violation = sdb.Column(sdb.Integer, default=0) #0 no exist #1 notify #2 shutdown
+                        //Configures the action that the switch must take whenever a security violation occurs at a port, such as the number of clients exceeding the configured client limit.
+                            //command>>port-access security violation action {notify | shutdown}
+                    //portaccess_security_violation_timer = sdb.Column(sdb.Integer, default=0) #0 no exist #range 10-600
+                        //Configures security violation recovery timer for the port when the security violation action is configured as shutdown.
+                            //command>>port-access security violation action shutdown recovery-timer <RECOVERY-TIME>
+                    //portaccess_security_violation_recovery = sdb.Column(sdb.Integer, default=0) #0 no exist #1 enable #2 disable
+                        //Configures auto-recovery of the port when the security violation action is configured as shutdown.
+                        //This configuration allows the port, that is shut down when a security violation occurs, to be automatically enabled after the recovery timer expires.
+                            //command>>port-access security violation action shutdown auto-recovery {enable | disable}
+                //Port security commands
+                //https://www.arubanetworks.com/techdocs/AOS-CX/10.12/HTML/security_6200-6300-6400/Content/Chp_Port_sec/Port_sec_cmds/por-sec-com-fl-10.htm
+                    //portaccess_ps = sdb.Column(sdb.Boolean, default=False)
+                        //Enables or disables port security globally or at the port level.
+                            //command>>port-access port-security {enable | disable}
+                    //portaccess_ps_mac = sdb.Column(sdb.String(32), default="")
+                        //Configures a static client (current interface (port) context) MAC address.
+                            //command>>port-access port-security mac-address <MAC-ADDRESS>
+                    //portaccess_ps_client_limit = sdb.Column(sdb.Integer, default=0) #0 no exist    #range 1-64
+                        //Specifies the maximum number of clients. Default: 1. Range: 0 to 32 (6200). 0 to 64 (6300, 6400).
+                            //command>>port-access port-security client-limit <CLIENTS>
+                //Port Access commands
+                //
+                    //portaccess_fb_role = sdb.Column(sdb.String(256), default="")
+                        //Configures the fallback role to assign to the clients onboarding on a port. 
+                        //This role is applied only when no derived role is applied to the clients.
+                            //command>>port-access fallback-role <ROLE-NAME>
+                    //portaccess_ob_precedence = sdb.Column(sdb.Integer, default=0) #0 = no exist #1=aaa then device-profile #2 = device-profile then aaa
+                        //Configures the precedence for the method to be used to authenticate onboarding devices for each interface.
+                            //command>>port-access onboarding-method precedence [aaa device-profile | device-profile aaa]
+                    //portaccess_ob_method = sdb.Column(sdb.Integer, default=0) #0 no exist #1=enable #2 = disable
+                        //Configures all methods to start concurrently for faster onboarding process. If authentication priority is not configured 
+                        //when enabling concurrent onboarding, the priority will be 802.1X followed by mac-auth and device-profile.
+                            //command>>port-access onboarding-method concurrent <enable | disable>
+                //PORTFILTER
+                //https://www.arubanetworks.com/techdocs/AOS-CX/AOSCX-CLI-Bank/cli_6300-6400/Content/Chp_Port_fil/Port_fil_cmds/por.htm?Highlight=portfilter
+                    //portfilter = sdb.Column(sdb.String(128), default="")
+                        //Configures the specified ports so they do not egress any packets that were received on the source port specified in interface context.
+                            //command>>portfilter <INTERFACE-LIST>
+                //Port-Access Device-Profile
+                //https://www.arubanetworks.com/techdocs/AOS-CX/AOSCX-CLI-Bank/cli_6300-6400/Content/Chp_Dev_disc/Dev_pro_cmds/por-acc-dev-pro-10.-fl.htm
+                    //portaccess_device_profile = sdb.Column(sdb.Boolean, default=False)
+                            //comand>>port-access device-profile <DEVICE-PROFILE-NAME>
+                //port-access device-profile mode
+                //https://www.arubanetworks.com/techdocs/AOS-CX/AOSCX-CLI-Bank/cli_6300-6400/Content/Chp_Dev_disc/Dev_pro_cmds/por-acc-dev-pro-mod-blo-unt-pro-app-10.-fl-ml.htm
+                    //portaccess_device_profile_mode = sdb.Column(sdb.Integer, default=0) #0 no exist #1 block-until-profile-applied
+                        //command>>port-access device-profile mode block-until-profile-applied
+                //aaa authentication port-access radius-override
+                //https://www.arubanetworks.com/techdocs/AOS-CX/AOSCX-CLI-Bank/cli_6300-6400/Content/Chp_Port_acc/Port_acc_gen_cmds/aaa-aut-por-acc-rad-ove.htm?Highlight=radius-override
+                    //radius_override = sdb.Column(sdb.Integer, default=0) #0=no exist #1 = enable #2= disable
+                        //command>>aaa authentication port-access radius-override (enable | disable)
+                //aaa authentication port-access auth-precedence
+                //https://www.arubanetworks.com/techdocs/AOS-CX/AOSCX-CLI-Bank/cli_6300-6400/Content/Chp_Port_acc/Port_acc_gen_cmds/aaa-aut-por-acc-aut-pre-fl-10.htm
+                    //Configures the per port authentication precedence using the space separator.
+                    //aaa_auth_precedence = sdb.Column(sdb.Integer, default=0) #0 no exist #1 = dot1x then mac, #2 = mac then dot1x
+                        //command>>aaa authentication port-access auth-precedence [dot1x mac-auth | mac-auth dot1x]
+                //aaa authentication port-access auth-priorit
+                //https://www.arubanetworks.com/techdocs/AOS-CX/AOSCX-CLI-Bank/cli_6300-6400/Content/Chp_Port_acc/Port_acc_gen_cmds/aaa-aut-por-acc-aut-pri-fl-ml-1011.htm
+                    //Configures the authentication priority using the space separator to specific interface.
+                    //aaa_auth_priority = sdb.Column(sdb.Integer, default=0) #0 no exist #1=dot1x then mac_auth #2 = mac-auth then dot1x        
+                        //command>>aaa authentication port-access auth-priority [dot1x mac-auth | mac-auth dot1x]        
+                //aaa authentication port-access allow-cdp-bpdu
+                //https://www.arubanetworks.com/techdocs/AOS-CX/AOSCX-CLI-Bank/cli_6300-6400/Content/Chp_Dev_disc/Dev_pro_cmds/aaa-aut-por-acc-all-cdp.htm
+                    //Allows all packets related to the CDP (Cisco Discovery Protocol) BPDU (Bridge Protocol Data Unit) on a secure port or LAG.
+                        //allow_cdp_bpdu = sdb.Column(sdb.Boolean, default=False)
+                            //command>>aaa authentication port-access allow-cdp-bpdu
+                //aaa authentication port-access allow-cdp-auth
+                //https://www.arubanetworks.com/techdocs/AOS-CX/AOSCX-CLI-Bank/cli_6300-6400/Content/Chp_Dev_disc/Dev_pro_cmds/aaa-aut-por-acc-all-cdp-aut.htm
+                    //Use this command to allow or block authentication on the CDP (Cisco Discovery Protocol) BPDU (Bridge Protocol Data Unit)
+                        //allow_cdp_auth = sdb.Column(sdb.Boolean, default=False)
+                            //command>>aaa authentication port-access allow-cdp-auth
+                //aaa authentication port-access allow-lldp-bpdu
+                //https://www.arubanetworks.com/techdocs/AOS-CX/AOSCX-CLI-Bank/cli_6300-6400/Content/Chp_Dev_disc/Dev_pro_cmds/aaa-aut-por-acc-all-lld-bpd.htm
+                    //Allows all packets related to the LLDP BPDU (Bridge Protocol Data Unit) on a secure port.
+                        //allow_lldp_bpdu = sdb.Column(sdb.Boolean, default=False)
+                            //command>>aaa authentication port-access allow-lldp-bpdu
+                //aaa authentication port-access allow-lldp-auth
+                //https://www.arubanetworks.com/techdocs/AOS-CX/AOSCX-CLI-Bank/cli_6300-6400/Content/Chp_Port_acc/Port_acc_gen_cmds/aaa-aut-por-acc-all-ldp-auth.htm
+                    //By default, authentication on chassis-mac is allowed via LLDP packets which are received on the port. 
+                        //allow_lldp_auth = sdb.Column(sdb.Boolean, default=False)
+                            //command>>aaa authentication port-access allow-lldp-auth [mac chassis-mac|source-mac]
+                //aaa authentication port-access auth-role
+                //https://www.arubanetworks.com/techdocs/AOS-CX/AOSCX-CLI-Bank/cli_6300-6400/Content/Chp_Port_acc/Port_acc_gen_cmds/aaa-aut-por-acc-rol-fl.htm
+                    //Configures the role to assign to the clients depending on the client authentication state.
+                    //command>>aaa authentication port-access [critical-role|preauth-role|reject-role| auth-role|critical-voice-role] <ROLE-NAME>
+                        //critical_role = sdb.Column(sdb.String(128), default="")
+                        //critical_voice_role = sdb.Column(sdb.String(128), default="")
+                        //preauth_role = sdb.Column(sdb.String(128), default="")
+                        //reject_role = sdb.Column(sdb.String(128), default="")
+                        //auth_role = sdb.Column(sdb.String(128), default="")
+                //port-access allow-flood-traffic
+                //https://www.arubanetworks.com/techdocs/AOS-CX/AOSCX-CLI-Bank/cli_6300-6400/Content/Chp_Port_acc/Port_acc_gen_cmds/por-acc-all-flo-tra-fl-10.htm
+                    //Enables or disables transmission of flood traffic, such as broadcast, multicast, and unknown unicast messages through a security
+                    //enabled port on which no client has been authenticated. 
+                        //allow_flood_traffic = sdb.Column(sdb.Integer, default=0) #0-no exist #1 enable #2 disable
+                            //command>>port-access allow-flood-traffic {enable | disable}
+                //This DB entry encompasses mulitple command in one entry
+                    //aaa_auth_dot1x = sdb.Column(sdb.Integer, default=0) #0=no exist #1=enable #2=disable #3=enable/cached-reauth #4=enable/reauth #5=enable/canned-eap-success 
+                    // If  #1 or #2 then
+                        //aaa authentication port-access dot1x authenticator
+                        //https://www.arubanetworks.com/techdocs/AOS-CX/AOSCX-CLI-Bank/cli_6300-6400/Content/Chp_Port_acc/Port_acc_802-1X_cmds/aaa-aut-por-acc-dot-aut-fl-10.htm
+                            //Enables or disables 802.1X authentication globally or at the port-level.     
+                                //command>>aaa authentication port-access dot1x authenticator {enable | disable}                        
+                    // else if #3 (multi-line command starting with command>>aaa authentication port-access dot1x authenticator enable)
+                        //aaa authentication port-access dot1x authenticator cached-reauth
+                        //https://www.arubanetworks.com/techdocs/AOS-CX/AOSCX-CLI-Bank/cli_6300-6400/Content/Chp_Port_acc/Port_acc_802-1X_cmds/aaa-aut-por-acc-dot-aut-cac-rea-fl.htm
+                            //Enables cached reauthentication on a port.
+                                //command>>aaa authentication port-access dot1x authenticator cached-reauth
+                    // else if #4 (multi-line command starting with command>>aaa authentication port-access dot1x authenticator enable)
+                        //aaa authentication port-access dot1x authenticator reauth
+                        //https://www.arubanetworks.com/techdocs/AOS-CX/AOSCX-CLI-Bank/cli_6300-6400/Content/Chp_Port_acc/Port_acc_802-1X_cmds/aaa-aut-por-acc-dot-aut-rea-fl.htm
+                            //Enables periodic reauthentication of authenticated clients on the port.
+                                //command>>aaa authentication port-access dot1x authenticator reauth
+                    // else if #5 (multi-line command starting with command>>aaa authentication port-access dot1x authenticator enable)
+                        //aaa authentication port-access dot1x authenticator canned-eap-success
+                        //can't find documentation
+                            //unknown
+                                //command>>aaa authentication port-access dot1x authenticator canned-eap-success
+                //aaa authentication port-access mac-auth
+                //https://www.arubanetworks.com/techdocs/AOS-CX/AOSCX-CLI-Bank/cli_6300-6400/Content/Chp_Port_acc/Port_acc_MAC_cmds/aaa-aut-por-acc-mac-aut-fl.htm
+                    //Enables or disables MAC authentication globally or at the port-level.
+                        //aaa_auth_mac = sdb.Column(sdb.Integer, default=0) #0 = no exist #1 = enable #2=disable
+                            //command>>aaa authentication port-access mac-auth {enable | disable}
+                //aaa authentication port-access mac-auth cached-reauth
+                //https://www.arubanetworks.com/techdocs/AOS-CX/AOSCX-CLI-Bank/cli_6300-6400/Content/Chp_Port_acc/Port_acc_MAC_cmds/aaa-aut-por-acc-mac-aut-cac-rea-fl.htm
+                    //Enables cached reauthentication on a port. Cached reauthentication allows MAC reauthentications to succeed when the RADIUS server is unavailable            
+                        //aaa_auth_mac_cached_reauth = sdb.Column(sdb.Boolean, default=False)
+                            //command>>aaa authentication port-access mac-auth cached-reauth
+                            //id = sdb.Column(sdb.Integer, primary_key=True)
+                //name = sdb.Column(sdb.String(128), nullable=False, unique=True, default="")
+                
+                //auth_mode = sdb.Column(sdb.Integer, default=0) #0 no exist #1-client-mode #2-device-mode #3=multi-domain
+                //aaa_auth_client_limit = sdb.Column(sdb.Integer, default=0) #0 no exist #range 1-256
+                //aaa_auth_client_limit_multi = sdb.Column(sdb.Integer, default=0) #0 no exist #range 1-5
+                //aaa_auth_mac_quiet = sdb.Column(sdb.Integer, default=0) #range 0-65535
+                //aaa_auth_mac_reauth = sdb.Column(sdb.BigInteger, default=0) #0 no exist #range 1-4294967295
+                //aaa_auth_mac_reauth_period = sdb.Column(sdb.BigInteger, default=0) #0 no  exist #range 30-4294967295
+                //aaa_auth_dot1x_quiet = sdb.Column(sdb.Integer, default=0) #range 0-65535
+                //aaa_auth_dot1x_cached_reauth = sdb.Column(sdb.BigInteger, default=0) #0 off range 30-4294967295
+                //aaa_auth_dot1x_max_retries = sdb.Column(sdb.Integer, default=0) #0 off range 1-10
+                //aaa_auth_dot1x_reauth_period = sdb.Column(sdb.BigInteger, default=0) #0 off range 30-4294967295
+                //aaa_auth_dot1x_discovery_period = sdb.Column(sdb.Integer, default=0) #range 1-65535
+                //aaa_auth_dot1x_max_eapol = sdb.Column(sdb.Integer, default=0) #0 off range 1-10
+                //aaa_auth_dot1x_eapol_timeout = sdb.Column(sdb.Integer, default=0) #range 1-65535
+                //aaa_auth_dot1x_initial_response_timeout = sdb.Column(sdb.Integer, default=0) #range = 1-300
+
+            addData: {name: "", description: "", portaccess_ps: false, portaccess_ps_mac: "", portfilter: "", portaccess_fb_role: "",
+                portaccess_fb_role: "", aaa_auth_precedence: 0, portaccess_ob_precedence: 0, portaccess_ob_method: 0, 
+                aaa_auth_priority: 0, portaccess_security_violation: 0, portaccess_security_violation_timer: 0, 
+                portaccess_security_violation_recovery: 0, critical_role: "", critical_voice_role: "", preauth_role: "", 
+                reject_role: "", auth_role: "", auth_mode: 0, allow_lldp_bpdu: false, allow_cdp_bpdu: false, allow_lldp_auth: false,
+                allow_cdp_auth: false, radius_override: 0, allow_flood_traffic: 0, aaa_auth_mac: 0, 
+                aaa_auth_dot1x: 0, portaccess_device_profile: false, portaccess_device_profile_mode: 0, portaccess_ps_client_limit: 0, 
+                aaa_auth_client_limit: 0, aaa_auth_client_limit_multi: 0, aaa_auth_mac_quiet: 0, aaa_auth_mac_reauth: 0, 
+                aaa_auth_mac_reauth_period: 0, aaa_auth_dot1x_quiet: 0, aaa_auth_dot1x_cached_reauth: 0, 
+                aaa_auth_dot1x_max_retries: 0, aaa_auth_dot1x_reauth_period: 0, aaa_auth_dot1x_discovery_period: 0, 
+                aaa_auth_dot1x_max_eapol: 0, aaa_auth_dot1x_eapol_timeout: 0, aaa_auth_dot1x_initial_response_timeout: 0},
+            editData: {id: "", name: "", description: "", portaccess_ps: false, portaccess_ps_mac: "", portfilter: "", portaccess_fb_role: "",
+                portaccess_fb_role: "", aaa_auth_precedence: 0, portaccess_ob_precedence: 0, portaccess_ob_method: 0, 
+                aaa_auth_priority: 0, portaccess_security_violation: 0, portaccess_security_violation_timer: 0, 
+                portaccess_security_violation_recovery: 0, critical_role: "", critical_voice_role: "", preauth_role: "", 
+                reject_role: "", auth_role: "", auth_mode: 0, allow_lldp_bpdu: false, allow_cdp_bpdu: false, allow_lldp_auth: false,
+                allow_cdp_auth: false, radius_override: 0, allow_flood_traffic: 0, aaa_auth_mac: 0, 
+                aaa_auth_dot1x: 0, portaccess_device_profile: false, portaccess_device_profile_mode: 0, portaccess_ps_client_limit: 0, 
+                aaa_auth_client_limit: 0, aaa_auth_client_limit_multi: 0, aaa_auth_mac_quiet: 0, aaa_auth_mac_reauth: 0, 
+                aaa_auth_mac_reauth_period: 0, aaa_auth_dot1x_quiet: 0, aaa_auth_dot1x_cached_reauth: 0, 
+                aaa_auth_dot1x_max_retries: 0, aaa_auth_dot1x_reauth_period: 0, aaa_auth_dot1x_discovery_period: 0, 
+                aaa_auth_dot1x_max_eapol: 0, aaa_auth_dot1x_eapol_timeout: 0, aaa_auth_dot1x_initial_response_timeout: 0},    
+            Dot1x: {auth: 0, cached_reauth: false, reauth: false, canned_eap_success: false},
+            Mac_auth: {auth: 0, cached_reauth: false, reauth: false},
+            $template: '#gridTemplate',
+            port_access_roles: [],
+            interface_role_profiles: [],
+            interface_role_profiles_filtered: [],
+            modalAlert: { title: '', body: '', button:'OK'},
+            tokenExpiredAlert: {
+                title: "Your API Token Has Expired",
+                body: "You will need to logout and log back in to reset your token.",
+                body2: "You will need to logout and log back in to reset your token. <br><br> <a href='/login?next=/config/global/irp'>Logout</a>",
+                button: "OK"},
+            areYouSure: {
+                title: 'WARNING - DATA WILL BE REMOVED',
+                body: 'This action will delete data.  Are you sure?',
+                button:'Yes, proceed.',
+                action:undefined},
+            activeAddData: false,
+            activeEditData: false, 
+            deleteData: {id: '' },
+            internal_vlan_selected: 0,
+            vlan_input: "",
+            validity: {},
+            cloneSelected: "",
+            client_limit_list: Array.from(Array(64), (_,x) => x+1),
+            auth_token: "{{ auth["api_token"] }}",
+
+            activate_modal_alert(title, message, button, action){
+                this.modalAlert.title = title;
+                this.modalAlert.displayed = true;
+                this.modalAlert.button = button;
+                var el = document.getElementById('modalAlert');
+                var bel = new bootstrap.Modal(el);
+                bel.show();
+                this.modalAlert.active = bel;
+                var modalBody = document.getElementById('modalBody');
+                modalBody.innerHTML = message;
+            },
+            dismiss_modal_alert(){
+                if (this.modalAlert.displayed) {
+                    this.modalAlert.displayed=false;
+                    this.modalAlert.active.hide();
+                }
+            },
+            add_data(payload) {
+                const path = irp_endpoint;
+                const headers = {
+                                "Content-Type": "application/json",
+                                "Accept": "application/json, text/plain, */*",
+                                "Authorization": this.auth_token
+                                }
+
+                axios.post(path, payload, { headers }).then((response) => {
+                    //console.log(response.data);
+                    this.get_data(); 
+                    }).catch((error) => {
+                        console.error(error.response.data)
+                        if (error.response.data === "Token is invalid") {
+                            this.activate_modal_alert(this.tokenExpiredAlert.title,
+                                                      this.tokenExpiredAlert.body2,
+                                                      this.tokenExpiredAlert.button);
+                        }
+                        this.get_data();
+                    });
+            },
+            edit_data(payload) {
+                const path = irp_endpoint+"?id="+this.editData.id;
+                const headers = {
+                                "Content-Type": "application/json",
+                                "Accept": "application/json, text/plain, */*",
+                                "Authorization": this.auth_token
+                                }
+
+                axios.put(path, payload, { headers }).then((response) => {
+                    //console.log(response.data);
+                    this.get_data();
+                    }).catch((error) => {
+                        console.error(error.response.data);
+                        if (error.response.data === "Token is invalid") {
+                            this.activate_modal_alert(this.tokenExpiredAlert.title,
+                                                      this.tokenExpiredAlert.body2,
+                                                      this.tokenExpiredAlert.button);
+                        }
+                        this.get_data();
+                    });
+            },
+            delete_data(payload) {
+                const path = irp_endpoint+"?id="+this.deleteData.id;
+                const headers = {
+                                "Content-Type": "application/json",
+                                "Accept": "application/json, text/plain, */*",
+                                "Authorization": this.auth_token
+                                }
+
+                axios.delete(path, { headers }).then((response) => {
+                    //console.log(response);
+                    this.get_data();
+                    }).catch((error) => {
+                        console.error(error.response.data);
+                        if (error.response.data === "Token is invalid") {
+                            this.activate_modal_alert(this.tokenExpiredAlert.title,
+                                                      this.tokenExpiredAlert.body2,
+                                                      this.tokenExpiredAlert.button);
+                        }
+                        this.get_data();
+                    });
+            },
+            get_data() {
+                const path = irp_endpoint;
+                axios.get(path).then((response) => {
+                    this.interface_role_profiles = response.data;
+                    for (let i = 0; i < this.interface_role_profiles.length; i++) {
+                        if (this.interface_role_profiles[i].name != "ALL-DEFAULT") {
+                            this.interface_role_profiles_filtered.push(this.interface_role_profiles[i]);
+                        }
+                    }
+                    }).catch((error) => {
+                        console.error(error.response.data);
+                    })
+            },
+            get_par_data(){
+                //retrieves the Port Access Roles 
+                axios.get(par_endpoint).then((response) => {
+                    this.port_access_roles = response.data;
+                }).catch((error) => {
+                    console.error(error.response.data);
+                })
+            },
+            handleAddReset() {
+                this.initAddForm()
+            },
+            handleEditReset() {
+                this.initEditForm()
+            },
+            handleMacAuthChange() {
+                if (this.Mac_auth.auth === '0') {
+                    this.Mac_auth.cached_reauth = false;
+                    this.Mac_auth.reauth = false;
+                }
+            },
+            handleDot1xAuthChange() {
+                if (this.Dot1x.auth === '0') {
+                    this.Dot1x.cached_reauth = false;
+                    this.Dot1x.reauth = false;
+                    this.Dot1x.canned_eap_success = false;
+                }
+            },
+            check_name_meets_prefix_reqs(input_name) {
+                //name must begin with "all-", "ent-", or "mfg-"
+                //console.log("substring", input_name.substring(0,4))
+                if ((input_name.substring(0,4) == "ALL-") || (input_name.substring(0,4) == "ENT-") || (input_name.substring(0,4) == "MFG-")) {
+                    return true
+                } else {
+                    return false
+                }
+            },
+            handleAddSubmit() {
+                const payload = {
+                    //replace " "(\s) with "_" and make it all uppercase
+                    name: this.addData.name.replace(/\s/g, "_").toUpperCase(),
+                    description: this.addData.description || "",
+                    portaccess_ps: this.addData.portaccess_ps || false,
+                    portaccess_ps_mac: this.addData.portaccess_ps_mac || "",
+                    portfilter: this.addData.portfilter || "",
+                    portaccess_fb_role: this.addData.portaccess_fb_role || "",
+                    aaa_auth_precedence: parseInt(this.addData.aaa_auth_precedence) || 0,
+                    portaccess_ob_precedence: parseInt(this.addData.portaccess_ob_precedence) || 0,
+                    portaccess_ob_method: parseInt(this.addData.portaccess_ob_method) || 0,
+                    aaa_auth_priority: parseInt(this.addData.aaa_auth_priority) || 0, 
+                    portaccess_security_violation: parseInt(this.addData.portaccess_security_violation) || 0,
+                    portaccess_security_violation_timer: parseInt(this.addData.portaccess_security_violation_timer) || 0, 
+                    portaccess_security_violation_recovery: parseInt(this.addData.portaccess_security_violation_recovery) || 0,
+                    critical_role: this.addData.critical_role || "",
+                    critical_voice_role: this.addData.critical_voice_role || "",
+                    preauth_role: this.addData.preauth_role || "",
+                    reject_role: this.addData.reject_role || "",
+                    auth_role: this.addData.auth_role || "",
+                    auth_mode: parseInt(this.addData.auth_mode) || 0,
+                    allow_lldp_bpdu: this.addData.allow_lldp_bpdu ||false,
+                    allow_cdp_bpdu: this.addData.allow_cdp_bpdu || false,
+                    allow_lldp_auth: this.addData.allow_lldp_auth || false,
+                    allow_cdp_auth: this.addData.allow_cdp_auth || false,
+                    radius_override: parseInt(this.addData.radius_override) || 0,
+                    allow_flood_traffic: parseInt(this.addData.allow_flood_traffic) || 0,
+                    portaccess_device_profile: this.addData.portaccess_device_profile || false,
+                    portaccess_device_profile_mode: parseInt(this.addData.portaccess_device_profile_mode) || 0,
+                    portaccess_ps_client_limit: parseInt(this.addData.portaccess_ps_client_limit) || 0,
+                    aaa_auth_client_limit: parseInt(this.addData.aaa_auth_client_limit) || 0,
+                    aaa_auth_client_limit_multi: parseInt(this.addData.aaa_auth_client_limit_multi) || 0,
+                    aaa_auth_mac_quiet: parseInt(this.addData.aaa_auth_mac_quiet) || 0,
+                    aaa_auth_mac_reauth: parseInt(this.addData.aaa_auth_mac_reauth) || 0,
+                    aaa_auth_mac_reauth_period: parseInt(this.addData.aaa_auth_mac_reauth_period) || 0,
+                    aaa_auth_dot1x_quiet: parseInt(this.addData.aaa_auth_dot1x_quiet) || 0,
+                    aaa_auth_dot1x_cached_reauth: parseInt(this.addData.aaa_auth_dot1x_cached_reauth) || 0, 
+                    aaa_auth_dot1x_max_retries: parseInt(this.addData.aaa_auth_dot1x_max_retries) || 0,
+                    aaa_auth_dot1x_reauth_period: parseInt(this.addData.aaa_auth_dot1x_reauth_period) || 0,
+                    aaa_auth_dot1x_discovery_period: parseInt(this.addData.aaa_auth_dot1x_discovery_period) || 0, 
+                    aaa_auth_dot1x_max_eapol: parseInt(this.addData.aaa_auth_dot1x_max_eapol) || 0,
+                    aaa_auth_dot1x_eapol_timeout: parseInt(this.addData.aaa_auth_dot1x_eapol_timeout) || 0,
+                    aaa_auth_dot1x_initial_response_timeout: parseInt(this.addData.aaa_auth_dot1x_initial_response_timeout) || 0,
+                    };
+                //have to set these seperately due to the way they are computed
+                payload.aaa_auth_mac = this.determineAuthMac();
+                payload.aaa_auth_dot1x = this.determineAuthDot1x();
+                
+                //id = 0 if it is a new role
+                let nameExists = this.doesNameExistinList(payload.name, 0);
+                
+                if (this.check_name_meets_prefix_reqs(payload.name)) {
+                    if (payload.name != "") {
+                        if (!nameExists) {
+                            this.toggleAddData();
+                            this.add_data(payload);
+                            this.initAddForm();
+                        } else {
+                            this.activate_modal_alert("Field Validation Error", "The input name must be unique", "OK");
+                        }
+                    } else {
+                        this.activate_modal_alert("Field Validation Error", "The Name field is rquired and cannot be empty", "OK");       
+                    }
+                } else {
+                    this.activate_modal_alert("Field Validation Error", "The Name field must begin with 'ALL-' 'ENT-' or 'MFG-'", "OK")
+                }
+            },
+            doesNameExistinList(profile_name, id) {
+                //checks to make sure the Name is unique in the list
+                //id=0 means it is coming from the add modal and is a new role that doesn't have a db entry
+                for (let i=0; i < this.interface_role_profiles.length; i++) {
+                    if (profile_name === this.interface_role_profiles[i].name && (id !== this.interface_role_profiles[i].id || id === 0)) {
+                        return true;
+                    }
+                }
+                return false;
+            },
+            determineAuthDot1x() {
+            //Dot1x: {auth: 0, cached_reauth: false, reauth: false, canned_eap_success: false}}
+            //dot1x.auth: not used = 0
+            //dot1x.auth: enabled = 1 (binary 1000)
+            //dot1x.cached_reauth: true = 2 (binary 0100)
+            //dot1x.reauth: true = 4 (binary 0010)
+            //dot1x.canned_eap_success: true = 8 (binary 0001)
+            //If all options are set the value will be 15 (binary 1111)
+                if (this.Dot1x.auth == 0) {
+                    return 0;
+                } else if (this.Dot1x.auth == 1 && !this.Dot1x.cached_reauth && !this.Dot1x.reauth && !this.Dot1x.canned_eap_success) {
+                    return 1;
+                } else {
+                    let count = 1;
+                    if (this.Dot1x.cached_reauth) {
+                        count += 2;
+                    }
+                    if (this.Dot1x.reauth) {
+                        count += 4;
+                    }
+                    if (this.Dot1x.canned_eap_success) {
+                        count += 8;
+                    }
+                    return count;
+                }
+            },
+            determineAuthMac() {
+                //Mac_auth: {auth: 0, cached_reauth: false, reauth: false}}
+                //mac_auth.auth: not used = 0
+                //mac_auth.auth: enabled = 1 (binary 100)
+                //mac_auth.cached_reauth: true = 2 (binary 010)
+                //mac_auth.reauth: true = 4 (binary 001)
+                //If all options are set the value will be 7 (binary 111)
+                    if (this.Mac_auth.auth == 0) {
+                        return 0;
+                    } else if (this.Mac_auth.auth == 1 && !this.Mac_auth.cached_reauth && !this.Mac_auth.reauth) {
+                        return 1;
+                    } else {
+                        let count = 1;
+                        if (this.Mac_auth.cached_reauth) {
+                            count += 2;
+                        }
+                        if (this.Mac_auth.reauth) {
+                            count += 4;
+                        }
+                        return count;
+                    }
+                },
+            deconstructAAA_Auth_Dot1x(input) {
+                //Dot1x: {auth: 0, cached_reauth: false, reauth: false, canned_eap_success: false}}
+                //dot1x.auth: disabled = 0
+                //dot1x.auth: enabled = 1
+                //dot1x.cached_reauth: true = 2
+                //dot1x.reauth: true = 4
+                //dot1x.canned_eap_success: true = 8
+                if (input == 0) {
+                    this.Dot1x = {auth: 0, cached_reauth: false, reauth: false, canned_eap_success: false}
+                } else if (input == 1) {
+                    this.Dot1x = {auth: 1, cached_reauth: false, reauth: false, canned_eap_success: false}
+                } else if (input > 1) {
+                    this.Dot1x.auth = 1;
+                    this.Dot1x.cached_reauth = input & 2 ? true : false;
+                    this.Dot1x.reauth = input & 4 ? true : false;
+                    this.Dot1x.canned_eap_success = input & 8 ? true : false;
+                }
+            },
+            deconstructAAA_Auth_Mac(input) {
+                //Mac_auth: {auth: 0, cached_reauth: false, reauth: false}}
+                //mac_auth.auth: not used = 0
+                //mac_auth.auth: enabled = 1
+                //mac_auth.cached_reauth: true = 2
+                //mac_auth.reauth: true = 4
+                if (input == 0) {
+                    this.Mac_auth = {auth: 0, cached_reauth: false, reauth: false}
+                } else if (input == 1) {
+                    this.Mac_auth = {auth: 1, cached_reauth: false, reauth: false}
+                } else if (input > 1) {
+                    this.Mac_auth.auth = 1;
+                    this.Mac_auth.cached_reauth = input & 2 ? true : false;
+                    this.Mac_auth.reauth = input & 4 ? true : false;
+                }
+            },
+            handleEditCancel() {
+                this.initEditForm();
+                this.toggleEditData();
+            },
+            handleAddCancel() {
+                this.initAddForm();
+                this.toggleAddData();
+            },
+            handleEditSubmit() {
+                const payload = {
+                    id: this.editData.id,
+                    //replace " " with "_" and make it all uppercase
+                    name: this.editData.name.replace(/\s/g, "_").toUpperCase(),
+                    description: this.editData.description || "",
+                    portaccess_ps: this.editData.portaccess_ps || false,
+                    portaccess_ps_mac: this.editData.portaccess_ps_mac || "",
+                    portfilter: this.editData.portfilter || "",
+                    portaccess_fb_role: this.editData.portaccess_fb_role || "",
+                    aaa_auth_precedence: parseInt(this.editData.aaa_auth_precedence) || 0,
+                    portaccess_ob_precedence: parseInt(this.editData.portaccess_ob_precedence) || 0,
+                    portaccess_ob_method: parseInt(this.editData.portaccess_ob_method) || 0,
+                    aaa_auth_priority: parseInt(this.editData.aaa_auth_priority) || 0, 
+                    portaccess_security_violation: parseInt(this.editData.portaccess_security_violation) || 0,
+                    portaccess_security_violation_timer: parseInt(this.editData.portaccess_security_violation_timer) || 0, 
+                    portaccess_security_violation_recovery: parseInt(this.editData.portaccess_security_violation_recovery) || 0,
+                    critical_role: this.editData.critical_role || "",
+                    critical_voice_role: this.editData.critical_voice_role || "",
+                    preauth_role: this.editData.preauth_role || "",
+                    reject_role: this.editData.reject_role || "",
+                    auth_role: this.editData.auth_role || "",
+                    auth_mode: parseInt(this.editData.auth_mode) || 0,
+                    allow_lldp_bpdu: this.editData.allow_lldp_bpdu ||false,
+                    allow_cdp_bpdu: this.editData.allow_cdp_bpdu || false,
+                    allow_lldp_auth: this.editData.allow_lldp_auth || false,
+                    allow_cdp_auth: this.editData.allow_cdp_auth || false,
+                    radius_override: parseInt(this.editData.radius_override) || 0,
+                    allow_flood_traffic: parseInt(this.editData.allow_flood_traffic) || 0,
+                    portaccess_device_profile: this.editData.portaccess_device_profile || false,
+                    portaccess_device_profile_mode: parseInt(this.editData.portaccess_device_profile_mode) || 0,
+                    portaccess_ps_client_limit: parseInt(this.editData.portaccess_ps_client_limit) || 0,
+                    aaa_auth_client_limit: parseInt(this.editData.aaa_auth_client_limit) || 0,
+                    aaa_auth_client_limit_multi: parseInt(this.editData.aaa_auth_client_limit_multi) || 0,
+                    aaa_auth_mac_quiet: parseInt(this.editData.aaa_auth_mac_quiet) || 0,
+                    aaa_auth_mac_reauth: parseInt(this.editData.aaa_auth_mac_reauth) || 0,
+                    aaa_auth_mac_reauth_period: parseInt(this.editData.aaa_auth_mac_reauth_period) || 0,
+                    aaa_auth_dot1x_quiet: parseInt(this.editData.aaa_auth_dot1x_quiet) || 0,
+                    aaa_auth_dot1x_cached_reauth: parseInt(this.editData.aaa_auth_dot1x_cached_reauth) || 0, 
+                    aaa_auth_dot1x_max_retries: parseInt(this.editData.aaa_auth_dot1x_max_retries) || 0,
+                    aaa_auth_dot1x_reauth_period: parseInt(this.editData.aaa_auth_dot1x_reauth_period) || 0,
+                    aaa_auth_dot1x_discovery_period: parseInt(this.editData.aaa_auth_dot1x_discovery_period) || 0, 
+                    aaa_auth_dot1x_max_eapol: parseInt(this.editData.aaa_auth_dot1x_max_eapol) || 0,
+                    aaa_auth_dot1x_eapol_timeout: parseInt(this.editData.aaa_auth_dot1x_eapol_timeout) || 0,
+                    aaa_auth_dot1x_initial_response_timeout: parseInt(this.editData.aaa_auth_dot1x_initial_response_timeout) || 0,
+                };
+                let nameExists = this.doesNameExistinList(payload.name, payload.id);
+
+                //have to set these seperately due to the way they are computed
+                payload.aaa_auth_mac = this.determineAuthMac();
+                payload.aaa_auth_dot1x = this.determineAuthDot1x();
+
+                if (this.check_name_meets_prefix_reqs(payload.name)) {
+                    if (payload.name != "") {
+                        if (!nameExists) {
+                            this.toggleEditData();
+                            //console.log(payload);                                
+                            this.edit_data(payload);
+                            this.initEditForm();
+                        } else {
+                            this.activate_modal_alert("Field Validation Error", "The input name must be unique", "OK");
+                        }
+                    } else {
+                        this.activate_modal_alert("Field Validation Error", "The Name field is rquired and cannot be empty", "OK");       
+                    }
+                } else {
+                    this.activate_modal_alert("Field Validation Error", "The Name field must begin with 'ALL-' 'ENT-' or 'MFG-'", "OK")
+                }
+            },
+            handleDelete(row) {
+                if (row) {
+                    this.deleteData.id = row.id;
+                    this.delete_data();
+                }
+            },
+            initAddForm() {
+                this.addData = {name: "", description: "", portaccess_ps: false, portaccess_ps_mac: "", portfilter: "", portaccess_fb_role: "",
+                    portaccess_fb_role: "", aaa_auth_precedence: 0, portaccess_ob_precedence: 0, portaccess_ob_method: 0, 
+                    aaa_auth_priority: 0, portaccess_security_violation: 0, portaccess_security_violation_timer: 0, 
+                    portaccess_security_violation_recovery: 0, critical_role: "", critical_voice_role: "", preauth_role: "", 
+                    reject_role: "", auth_role: "", auth_mode: 0, allow_lldp_bpdu: false, allow_cdp_bpdu: false, allow_lldp_auth: false,
+                    allow_cdp_auth: false, radius_override: 0, allow_flood_traffic: 0, aaa_auth_mac: 0, 
+                    aaa_auth_dot1x: 0, portaccess_device_profile: false, portaccess_device_profile_mode: 0, portaccess_ps_client_limit: 0, 
+                    aaa_auth_client_limit: 0, aaa_auth_client_limit_multi: 0, aaa_auth_mac_quiet: 0, aaa_auth_mac_reauth: 0, 
+                    aaa_auth_mac_reauth_period: 0, aaa_auth_dot1x_quiet: 0, aaa_auth_dot1x_cached_reauth: 0, 
+                    aaa_auth_dot1x_max_retries: 0, aaa_auth_dot1x_reauth_period: 0, aaa_auth_dot1x_discovery_period: 0, 
+                    aaa_auth_dot1x_max_eapol: 0, aaa_auth_dot1x_eapol_timeout: 0, aaa_auth_dot1x_initial_response_timeout: 0};
+                this.Dot1x = {auth: 0, cached_reauth: false, reauth: false, canned_eap_success: false};
+                this.Mac_auth = {auth: 0, cached_reauth: false, reauth: false};
+            },
+            initEditForm() {
+                this.editData = {name: "", description: "", portaccess_ps: false, portaccess_ps_mac: "", portfilter: "", portaccess_fb_role: "",
+                    portaccess_fb_role: "", aaa_auth_precedence: 0, portaccess_ob_precedence: 0, portaccess_ob_method: 0, 
+                    aaa_auth_priority: 0, portaccess_security_violation: 0, portaccess_security_violation_timer: 0, 
+                    portaccess_security_violation_recovery: 0, critical_role: "", critical_voice_role: "", preauth_role: "", 
+                    reject_role: "", auth_role: "", auth_mode: 0, allow_lldp_bpdu: false, allow_cdp_bpdu: false, allow_lldp_auth: false,
+                    allow_cdp_auth: false, radius_override: 0, allow_flood_traffic: 0, aaa_auth_mac: 0, 
+                    aaa_auth_dot1x: 0, portaccess_device_profile: false, portaccess_device_profile_mode: 0, portaccess_ps_client_limit: 0, 
+                    aaa_auth_client_limit: 0, aaa_auth_client_limit_multi: 0, aaa_auth_mac_quiet: 0, aaa_auth_mac_reauth: 0, 
+                    aaa_auth_mac_reauth_period: 0, aaa_auth_dot1x_quiet: 0, aaa_auth_dot1x_cached_reauth: 0, 
+                    aaa_auth_dot1x_max_retries: 0, aaa_auth_dot1x_reauth_period: 0, aaa_auth_dot1x_discovery_period: 0, 
+                    aaa_auth_dot1x_max_eapol: 0, aaa_auth_dot1x_eapol_timeout: 0, aaa_auth_dot1x_initial_response_timeout: 0};
+                this.Dot1x = {auth: 0, cached_reauth: false, reauth: false, canned_eap_success: false};
+                this.Mac_auth = {auth: 0, cached_reauth: false, reauth: false};
+            },
+            toggleAddData() {
+                const body = document.querySelector('body');
+                this.activeAddData = !this.activeAddData;
+                if (this.activeAddData) {
+                    body.classList.add('modal-open');
+                    this.$nextTick(() => {
+                        document.getElementById("addRoleName").focus();
+                    });
+                } else {
+                    body.classList.remove('modal-open');
+                }
+            },
+            cloneExisting() {
+                let row;
+
+                for (let i=0; i < this.interface_role_profiles.length; i++) {
+                    if (this.interface_role_profiles[i].name == this.cloneSelected) {
+                        //console.log("match found!", this.interface_role_profiles[i].name);
+                        row = this.interface_role_profiles[i];
+                    }
+                }
+                //push its data to the currently in use addData variables
+                if (row) {
+                    this.addData.name =  "COPY-OF-" + row.name;
+                    this.addData.id = row.id;
+                    this.addData.description = row.description;
+					this.addData.portaccess_ps = row.portaccess_ps;
+					this.addData.portaccess_ps_mac = row.portaccess_ps_mac;
+					this.addData.portfilter = row.portfilter;
+					this.addData.portaccess_fb_role = row.portaccess_fb_role;
+					this.addData.aaa_auth_precedence = row.aaa_auth_precedence;
+					this.addData.portaccess_ob_precedence = row.portaccess_ob_precedence;
+					this.addData.portaccess_ob_method = row.portaccess_ob_method;
+					this.addData.aaa_auth_priority = row.aaa_auth_priority;
+					this.addData.portaccess_security_violation = row.portaccess_security_violation;
+					this.addData.portaccess_security_violation_timer = row.portaccess_security_violation_timer;
+					this.addData.portaccess_security_violation_recovery = row.portaccess_security_violation_recovery;
+                    this.addData.critical_role = row.critical_role;
+					this.addData.critical_voice_role = row.critical_voice_role;
+					this.addData.preauth_role = row.preauth_role;
+					this.addData.reject_role = row.reject_role;
+					this.addData.auth_role = row.auth_role;
+					this.addData.auth_mode = row.auth_mode;
+					this.addData.allow_lldp_bpdu = row.allow_lldp_bpdu;
+					this.addData.allow_cdp_bpdu = row.allow_cdp_bpdu;
+					this.addData.allow_lldp_auth = row.allow_lldp_auth;
+					this.addData.allow_cdp_auth = row.allow_cdp_auth;
+					this.addData.radius_override = row.radius_override;
+					this.addData.allow_flood_traffic = row.allow_flood_traffic;
+					this.addData.portaccess_device_profile = row.portaccess_device_profile;
+					this.addData.portaccess_device_profile_mode = row.portaccess_device_profile_mode;
+					this.addData.portaccess_ps_client_limit = row.portaccess_ps_client_limit;
+					this.addData.aaa_auth_client_limit = row.aaa_auth_client_limit;
+					this.addData.aaa_auth_client_limit_multi = row.aaa_auth_client_limit_multi;
+					this.addData.aaa_auth_mac_quiet = row.aaa_auth_mac_quiet;
+					this.addData.aaa_auth_mac_reauth = row.aaa_auth_mac_reauth;
+					this.addData.aaa_auth_mac_reauth_period = row.aaa_auth_mac_reauth_period;
+					this.addData.aaa_auth_dot1x_quiet = row.aaa_auth_dot1x_quiet;
+					this.addData.aaa_auth_dot1x_cached_reauth = row.aaa_auth_dot1x_cached_reauth;
+					this.addData.aaa_auth_dot1x_max_retries = row.aaa_auth_dot1x_max_retries;
+					this.addData.aaa_auth_dot1x_reauth_period = row.aaa_auth_dot1x_reauth_period;
+					this.addData.aaa_auth_dot1x_discovery_period = row.aaa_auth_dot1x_discovery_period;
+					this.addData.aaa_auth_dot1x_max_eapol = row.aaa_auth_dot1x_max_eapol;
+					this.addData.aaa_auth_dot1x_eapol_timeout = row.aaa_auth_dot1x_eapol_timeout;
+					this.addData.aaa_auth_dot1x_initial_response_timeout = row.aaa_auth_dot1x_initial_response_timeout;
+                    //read these in and output them in a usable format
+                    this.deconstructAAA_Auth_Mac(row.aaa_auth_mac);
+                    this.deconstructAAA_Auth_Dot1x(row.aaa_auth_dot1x);
+
+                    //console.log("**********");
+                    //console.log(this.addData);
+                    //console.log("MAC auth", this.Mac_auth);
+                    //console.log("DOT1X auth", this.Dot1x);
+                } else {
+                    console.error(this.cloneSelected,"not found in existing interface profile list.")
+                }
+            },
+            toggleEditData(row) {
+                if (row) {
+                    this.editData.name = row.name;
+                    this.editData.id = row.id;
+                    this.editData.description = row.description;
+					this.editData.portaccess_ps = row.portaccess_ps;
+					this.editData.portaccess_ps_mac = row.portaccess_ps_mac;
+					this.editData.portfilter = row.portfilter;
+					this.editData.portaccess_fb_role = row.portaccess_fb_role;
+					this.editData.aaa_auth_precedence = row.aaa_auth_precedence;
+					this.editData.portaccess_ob_precedence = row.portaccess_ob_precedence;
+					this.editData.portaccess_ob_method = row.portaccess_ob_method;
+					this.editData.aaa_auth_priority = row.aaa_auth_priority;
+					this.editData.portaccess_security_violation = row.portaccess_security_violation;
+					this.editData.portaccess_security_violation_timer = row.portaccess_security_violation_timer;
+					this.editData.portaccess_security_violation_recovery = row.portaccess_security_violation_recovery;
+                    this.editData.critical_role = row.critical_role;
+					this.editData.critical_voice_role = row.critical_voice_role;
+					this.editData.preauth_role = row.preauth_role;
+					this.editData.reject_role = row.reject_role;
+					this.editData.auth_role = row.auth_role;
+					this.editData.auth_mode = row.auth_mode;
+					this.editData.allow_lldp_bpdu = row.allow_lldp_bpdu;
+					this.editData.allow_cdp_bpdu = row.allow_cdp_bpdu;
+					this.editData.allow_lldp_auth = row.allow_lldp_auth;
+					this.editData.allow_cdp_auth = row.allow_cdp_auth;
+					this.editData.radius_override = row.radius_override;
+					this.editData.allow_flood_traffic = row.allow_flood_traffic;
+					this.editData.portaccess_device_profile = row.portaccess_device_profile;
+					this.editData.portaccess_device_profile_mode = row.portaccess_device_profile_mode;
+					this.editData.portaccess_ps_client_limit = row.portaccess_ps_client_limit;
+					this.editData.aaa_auth_client_limit = row.aaa_auth_client_limit;
+					this.editData.aaa_auth_client_limit_multi = row.aaa_auth_client_limit_multi;
+					this.editData.aaa_auth_mac_quiet = row.aaa_auth_mac_quiet;
+					this.editData.aaa_auth_mac_reauth = row.aaa_auth_mac_reauth;
+					this.editData.aaa_auth_mac_reauth_period = row.aaa_auth_mac_reauth_period;
+					this.editData.aaa_auth_dot1x_quiet = row.aaa_auth_dot1x_quiet;
+					this.editData.aaa_auth_dot1x_cached_reauth = row.aaa_auth_dot1x_cached_reauth;
+					this.editData.aaa_auth_dot1x_max_retries = row.aaa_auth_dot1x_max_retries;
+					this.editData.aaa_auth_dot1x_reauth_period = row.aaa_auth_dot1x_reauth_period;
+					this.editData.aaa_auth_dot1x_discovery_period = row.aaa_auth_dot1x_discovery_period;
+					this.editData.aaa_auth_dot1x_max_eapol = row.aaa_auth_dot1x_max_eapol;
+					this.editData.aaa_auth_dot1x_eapol_timeout = row.aaa_auth_dot1x_eapol_timeout;
+					this.editData.aaa_auth_dot1x_initial_response_timeout = row.aaa_auth_dot1x_initial_response_timeout;
+                    //read these in and output them in a usable format
+                    this.deconstructAAA_Auth_Mac(row.aaa_auth_mac);
+                    this.deconstructAAA_Auth_Dot1x(row.aaa_auth_dot1x);
+                }
+                const body = document.querySelector('body');
+                this.activeEditData = !this.activeEditData;
+                if (this.activeEditData) {
+                        body.classList.add('modal-open');
+                } else {
+                        body.classList.remove('modal-open');
+                }
+            },
+            are_you_sure(action,id){
+                this.areYouSure.displayed=true
+                var el = document.getElementById('modalAreYouSure');
+                var bel = new bootstrap.Modal(el);
+                bel.show();
+                this.areYouSure.active = bel;
+                this.areYouSure.action=action
+                this.areYouSure.id=id
+            },
+            dismiss_are_you_sure(value){
+                if (this.areYouSure.displayed) {
+                    this.areYouSure.result = value;
+                    if (value) {
+                        this.areYouSure.action(this.areYouSure.id)
+                    }
+                    this.areYouSure.displayed=false;
+                    this.areYouSure.active.hide();
+                }
+            },
+            mounted() {
+                this.get_data();
+                this.get_par_data()
+                }
+            }
+        }
+createApp({app}).mount()
+</script>
+<div v-scope="app()" @vue:mounted="mounted"></div>
+{% endblock %}

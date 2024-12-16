@@ -1,0 +1,305 @@
+{% extends 'menu.html' %}
+{% block content %}
+<style>
+    .vendor-column-width {
+        width: 75%;
+    }
+    .button-column-width {
+        width: 25%;
+    }
+</style>
+<template id="gridTemplate">
+    <div class="container">
+        <div class="row">
+            <div class="col-6"> <!-- Make a smaller table since we only have two columns - 6 = half the width of the screen-->
+                <h1>Samurai Vendors</h1>
+                <br><br>
+                <button type="button" class="btn btn-success btn-sm" @click="toggleAddData()" style="width: 125px;">Add New Vendor</button>
+                <br><br>
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">Vendor Name</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="row in samurai_vendors" :key="row.id">
+                            <td class="vendor-column-width">{%raw%}{{ row.vendor }}{%endraw%}</td>
+                            <td class="buttom-column-width">
+                                <div v-if="row.id !== 1">
+                                    <button type="button" class="btn btn-warning btn-sm" @click="toggleEditData(row)" style="width: 125px;">Update Vendor</button>
+                                </div>
+                                <div v-else>
+                                    <button disabled type="button" class="btn btn-warning btn-sm" @click="toggleEditData(row)" style="width: 125px;">Can't Modify</button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div> <!-- end column -->
+        </div> <!-- end row -->
+    </div> <!-- end container -->
+
+<!-- edit data modal -->
+<div ref="editData" class="modal fade" :class="{ show: activeEditData, 'd-block': activeEditData }" tabindex="-1"role="dialog">
+    <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Vendor</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" @click="handleEditCancel">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div> <!-- end modal header-->
+            <div class="modal-body" ref="modalBodyRef">
+                <form>
+                    <div class= "container"> 
+                        <div class = "row">
+                            <div class = "col"> 
+                                <div class="mb-2">
+                                    <label >Vendor Name:</label>
+                                    <input type="text" class="form-control" id="editVendorName" v-model="editData.vendor" placeholder="Enter the vendor name">
+                                </div>
+                                <br>
+                            </div> <!-- end first column -->
+                        </div> <!-- end row -->
+                    </div> <!-- end container -->
+                    <!-- submit and reset buttons -->
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-primary btn-sm" @click="handleEditVendorSubmit">Submit</button>
+                    </div>
+                    <!-- cancel button -->
+                    <div class="btn-group" role="group" style="position: absolute; bottom: 16px; right: 16px;">
+                        <button type="button" class="btn btn-warning btn-sm" @click="handleEditCancel">Cancel</button>
+                    </div>
+                </form>
+            </div> <!-- end modal body -->
+        </div> <!-- end modal content -->
+    </div> <!-- end modal dialog -->
+</div> <!-- end ref="editData" -->
+<div v-if="activeEditData" class="modal-backdrop fade show"></div>
+
+<!-- add data modal -->
+<div ref="addData" class="modal fade" :class="{ show: activeAddData, 'd-block': activeAddData }" tabindex="-1"role="dialog">
+    <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Vendor</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close" @click="handleAddCancel">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div> <!-- end modal header-->
+            <div class="modal-body" ref="modalBodyRef">
+                <form>
+                    <div class= "container"> 
+                        <div class = "row">
+                            <div class = "col"> 
+                                <div class="mb-2">
+                                    <label >Vendor Name:</label>
+                                    <input type="text" class="form-control" id="addVendorName" v-model="addData.vendor" placeholder="Enter the vendor name">
+                                </div>
+                                <br>
+                            </div> <!-- end first column -->
+                        </div> <!-- end row -->
+                    </div> <!-- end container -->
+                    <!-- submit and reset buttons -->
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-primary btn-sm" @click="handleAddVendorSubmit">Submit</button>
+                    </div>
+                    <!-- cancel button -->
+                    <div class="btn-group" role="group" style="position: absolute; bottom: 16px; right: 16px;">
+                        <button type="button" class="btn btn-warning btn-sm" @click="handleAddCancel">Cancel</button>
+                    </div>
+                </form>
+            </div> <!-- end modal body -->
+        </div> <!-- end modal content -->
+    </div> <!-- end modal dialog -->
+</div> <!-- end ref="addData" -->
+<div v-if="activeAddData" class="modal-backdrop fade show"></div>
+
+{% include "vue_utility_modal_are_you_sure.html" %}
+{% include "vue_utility_modal_alert.html" %}
+
+</div> <!-- end container -->
+</template>
+
+<script type="module">
+    import { createApp } from 'https://unpkg.com/petite-vue?module'
+    import 'https://unpkg.com/axios/dist/axios.min.js'
+ 
+    const samurai_get_vendor_endpoint = "/samurai/vendor_info/getData";
+    const samurai_update_vendor_endpoint = "/samurai/vendor_info/updateData"; //need to add /<id> to this in the PUT
+
+    function app() {
+        return {
+            data() {
+                    return { 
+                        activeAddData: false
+                    }
+            },
+            $template: '#gridTemplate',
+            modalAlert: { title: '', body: '', button:'OK'},
+            tokenExpiredAlert: {
+                title: "Your API Token Has Expired",
+                body: "You will need to logout and log back in to reset your token.",
+                body2: "You will need to logout and log back in to reset your token. <br><br> <a href='/login?next=/config/global/irp'>Logout</a>",
+                button: "OK"},
+            vendorStringEmptyAlert: {
+                title: "Vendor Name cannot be empty",
+                body: "Please check your data and resubmit",
+                button: "OK"},
+            areYouSure: {
+                title: 'WARNING - DATA WILL BE REMOVED',
+                body: 'This action will delete data.  Are you sure?',
+                button:'Yes, proceed.',
+                action:undefined},
+            samurai_product_prices: [],
+            samurai_vendors: [],
+            activeAddData: false,
+            activeEditData: false,
+            addData: {vendor: ""},
+            editData: {id: "", vendor: ""},
+            defultData: {id: "", vendor: ""},
+            deleteData: {id: '' },
+
+            activate_modal_alert(title, message, button, action){
+                this.modalAlert.title = title;
+                this.modalAlert.displayed = true;
+                this.modalAlert.button = button;
+                var el = document.getElementById('modalAlert');
+                var bel = new bootstrap.Modal(el);
+                bel.show();
+                this.modalAlert.active = bel;
+                var modalBody = document.getElementById('modalBody');
+                modalBody.innerHTML = message;
+            },
+            dismiss_modal_alert(){
+                if (this.modalAlert.displayed) {
+                    this.modalAlert.displayed=false;
+                    this.modalAlert.active.hide();
+                }
+            },
+            add_vendor_data(payload) {
+                const path = samurai_update_vendor_endpoint;
+                axios.post(path, payload).then((response) => {
+                    console.log(response.data)
+                    this.get_data();
+                }).catch((error) => {
+                    console.error(error.response.data);
+                    this.get_data();
+                });
+            },
+            edit_vendor_data(payload) {
+                const path = samurai_update_vendor_endpoint+"/"+payload.id;
+                axios.put(path, payload).then((response) => {
+                    //console.log(response.data)
+                    this.get_data();
+                }).catch((error) => {
+                    console.error(error.response.data);
+                    this.get_data();
+                });
+            },
+            get_samurai_vendor_data() {
+                const path = samurai_get_vendor_endpoint;
+                axios.get(path).then((response) => {
+                    this.samurai_vendors = response.data;
+                    //console.log(this.samurai_vendors);
+                }).catch((error) => {
+                    console.error(error.response.data);
+                })
+
+            },
+            get_data() {
+                this.get_samurai_vendor_data();
+            },
+            handleEditReset() {
+                this.initEditForm()
+            },
+            handleEditCancel() {
+                this.toggleEditData();
+            },
+            handleAddCancel() {
+                this.toggleAddData();
+            },
+            handleAddVendorSubmit() {
+                const payload = {
+                    vendor: this.addData.vendor.trim()
+                }
+                if (payload.vendor != "") {
+                    this.toggleAddData();
+                    this.add_vendor_data(payload);
+                    this.resetAddData();
+                } else {
+                    this.activate_modal_alert(this.vendorStringEmptyAlert.title, this.vendorStringEmptyAlert.body, this.vendorStringEmptyAlert.button)
+                }
+            },            
+            handleEditVendorSubmit() {
+                const payload = {
+                    id: this.editData.id,
+                    vendor: this.editData.vendor.trim()
+                }
+                if (payload.vendor != "") {
+                    this.toggleEditData();
+                    this.edit_vendor_data(payload);
+                } else {
+                    this.activate_modal_alert(this.vendorStringEmptyAlert.title, this.vendorStringEmptyAlert.body, this.vendorStringEmptyAlert.button)
+                }
+            },
+            handleDelete(row) {
+                if (row) {
+                    this.deleteData.id = row.id;
+                    this.delete_data();
+                }
+            },
+            resetAddData() {
+                this.addData = this.defultData;
+            },
+            toggleAddData() {
+                const body = document.querySelector('body');
+                this.activeAddData = !this.activeAddData;
+                if (this.activeAddData) {
+                        body.classList.add('modal-open');
+                } else {
+                        body.classList.remove('modal-open');
+                }
+            },
+            toggleEditData(row) {
+                if (row) {
+                    this.editData = row;
+                }
+                const body = document.querySelector('body');
+                this.activeEditData = !this.activeEditData;
+                if (this.activeEditData) {
+                        body.classList.add('modal-open');
+                } else {
+                        body.classList.remove('modal-open');
+                }
+            },
+            are_you_sure(action,id){
+                this.areYouSure.displayed=true
+                var el = document.getElementById('modalAreYouSure');
+                var bel = new bootstrap.Modal(el);
+                bel.show();
+                this.areYouSure.active = bel;
+                this.areYouSure.action=action
+                this.areYouSure.id=id
+            },
+            dismiss_are_you_sure(value){
+                if (this.areYouSure.displayed) {
+                    this.areYouSure.result = value;
+                    if (value) {
+                        this.areYouSure.action(this.areYouSure.id)
+                    }
+                    this.areYouSure.displayed=false;
+                    this.areYouSure.active.hide();
+                }
+            },
+            mounted() {
+                this.get_data();
+                }
+            }
+        }
+createApp({app}).mount()
+</script>
+<div v-scope="app()" @vue:mounted="mounted"></div>
+{% endblock %}

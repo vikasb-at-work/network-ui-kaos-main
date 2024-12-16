@@ -1,0 +1,1069 @@
+{% extends 'menu.html' %}
+{% block content %}
+<style>
+    .container-fluid {
+        width: 90%;
+        margin: 0 auto;
+    }
+    .input-group-label {
+        width: 130px;
+    }    
+    .form-control.text-right {
+        text-align: right;
+    }
+    /* Sets a max width for the Product column and allows the text to wrap */
+    td:nth-child(1),
+    th:nth-child(1) {
+        max-width: 300px;  /* should be at 300 preferrably 320 */
+        min-width: 300px;
+        white-space: normal;
+    }
+    td:nth-child(4),
+    th:nth-child(4) {
+        /* This is for the Model Number Column */
+        max-width: 150px;
+        min-width: 150px;
+        white-space: normal;
+    }
+    td:nth-child(5),
+    th:nth-child(5) {
+        /* This is for the Usage Count Column */
+        max-width: 65px;
+        min-width: 65px;
+        white-space: normal;
+    }
+    th:nth-child(5) input[type="number"] {
+        width: 80%;
+        padding: 5px;
+        box-sizing: border-box;
+        border: 1px solid #ddd;
+        border-radius: .25rem;
+    }
+    td:nth-child(6),
+    th:nth-child(6) {
+        /* This is for the Category Column */
+        max-width: 110px;
+        min-width: 110px;
+        white-space: normal;
+    }
+    td:nth-child(7),
+    th:nth-child(7) {
+        /* This is for the Type Column */
+        max-width: 110px;
+        min-width: 110px;
+        white-space: normal;
+    }
+    td:nth-child(8),
+    th:nth-child(8) {
+        /* This is for the Vendor Column */
+        max-width: 110px;
+        min-width: 110px;
+        white-space: normal;
+    }
+    td:nth-child(9),
+    th:nth-child(9) {
+        /* This is for the End of Sale Column */
+        max-width: 122px;
+        min-width: 122px;
+        white-space: normal;
+    }
+    th input[type="text"] {
+        width: 90%;
+        padding: 5px;
+        box-sizing: border-box;
+        border: 1px solid #ddd;
+        border-radius: .25rem;
+    }
+    /* Text color for non-current "retired" items */
+    .lighter-text {
+        color: #a0a0a0;
+    }
+    /* Rounds the corners on the date box and lightens the border a bit */
+    input[type="date"] {
+        border-radius: .25rem;
+        border: 1px solid hsl(0, 0%, 70%);
+    }
+    .url-input {
+        border-radius: .25rem;
+        border: 1px solid hsl(0, 0%, 70%);
+    }
+    .product-name-display {
+        border: none; 
+        /* background-color: transparent; */
+        color: inherit;
+        cursor: default;
+    }
+    .product-name-display:disabled {
+        background-color: transparent; /* override bootstrap background color */
+        opacity: 1;
+    }
+    .input-date {
+        display: flex;
+        align-items: center; 
+    }
+    /* Adjusts spacing between the date input and the question mark icon */
+    .input-date input[type="date"] {
+        margin-right: 10px; 
+    }
+    .icon-question-background {
+        color: #003cff;
+    }
+    .icon-pencil-custom {
+        color: #5cba45; /* Should match the "Custom" badge that gets applied closely */
+    }
+    textarea {
+        resize: none;
+    }
+    .left-space {
+        margin-left: 10px;
+    }
+    .input-with-symbols {
+        display: flex;
+        align-items: center;
+        position: relative;
+    }
+    .symbols {
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        right: -7px;
+    }
+    .symbols span {
+        line-height: 0.8; /* Adjusts spacing between symbols */
+    }
+    .radio-container input[type="radio"] {
+        display: none;
+    }
+    .radio-container label {
+        font-size: 19px; /* 18px */
+        cursor: pointer;
+        color: black;
+        transition: color 0.3s;
+    }
+    .radio-container input[type="radio"]:checked + label {
+        color: blue;
+    }
+    .radio-container input[type="radio"] + label {
+        color: black;
+    }
+</style>
+<!-- LOOKING AT THIS:  https://www.w3schools.com/howto/tryit.asp?filename=tryhow_js_filter_table 
+                       https://hibbard.eu/filterable-table-vuejs/ -->
+<template id="gridTemplate">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col"> <!-- how wide the whole table is-->
+                <h1>Samurai Products</h1>
+                <br><br>
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">Product Name</th>
+                            <th><i class="fa-solid fa-pencil icon-pencil-custom"></i></th> <!-- this column is for the custom product pencil icon -->
+                            <th></th> <!-- this column is for the link back to the samurai table -->
+                            <th scope="col">Model Number</th>
+                            <th scope="col">Usage Count</th>
+                            <th scope="col">Category</th>
+                            <th scope="col">Type</th>
+                            <th scope="col">Vendor</th>
+                            <th scope="col">End of Sale</th>
+                            <th class="lighter-text">{%raw%}{{filteredProductCount}} out of {{totalProductCount}} products shown{%endraw%}</th>
+                        </tr>
+                        <!-- filter header row -->
+                        <tr>
+                            <th><input type="text" v-model="filter.productName"></th>
+                            <th><!-- this column is for the custom product pencil icon -->
+                                <div style="height: 36px;">
+                                    <input class="form-check-input" type="checkbox" v-model="filter.customProduct" style="position: relative; top: 5px;">
+                                </div>
+                            </th>
+                            <th></th>  <!-- this column is for the link back to the samurai table -->
+                            <th><input type="text" v-model="filter.modelNumber"></th>
+                            <th>
+                                <div class="input-with-symbols">
+                                    <input type="number" min="0" step="1" v-model="filter.usageCount">
+                                    <div class="symbols">
+                                        <span>
+                                            <div class="radio-container">
+                                                <input type="radio" id="radioGT" name="usageCountRadio" value="GT" v-model="filter.usageCountModifier">
+                                                <label for="radioGT">&gt;</label>
+                                            </div>
+                                        </span>
+                                        <span>
+                                            <div class="radio-container">
+                                                <input type="radio" id="radioEQ" name="usageCountRadio" value="EQ" v-model="filter.usageCountModifier">
+                                                <label for="radioEQ">=</label>
+                                            </div>
+                                        </span>
+                                        <span>
+                                            <div class="radio-container">
+                                                <input type="radio" id="radioLT" name="usageCountRadio" value="LT" v-model="filter.usageCountModifier">
+                                                <label for="radioLT">&lt;</label>
+                                            </div>
+                                        </span>
+                                    </div>
+                                </div>
+                            </th>
+                            <th>
+                                <select type="text" class="form-select" v-model="filter.category">
+                                    <option value="" selected></option>
+                                    <option value="Hardware">Hardware</option>
+                                    <option value="Software">Software</option>
+                                </select>
+                            </th>
+                            <th>
+                                <select type="text" class="form-select" v-model="filter.deviceType">
+                                    <option value="" selected></option>
+                                    <option v-for="row in samurai_deviceType_list" :value="row.deviceType">{%raw%}{{row.deviceType}}{%endraw%}</option>
+                                </select>
+                            </th>
+                            <th>
+                                <select type="text" class="form-select" v-model="filter.vendor">
+                                    <option value="" selected></option>
+                                    <option v-for="row in samurai_vendor_list" :value="row.vendor">{%raw%}{{row.vendor}}{%endraw%}</option>
+                                </select>
+                            </th>
+                            <th><input type="text" v-model="filter.endOfSale"></th>
+                            <th>
+                                <button type="button" class="btn btn-secondary btn-sm" @click="resetFilter()" style="margin-right: 10px;">Reset Filters</button>
+                                Filter by column
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="row in filtered_product_list" :key="row.id" :class="{ 'lighter-text': row.current == 0 }">
+                            <td>{%raw%}{{ row.productAlias          }}{%endraw%}</td>
+                            <td v-if="row.discovered == 1"><i class="fa-solid fa-pencil icon-pencil-custom"></i></td> <!-- if the product is custom show the icon -->
+                            <td v-else></td>                                                                          <!-- if not don't -->
+                            <td v-if="row.productAlias !== 'No filter match'"><a :href=samuraiProductLink(row) target="_blank"><i class="fas fa-external-link-alt"></i></a></td>
+                            <td v-else></td>
+                            <td>{%raw%}{{ row.modelNumber           }}{%endraw%}</td>
+                            <td>{%raw%}{{ row.usageCount            }}{%endraw%}</td>
+                            <td>{%raw%}{{ row.productType_name      }}{%endraw%}</td>
+                            <td>{%raw%}{{ row.deviceType_name       }}{%endraw%}</td>
+                            <td>{%raw%}{{ row.vendor_name           }}{%endraw%}</td>
+                            <td v-if="row.end_of_sale">{%raw%}{{ row.end_of_sale }}{%endraw%}</td>
+                            <td v-else></td>
+                            <td>
+                                <div v-if="row.productAlias !== 'No filter match'">
+                                    <button type="button" class="btn btn-info btn-sm"    @click="toggleEditProductData(row)"  >Product  </button>
+                                    <button type="button" class="btn btn-warning btn-sm" @click="toggleEditPricingData(row)"  >Pricing/Maint.  </button>
+                                    <button type="button" class="btn btn-success btn-sm" @click="toggleEditLifecycleData(row)">Lifecycle</button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div> <!-- end column -->
+        </div> <!-- end row -->
+    </div> <!-- end container -->
+
+<!-- edit product data modal -->
+<div ref="editProductData" class="modal fade" :class="{ show: activeEditProductData, 'd-block': activeEditProductData }" tabindex="-1"role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit {%raw%}{{ editProductData.productAlias }}{%endraw%}</h5>
+                <div>
+                    <!-- show retired image if product is not current -->
+                    <img v-if="editProductData.current == false" src="/images/retired150wide.png" alt="Image"></i>
+                    <!-- show custom image if the product is custom type -->
+                    <img v-if="editProductData.discovered == 1" src="/images/custom117x41.png" alt="Image"></i>
+                </div>
+                <button type="button" class="close left-space" data-dismiss="modal" aria-label="Close" @click="handleEditProductCancel">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div> <!-- end modal header-->
+            <div class="modal-body" ref="modalBodyRef">
+                <form>
+                    <div class= "container"> 
+                        <div class = "row">
+                            <div class = "col"> 
+                                <!-- Discovered product name-->
+                                <div class="mb-3">
+                                    <label for="editProductName" class="form-label">Discovered product name:</label>
+                                    <div 
+                                    id="circle_anchor_editProductName" 
+                                    style="display: inline-block; padding-left: 5px;"
+                                    data-bs-toggle="tooltip" 
+                                    data-bs-placement="right" 
+                                    title="This is the name the inventory job discovered.  This name cannot be modified.">
+                                    <i class="fas fa-question-circle icon-question-background"></i>
+                                </div>
+                                    <input v-if="editProductData.discovered == 1"   disabled id="editProductName" class="form-control product-name-display" type="text" placeholder="Not available with custom products">
+                                    <input v-else                                   disabled id="editProductName" class="form-control product-name-display" type="text" v-model="editProductData.product">
+                                </div>
+                                <!-- ProductAlias -->
+                                <div class="mb-3">
+                                    <label for="editProductAlias" class="form-label" style="display: inline-block">Product friendly name:</label>
+                                    <div 
+                                        id="circle_anchor_editProductAlias" 
+                                        style="display: inline-block; padding-left: 5px;"
+                                        data-bs-toggle="tooltip" 
+                                        data-bs-placement="right" 
+                                        title="This is the name we will identify the product as if the discovered name isn't descriptive enough.">
+                                        <i class="fas fa-question-circle icon-question-background"></i>
+                                    </div>
+                                    <input id="editProductAlias" class="form-control" type="text" v-model="editProductData.productAlias">
+                                </div>
+                                <div class="row">
+                                    <div class="col">
+                                        <!-- ProductType Category-->
+                                        <div class="mb-3"> 
+                                            <label for="editProductType" class="form-label">Product Category:</label>
+                                            <select type="text" class="form-select" id="editProductType" v-model="editProductData.productType">
+                                                <option value="1">Hardware</option>
+                                                <option value="2">Software</option>
+                                            </select>
+                                        </div>
+                                    </div> <!-- end column -->
+                                    <div class="col">
+                                        <!-- DeviceType -->
+                                        <div class="mb-3"> 
+                                            <label for="editDeviceType" class="form-label">Product Type:</label>
+                                            <select type="text" class="form-select" id="editDeviceType" v-model="editProductData.deviceType">
+                                                <option v-for="row in samurai_deviceType_list" :value="row.id">{%raw%}{{row.deviceType}}{%endraw%}</option>
+                                            </select>
+                                        </div>
+                                    </div> <!-- end column -->
+                                </div> <!-- end row -->
+                                <!-- Vendor -->
+                                <div class="mb-3"> 
+                                    <label for="editVendor" class="form-label">Product Vendor:</label>
+                                    <select type="text" class="form-select" id="editVendor" v-model="editProductData.vendor_id">
+                                        <option v-for="row in samurai_vendor_list" :value="row.id">{%raw%}{{row.vendor}}{%endraw%}</option>
+                                    </select>
+                                </div>
+                                <!-- modelNumber -->
+                                <div class="mb-3">
+                                    <label for="editModelNumber" class="form-label" style="display: inline-block">Model number:</label>                                    
+                                    <input id="editModelNumber" class="form-control" type="text" placeholder="Enter model or part number here..." v-model="editProductData.modelNumber">
+                                </div>
+                                <!-- Replacement -->
+                                <div class="mb-3">
+                                    <label v-if="editProductData.discovered != 1" for="editReplacementSelect">Replace with:</label>
+                                    <label v-else                                 for="editReplacementSelect">Replace with: (Not available with custom products)</label>
+                                    <select type="text" class="form-select" id="editReplacementSelect" v-model="editProductData.productNew" :disabled="editProductData.discovered == 1"> 
+                                        <option v-else v-for="row in samurai_products_list" :value="row.id">{%raw%}{{ makeReplacementName(row) }}{%endraw%}</option>
+                                    </select>
+                                </div>
+                                <!-- Current product switch -->
+                                <div class="mb-3">
+                                    <div class="form-check form-switch"> 
+                                        <label class="form-check-label" for="editCurrent">Current Product</label> 
+                                        <input class="form-check-input" type="checkbox" id="editCurrent" v-model="editProductData.current" :disabled="editProductData.discovered == 1"> 
+                                    </div>
+                                </div>
+                            </div> <!-- end first column -->
+                            <div class = "col" style="border-left: 1px dashed #333;"> <!-- begin second column -->
+                                <!-- Product information Link -->
+                                <div class="mb-3">
+                                    <label class="form-label" for="editProductLink" style="display: inline-block;">Product information link:</label>
+                                    <div 
+                                        v-show="editProductData.productLink != ''" 
+                                        style="display: inline-block; padding-left: 5px"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="right"
+                                        title="Open the product information link in a new window">
+                                        <a :href="editProductData.productLink" target="_blank">
+                                            <i class="fas fa-external-link-alt"></i>
+                                        </a>
+                                    </div>
+                                    <br>
+                                    <div>                                        
+                                        <input type="url" class="form-control" id="editProductLink" v-model="editProductData.productLink" placeholder="https://example.com" maxlength="255" size="50">
+                                    </div>
+                                </div>
+                                    <!-- Notes -->
+                                <div class="mb-3">
+                                    <label class="form-label" for="editNotes">Notes:</label>
+                                    <textarea class="form-control" id="editNotes" v-model="editProductData.productNotes" rows="17" placeholder="Enter notes here..."></textarea>
+                                </div>
+                            </div> <!-- end second column -->
+                        </div> <!-- end row -->
+                    </div> <!-- end container -->
+                    <!-- submit and reset buttons -->
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-primary btn-sm" @click="handleEditProductSubmit">Submit</button>
+                    </div>
+                    <!-- cancel button -->
+                    <div class="btn-group" role="group" style="position: absolute; bottom: 16px; right: 16px;">
+                        <button type="button" class="btn btn-warning btn-sm" @click="handleEditProductCancel">Cancel</button>
+                    </div>
+                </form>
+            </div> <!-- end modal body -->
+        </div> <!-- end modal content -->
+    </div> <!-- end modal dialog -->
+</div> <!-- end ref="editData" -->
+<div v-if="activeEditProductData" class="modal-backdrop fade show"></div>
+
+<!-- edit pricing data modal -->
+<div ref="editPricingData" class="modal fade" :class="{ show: activeEditPricingData, 'd-block': activeEditPricingData }" tabindex="-1"role="dialog">
+    <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Pricing for {%raw%}{{ editPricingData.productAlias }}{%endraw%}</h5>
+                <!-- show retired image if product is not current -->
+                <div class=""> 
+                    <!-- show retired image if product is not current -->
+                    <img v-if="editPricingData.current == false" src="/images/retired150wide.png" alt="Image"></i>
+                    <!-- show custom image if the product is custom type -->
+                    <img v-if="editPricingData.discovered == 1" src="/images/custom117x41.png" alt="Image"></i>
+                </div>
+                <button type="button" class="close left-space" data-dismiss="modal" aria-label="Close" @click="handleEditPricingCancel">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div> <!-- end modal header-->
+            <div class="modal-body" ref="modalBodyRef">
+                <form>
+                    <div class= "container"> 
+                        <div class = "row">
+                            <div class = "col"> 
+                                <!-- Capital field-->
+                                <div class="text-center">Capital<br></div>
+                                <div class="input-group mb-2">
+                                    <span class="input-group-text input-group-label">Cost:</span>
+                                    <input type="number" class="form-control text-right" id="editCapital" v-model="editPricingData.capital" min="0" step="1" placeholder="0">
+                                </div>
+                               <!-- Expense field-->
+                                <div class="text-center">Expense<br></div>
+                                <div class="input-group mb-2">
+                                    <span class="input-group-text input-group-label">Maintenance:</span>
+                                    <input type="number" class="form-control text-right" id="editexpMaint" v-model="editPricingData.expMaint" min="0" step="1" placeholder="0">
+                                </div>
+                                <div class="input-group mb-2">
+                                    <span class="input-group-text input-group-label">SAAS:</span>
+                                    <input type="number" class="form-control text-right" id="editexpSaas" v-model="editPricingData.expSaas" min="0" step="1" placeholder="0">
+                                </div>
+                                <div class="input-group mb-2">
+                                    <span class="input-group-text input-group-label">Other:</span>
+                                    <input type="number" class="form-control text-right" id="editexpOther" v-model="editPricingData.expOther" min="0" step="1" placeholder="0">
+                                </div>
+                                <p><small>Values in US Dollars</small></p>
+                                <!-- maint./support part number-->
+                                <div class="mb-3">
+                                    <label for="editPricingMaint1PN" class="form-label">Maint./Support part number:</label>                                    
+                                    <input id="editPricingMaint1PN" class="form-control" type="text" v-model="editPricingData.maint1PartNumber">
+                                </div>
+                                <!-- maint./support description -->
+                                <div class="mb-3">
+                                    <label for="editPricingMaint1Desc" class="form-label">Maint./Support description:</label>                                    
+                                    <textarea id="editPricingMaint1Desc" class="form-control" rows="2" maxlength="254" v-model="editPricingData.maint1Description"></textarea>
+                                </div>
+                                <!-- SAAS/license part number-->
+                                <div class="mb-3">
+                                    <label for="editPricingMaint2PN" class="form-label">SAAS/License part number:</label>                                    
+                                    <input id="editPricingMaint2PN" class="form-control" type="text" v-model="editPricingData.maint2PartNumber">
+                                </div>
+                                <!-- SAAS/license description-->
+                                <div class="mb-3">
+                                    <label for="editPricingMaint2Desc" class="form-label">SAAS/License description:</label>                                    
+                                    <textarea id="editPricingMaint2Desc" class="form-control" rows="2" maxlength="254" v-model="editPricingData.maint2Description"></textarea>
+                                </div>
+                            </div> <!-- end first column -->
+                        </div> <!-- end row -->
+                    </div> <!-- end container -->
+                    <!-- submit and reset buttons -->
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-primary btn-sm" @click="handleEditPricingSubmit">Submit</button>
+                    </div>
+                    <!-- cancel button -->
+                    <div class="btn-group" role="group" style="position: absolute; bottom: 16px; right: 16px;">
+                        <button type="button" class="btn btn-warning btn-sm" @click="handleEditPricingCancel">Cancel</button>
+                    </div>
+                </form>
+            </div> <!-- end modal body -->
+        </div> <!-- end modal content -->
+    </div> <!-- end modal dialog -->
+</div> <!-- end ref="editData" -->
+<div v-if="activeEditPricingData" class="modal-backdrop fade show"></div>
+
+<!-- edit lifecycle data modal -->
+<div ref="editLifecycleData" class="modal fade" :class="{ show: activeEditLifecycleData, 'd-block': activeEditLifecycleData }" tabindex="-1"role="dialog">
+    <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit {%raw%}{{ editLifecycleData.productAlias }}{%endraw%} Lifecycle</h5>
+                <!-- show retired image if product is not current -->
+                <div class=""> 
+                    <!-- show retired image if product is not current -->
+                    <img v-if="editLifecycleData.current == false" src="/images/retired150wide.png" alt="Image"></i>
+                    <!-- show custom image if the product is custom type -->
+                    <img v-if="editLifecycleData.discovered == 1" src="/images/custom117x41.png" alt="Image"></i>
+                </div>
+                <button type="button" class="close left-space" data-dismiss="modal" aria-label="Close" @click="handleEditLifecycleCancel">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div> <!-- end modal header-->
+            <div class="modal-body" ref="modalBodyRef">
+                <form>
+                    <div class= "container"> 
+                        <div class = "row">
+                            <div class = "col"> 
+                                <!-- End of Sale  -->
+                                <div class="mb-3">
+                                    <label for="editEoS">End of Sale</label><br>
+                                    <div class="input-date">
+                                        <input type="date" id="editEoS" v-model="editLifecycleData.end_of_sale" min="2000-01-01" max="2099-12-31">
+                                            <div id="circle_anchor_editEoS" data-bs-toggle="tooltip" data-bs-placement="right" title="End of Sale is the date the vendor will no longer sell this product.">
+                                                <i class="fas fa-question-circle icon-question-background"></i>
+                                            </div>
+                                    </div>
+                                </div>
+                                <!-- End of hw support renewal -->
+                                <div v-show="editLifecycleData.productType == 1" class="mb-3">
+                                    <label for="editEoHWSR">End of Hardware Support Renewal</label><br>
+                                    <div class="input-date">
+                                        <input type="date" id="editEoHWSR" v-model="editLifecycleData.end_of_hw_renew" min="2000-01-01" max="2099-12-31">
+                                            <div id="circle_anchor_editEoHWSR" data-bs-toggle="tooltip" data-bs-placement="right" title="End of Hardware Support Renewal is the last date to extend or renew a support contract for the product. The extension or renewal period generally cannot extend beyond the End of Support date.">
+                                                <i class="fas fa-question-circle icon-question-background"></i>
+                                            </div>
+                                    </div>
+                                </div>
+                                <!-- End of software security updates  -->
+                                <div v-show="editLifecycleData.productType == 2" class="mb-3">
+                                    <label for="editEoSSU">End of Software Security Updates</label><br>
+                                    <div class="input-date">
+                                        <input type="date" id="editEoSSU" v-model="editLifecycleData.end_of_sw_sec_upd" min="2000-01-01" max="2099-12-31"> 
+                                            <div id="circle_anchor_editEoSSU" data-bs-toggle="tooltip" data-bs-placement="right" title="End of Software Security Updates is the last day the vendor may release software updates to resolve identified security issues.">
+                                                <i class="fas fa-question-circle icon-question-background"></i>
+                                            </div>
+                                    </div>
+                                </div>
+                                <!-- End of HW support  -->
+                                <div v-show="editLifecycleData.productType == 1" class="mb-3">
+                                    <label for="editEoHWS">End of Hardware Support</label><br>
+                                    <div class="input-date">
+                                        <input type="date" id="editEoHWS" v-model="editLifecycleData.end_of_hw_support" min="2000-01-01" max="2099-12-31"> 
+                                            <div id="circle_anchor_editEoHWS" data-bs-toggle="tooltip" data-bs-placement="right" title="End of Hardware Support is the last day to receive service and support for the hardware.  May be the same date as End of Support.">
+                                                <i class="fas fa-question-circle icon-question-background"></i>
+                                            </div>
+                                    </div>        
+                                </div>
+                                <!-- End of Support  -->
+                                <div class="mb-3">
+                                    <label for="editEoSPT">End of Support</label><br>
+                                    <div class="input-date">
+                                        <input type="date" id="editEoSPT" v-model="editLifecycleData.end_of_support" min="2000-01-01" max="2099-12-31">
+                                            <div id="circle_anchor_editEoSPT" data-bs-toggle="tooltip" data-bs-placement="right" title="End of Support is the last day to receive service and support for the product.">
+                                                <i class="fas fa-question-circle icon-question-background"></i>
+                                            </div> 
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="editAnnouncement" style="display: inline-block;">Announcement Link</label>
+                                    <div 
+                                        v-show="editLifecycleData.announcement != ''" 
+                                        style="display: inline-block; padding-left: 5px"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="right"
+                                        title="Open the announcement link in a new window">
+                                        <a :href="editLifecycleData.announcement" target="_blank">
+                                            <i class="fas fa-external-link-alt"></i>
+                                        </a>
+                                    </div>
+                                    <br>
+                                    <div>                                        
+                                        <input type="url" class="url-input" id="editAnnouncement" v-model="editLifecycleData.announcement" placeholder="https://example.com" maxlength="255" size="50">
+                                    </div>
+                                </div>
+                            </div> <!-- end first column -->
+                        </div> <!-- end row -->
+                    </div> <!-- end container -->
+                    <!-- submit and reset buttons -->
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-primary btn-sm" @click="handleEditLifecycleSubmit">Submit</button>
+                    </div>
+                    <!-- cancel button -->
+                    <div class="btn-group" role="group" style="position: absolute; bottom: 16px; right: 16px;">
+                        <button type="button" class="btn btn-warning btn-sm" @click="handleEditLifecycleCancel">Cancel</button>
+                    </div>
+                </form>
+            </div> <!-- end modal body -->
+        </div> <!-- end modal content -->
+    </div> <!-- end modal dialog -->
+</div> <!-- end ref="" -->
+<div v-if="activeEditLifecycleData" class="modal-backdrop fade show"></div>
+
+{% include "vue_utility_modal_are_you_sure.html" %}
+{% include "vue_utility_modal_alert.html" %}
+
+</div> <!-- end container -->
+</template>
+
+<script type="module">
+    import { createApp } from 'https://unpkg.com/petite-vue?module'
+    import 'https://unpkg.com/axios/dist/axios.min.js'
+ 
+    const samurai_get_product_endpoint = "/samurai/products/getData";
+    const samurai_update_product_endpoint = "/samurai/products/updateData"; //need to add /<id> to this in the PUT
+    const samurai_get_product_replacement_endpoint = "/samurai/product_replacement/getData";
+    const samurai_update_product_replacement_endpoint = "/samurai/product_replacement/updateData"; //need to add /<id> to this in the PUT
+    const samurai_get_vendor_endpoint = "/samurai/vendor_info/getData";
+    const samurai_get_devicetype_endpoint = "/samurai/device_types/getData";
+
+    function app() {
+        return {
+            data() {
+                    return { 
+                        activeAddData: false
+                    }
+            },
+            $template: '#gridTemplate',
+            modalAlert: { title: '', body: '', button:'OK'},
+            tokenExpiredAlert: {
+                title: "Your API Token Has Expired",
+                body: "You will need to logout and log back in to reset your token.",
+                body2: "You will need to logout and log back in to reset your token. <br><br> <a href='/login?next=/config/global/irp'>Logout</a>",
+                button: "OK"},
+            areYouSure: {
+                title: 'WARNING - DATA WILL BE REMOVED',
+                body: 'This action will delete data.  Are you sure?',
+                button: 'Yes, proceed.',
+                action: undefined},
+            samurai_products_list: [],
+            samurai_product_replacement_list: [],
+            samurai_vendor_list: [],
+            samurai_deviceType_list: [],
+            showTooltip: false,
+            activeEditReplacementData: false,
+            activeEditPricingData: false,
+            activeEditProductData: false,
+            activeEditLifecycleData: false,
+            editReplacementData: {id: "", productOld: "", productOldName: "", productNew: "", productNewName: ""},
+            editPricingData: {id: "", product: "", capital: 0, expOther: 0, expSaas: 0, expMaint: 0, current:0, deviceType: 0,
+                              maint1PartNumber: "", maint1Description: "", maint2PartNumber: "", maint2Description: ""},
+            editProductData: {id: "", product: "", current:0, deviceType: 0, deviceType_name: "", vendor: 0, vendor_name: "", 
+                              productType: 0, productType_name: "", productNew: "", orig_productNew: "", replacement_id: 0,
+                              announcement: "", productAlias: "", modelNumber: "", productLink: "", productNotes: ""},
+            editLifecycleData: {id: "", product: "", deviceType: 0, end_of_sale: "", end_of_hw_rewnew: "", end_of_sw_sec_upd: "",
+                                end_of_hw_support: "", end_of_support: "", announcement: ""},
+            defultPricingData: {id: "", product: "", capital: 0, expOther: 0, expSaas: 0, expMaint: 0, current:0, deviceType: 0},
+            deleteData: {id: '' },
+            filter: {productName: "", customProduct: false, modelNumber: "", usageCount: "", usageCountModifier: "EQ", category: "", deviceType: "", vendor: "", endOfSale: ""},
+            noFilterMatch: {productAlias: "No filter match"},
+            totalProductCount: 0,
+            filteredProductCount: 0,
+
+            samuraiProductLink(row) {
+                return "/samurai?exact=True&deviceModel=" + row.product;
+            },
+            makeReplacementName(row) {
+                if (row.product == row.productAlias) {
+                    if (row.modelNumber !== "" && row.modelNumber !== null) {
+                        return row.productAlias + " (model: " + row.modelNumber + ")";
+                    } else {
+                        return row.productAlias;
+                    }
+                } else {
+                    if (row.modelNumber !== "" && row.modelNumber !== null) {
+                        return row.productAlias + " (model: " + row.modelNumber + ")" + " (orig: " + row.product + ")";
+                    } else {
+                        return row.productAlias + " (orig: " + row.product + ")";
+                    }
+                }
+            },
+            formatDollar(value) {
+                if (value === null) {
+                    return null
+                }
+                // Format value as dollar amount with thousands separator
+                let formattedValue = value.toLocaleString('en-US', {
+                    style: 'currency',
+                    currency: 'USD',
+                    minimumFractionDigits: 0
+                });
+                return formattedValue;
+            },
+            activate_modal_alert(title, message, button, action){
+                this.modalAlert.title = title;
+                this.modalAlert.displayed = true;
+                this.modalAlert.button = button;
+                var el = document.getElementById('modalAlert');
+                var bel = new bootstrap.Modal(el);
+                bel.show();
+                this.modalAlert.active = bel;
+                var modalBody = document.getElementById('modalBody');
+                modalBody.innerHTML = message;
+            },
+            dismiss_modal_alert(){
+                if (this.modalAlert.displayed) {
+                    this.modalAlert.displayed=false;
+                    this.modalAlert.active.hide();
+                }
+            },
+            edit_product_data(payload) {
+                const path = samurai_update_product_endpoint+"/"+payload.id;
+  
+                axios.put(path, payload).then((response) => {
+                    this.get_data();
+                }).catch((error) => {
+                    console.error(error.response.data);
+                    this.get_data();
+                });
+            },
+            edit_replacement_data(payload) {
+                const path = samurai_update_product_replacement_endpoint+"/"+payload.id
+                axios.put(path, payload).then((response) => {
+                    //this isn't needed since this call is part of the handleEditProduct function
+                    //this.get_data();
+                }).catch((error) => {
+                    console.error(error.response.data);
+                    this.get_data();
+                });
+            },
+            get_samurai_product_data() {
+                const path = samurai_get_product_endpoint;
+                axios.get(path).then((response) => {
+                    this.samurai_products_list = response.data;
+                    //sort the data by "product"
+                    //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/Collator
+                    //convert productType to text
+                    for (let i=0; i < this.samurai_products_list.length; i++) {
+                        if (this.samurai_products_list[i].productType == 1) {
+                            this.samurai_products_list[i].productType_name = "Hardware";
+                        } else if (this.samurai_products_list[i].productType == 2) {
+                            this.samurai_products_list[i].productType_name = "Software";
+                        }
+                    }
+                }).catch((error) => {
+                    console.error(error.response.data);
+                })
+
+            },
+            get_samurai_product_replacement_data() {
+                const path = samurai_get_product_replacement_endpoint;
+                axios.get(path).then((response) => {
+                    this.samurai_product_replacement_list = response.data;
+                }).catch((error) => {
+                    console.error(error.response.data);
+                })
+            },
+            get_samurai_vendor_data() {
+                const path = samurai_get_vendor_endpoint;
+                axios.get(path).then((response) => {    
+                    this.samurai_vendor_list = response.data;
+                }).catch((error) => {
+                    console.error(error.response.data);
+                }) 
+            },
+            get_samurai_deviceType_data() {
+                const path = samurai_get_devicetype_endpoint;
+                axios.get(path).then((response) => {    
+                    this.samurai_deviceType_list = response.data;
+                }).catch((error) => {
+                    console.error(error.response.data);
+                }) 
+            },
+            get_data() {
+                this.get_samurai_product_replacement_data();
+                this.get_samurai_vendor_data();
+                this.get_samurai_deviceType_data();
+                this.get_samurai_product_data();
+                
+            },
+            get filtered_product_list() {
+                let filtered_list = this.samurai_products_list;
+                this.totalProductCount = filtered_list.length;
+                if (filtered_list && filtered_list.length > 0) {
+                    if (this.filter.productName !== "") {
+                        const productNameSearchTerm = this.filter.productName.toLowerCase();
+                        filtered_list = filtered_list.filter(row => {
+                            const productName = row.product.toString().toLowerCase();
+                            return productName.includes(productNameSearchTerm)
+                        });
+                    }
+                    if (this.filter.customProduct !== false) {
+                        //if filter.customProduct = true then set the search term to 1
+                        const customProductSearchTerm = 1;
+                        filtered_list = filtered_list.filter(row => {
+                            const customProduct = row.discovered;
+                            //a custom product == discovered == 1
+                            return customProduct == customProductSearchTerm
+                        });
+
+                    }
+                    if (this.filter.modelNumber !== "") {
+                        const modelNumberSearchTerm = this.filter.modelNumber.toLowerCase();
+                        filtered_list = filtered_list.filter(row => {
+                            const modelNumber = row.modelNumber.toString().toLowerCase();
+                            return modelNumber.includes(modelNumberSearchTerm)
+                        });
+                    }
+                    if (this.filter.usageCount !== "") {
+                        const usageCountSearchTerm = this.filter.usageCount;
+                        const usageCountModifierReceived = this.filter.usageCountModifier
+
+                        filtered_list = filtered_list.filter(row => {
+                            const usageCount = row.usageCount;
+
+                            if (usageCountModifierReceived === "EQ") {
+                                return usageCount == usageCountSearchTerm;
+                            } else if (usageCountModifierReceived === "LT") {
+                                return usageCount < usageCountSearchTerm;
+                            } else if (usageCountModifierReceived === "GT") {
+                                return usageCount > usageCountSearchTerm;
+                            }
+                        });
+                    }
+                    if (this.filter.category !== "") {
+                        const categorySearchTerm = this.filter.category.toLowerCase();
+                        filtered_list = filtered_list.filter(row => {
+                            const category = row.productType_name.toString().toLowerCase();
+                            return category.includes(categorySearchTerm)
+                        });
+                    }
+                    if (this.filter.deviceType !== "") {
+                        const deviceTypeSearchTerm = this.filter.deviceType.toLowerCase();
+                        filtered_list = filtered_list.filter(row => {
+                            const deviceType = row.deviceType_name.toString().toLowerCase();
+                            return deviceType.includes(deviceTypeSearchTerm)
+                        });
+                    }
+                    if (this.filter.vendor !== "") {
+                        const vendorSearchTerm = this.filter.vendor.toLowerCase();
+                        filtered_list = filtered_list.filter(row => {
+                            const vendor = row.vendor_name.toString().toLowerCase();
+                            return vendor.includes(vendorSearchTerm)
+                        });
+                    }
+                    if (this.filter.endOfSale !== "") {
+                        const endOfSaleSearchTerm = this.filter.endOfSale.toLowerCase();
+                        filtered_list = filtered_list.filter(row => {
+                            let endOfSale = "";
+                            if (row.end_of_sale) {
+                                //converts the date type to a string - the date part is in front of the T
+                                endOfSale = new Date(row.end_of_sale).toISOString().split('T')[0]
+                            }
+                            return endOfSale.includes(endOfSaleSearchTerm)
+                        });
+                    }
+                } 
+                if (filtered_list.length != 0) {
+                    this.filteredProductCount = filtered_list.length
+                    return filtered_list;
+                } else { // if nothing matches the filter give this output
+                    this.filteredProductCount = filtered_list.length
+                    filtered_list = [this.noFilterMatch];                    
+                    return filtered_list;
+                }
+            },
+            resetFilter() {
+                this.filter.productName="";
+                this.filter.customProduct=false;
+                this.filter.modelNumber="";
+                this.filter.usageCount="";
+                this.filter.category="";
+                this.filter.deviceType="";
+                this.filter.vendor="";
+                this.filter.endOfSale="";
+            },
+            handleEditReset() {
+                this.initEditForm()
+            },
+            handleEditProductCancel() {
+                this.get_data();
+                this.toggleEditProductData();
+            },
+            handleEditPricingCancel() {
+                this.get_data();
+                this.toggleEditPricingData();
+            },
+            handleEditLifecycleCancel() {
+                this.get_data();
+                this.toggleEditLifecycleData();
+            },
+            handleEditProductSubmit() {
+                if (this.editProductData.productAlias !== "") {
+                    //update replacement product if it was changed
+                    if (this.editProductData.orig_productNew !== this.editProductData.productNew) {
+                        const replacement_payload = {
+                            id: this.editProductData.replacement_id,
+                            productNew: this.editProductData.productNew
+                        }
+                        this.edit_replacement_data(replacement_payload);
+                    } 
+                    const payload = {
+                        id: this.editProductData.id,
+                        productAlias: this.editProductData.productAlias.trim(),
+                        modelNumber: this.editProductData.modelNumber.trim() || "",
+                        current: this.editProductData.current,
+                        productType: this.editProductData.productType,
+                        deviceType: this.editProductData.deviceType,
+                        vendor: this.editProductData.vendor_id,
+                        productLink: this.editProductData.productLink,
+                        productNotes: this.editProductData.productNotes
+                    }
+                    this.edit_product_data(payload);
+                    this.toggleEditProductData();
+                } else {
+                    this.activate_modal_alert("Data validation error", "Product friendly name cannot be empty.", "OK")
+                }
+            },
+            handleEditPricingSubmit() {
+                const payload = {
+                    id: this.editPricingData.id,
+                    capital: this.editPricingData.capital,
+                    expOther: this.editPricingData.expOther,
+                    expSaas: this.editPricingData.expSaas,
+                    expMaint: this.editPricingData.expMaint,
+                    maint1PartNumber: this.editPricingData.maint1PartNumber,
+                    maint1Description: this.editPricingData.maint1Description,
+                    maint2PartNumber: this.editPricingData.maint2PartNumber,
+                    maint2Description: this.editPricingData.maint2Description
+                }                                                      
+                this.toggleEditPricingData();
+                this.edit_product_data(payload);
+            },
+            validateEnteredDate(date_string) {
+                let year_regex = /^20[0-9]{2}$/;
+                let month_regex = /^(0[1-9]|1[0-2])$/;
+                let day_regex = /^(0[1-9]|[12][0-9]|3[01])$/;
+                let year_valid = false;
+                let month_valid = false;
+                let day_valid = false;
+                
+                if (date_string !== null && date_string !== "") {
+                    let date_string_parts = date_string.split("-");
+
+                    if (date_string_parts[0].length == 4 && year_regex.test(date_string_parts[0])) { //checks if the year is between 2000 and 2099
+                        year_valid = true;
+                    }
+                    if (date_string_parts[1].length == 2 && month_regex.test(date_string_parts[1])) { //checks if the month is between 01 and 12
+                        month_valid = true;
+                    }
+                    if (date_string_parts[2].length == 2 && day_regex.test(date_string_parts[2])) { //checks if the day is between 01 and 31 - does not validate how many days are in the month
+                        day_valid = true;
+                    }
+
+                    if (year_valid && month_valid && day_valid) {
+                        return true;
+                    } else {
+                        console.error(`${date_string} is an invalid date`)
+                        return false;
+                    }
+                } else {
+                    return true; //if the date_string passed is null or "" return true to skip the check
+                }
+            },
+            handleEditLifecycleSubmit() {
+                const payload = {
+                    id: this.editLifecycleData.id,
+                    end_of_sale: this.editLifecycleData.end_of_sale,
+                    end_of_hw_renew: this.editLifecycleData.end_of_hw_renew,
+                    end_of_sw_sec_upd: this.editLifecycleData.end_of_sw_sec_upd,
+                    end_of_hw_support: this.editLifecycleData.end_of_hw_support,
+                    end_of_support: this.editLifecycleData.end_of_support,
+                    announcement: this.editLifecycleData.announcement
+                }
+                let validationResults = {
+                    overall: true,
+                    End_of_Sale: this.validateEnteredDate(payload.end_of_sale),
+                    End_of_Hardware_Support_Renewal: this.validateEnteredDate(payload.end_of_hw_renew),                    
+                    End_of_Software_Security_Updates: this.validateEnteredDate(payload.end_of_sw_sec_upd),
+                    End_of_Hardware_Support: this.validateEnteredDate(payload.end_of_hw_support),                    
+                    End_of_Support: this.validateEnteredDate(payload.end_of_support)
+                }
+                //console.log("validation results ", validationResults)
+
+                let errorMessage = "An invalid date was entered for the following field(s):<br>";
+
+                //find invalid dates in the validatinoResults object
+                for (const key in validationResults) {
+                    //console.log(key, validationResults[key]);
+                    if (!validationResults[key]) {
+                        errorMessage += `${key.replace(/_/g, ' ')}<br>`; //globally replaces _ with " " in each key
+                        validationResults.overall = false;
+                    }
+                }
+
+                if (validationResults.overall) {
+                    this.toggleEditLifecycleData();
+                    this.edit_product_data(payload);
+                } else {
+                    this.activate_modal_alert("Date entry error", errorMessage, "OK")
+                }
+            },
+            toggleEditProductData(row) {
+                if (row) {
+                    this.editProductData = row;	
+                    //Find the corresponding entry in the replacement list and grab the existing replacement
+                    for (let i=0; i<this.samurai_product_replacement_list.length; i++) {
+                        if (row.id == this.samurai_product_replacement_list[i].productOld) {
+                            this.editProductData.replacement_id = this.samurai_product_replacement_list[i].id;
+                            this.editProductData.productNew = this.samurai_product_replacement_list[i].productNew;
+                            //Save the productNew in case it changes
+                            this.editProductData.orig_productNew = this.editProductData.productNew
+                            break;
+                        }
+                    }
+                }
+                const body = document.querySelector('body');
+                this.activeEditProductData = !this.activeEditProductData;
+                if (this.activeEditProductData) {
+                        body.classList.add('modal-open');
+                } else {
+                        body.classList.remove('modal-open');
+                }
+            },
+            toggleEditLifecycleData(row) {
+                if (row) {
+                    this.editLifecycleData = row;	
+                }
+                const body = document.querySelector('body');
+                this.activeEditLifecycleData = !this.activeEditLifecycleData;
+                if (this.activeEditLifecycleData) {
+                        body.classList.add('modal-open');
+                } else {
+                        body.classList.remove('modal-open');
+                }
+            },
+            toggleEditPricingData(row) {
+                if (row) {
+                    this.editPricingData = row;	
+                }
+                const body = document.querySelector('body');
+                this.activeEditPricingData = !this.activeEditPricingData;
+                if (this.activeEditPricingData) {
+                        body.classList.add('modal-open');
+                } else {
+                        body.classList.remove('modal-open');
+                }
+            },
+            are_you_sure(action,id){
+                this.areYouSure.displayed=true
+                var el = document.getElementById('modalAreYouSure');
+                var bel = new bootstrap.Modal(el);
+                bel.show();
+                this.areYouSure.active = bel;
+                this.areYouSure.action=action
+                this.areYouSure.id=id
+            },
+            dismiss_are_you_sure(value){
+                if (this.areYouSure.displayed) {
+                    this.areYouSure.result = value;
+                    if (value) {
+                        this.areYouSure.action(this.areYouSure.id)
+                    }
+                    this.areYouSure.displayed=false;
+                    this.areYouSure.active.hide();
+                }
+            },
+            mounted() {
+                this.get_data();
+                }
+            }
+        }
+createApp({app}).mount()
+//These lines initialize all of the tooltips on the page
+//However it doesn't work here for <div> that have vue v-if/v-else 
+//as those items aren't in the DOM yet when this fires
+//If you use v-show instead the <div> will be in the DOM and can be found
+var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+  return new bootstrap.Tooltip(tooltipTriggerEl)
+})
+
+</script>
+<div v-scope="app()" @vue:mounted="mounted"></div>
+{% endblock %}

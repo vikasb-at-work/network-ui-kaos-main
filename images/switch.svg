@@ -1,0 +1,70 @@
+<svg id="shapes" width=100% height=100%>
+    <defs>
+    	<svg class="chassis" id="chassis-1u"><polygon points="1,1 900,1 900,140 1,140" style="stroke-width:3"/></svg>
+    	<svg class="chassis" id="chassis-small"><polygon points="1,1 500,1 500,140 1,140" style="stroke-width:3"/></svg>
+		<svg class="chassis" id="chassis-6405">
+			<polygon points="1,1 990,1 990,980, 1,980" style="stroke-width:3" fill="grey" fill-opacity="0.35"/>
+			<line x1="1" y1="140" x2="990" y2="140" style="stroke-width:3"/>
+			<line x1="1" y1="280" x2="990" y2="280" style="stroke-width:3"/>
+			<line x1="1" y1="420" x2="990" y2="420" style="stroke-width:3"/>
+			<line x1="1" y1="560" x2="990" y2="560" style="stroke-width:3"/>
+			<line x1="1" y1="700" x2="990" y2="700" style="stroke-width:3"/>
+			<line x1="1" y1="840" x2="990" y2="840" style="stroke-width:3"/>
+			<image x="1" width="990" transform="scale(1,1.43)" href="/images/aruba-6400-faceplate.png">
+		</svg>
+		<svg class="chassis-overdraw" id="chassis-6405-overdraw">
+			<polygon points="1,1 990,1 990,980, 1,980" style="stroke-width:3"/>
+			<line x1="1" y1="140" x2="990" y2="140" style="stroke-width:3"/>
+			<line x1="1" y1="280" x2="990" y2="280" style="stroke-width:3"/>
+			<line x1="1" y1="420" x2="990" y2="420" style="stroke-width:3"/>
+			<line x1="1" y1="560" x2="990" y2="560" style="stroke-width:3"/>
+			<line x1="1" y1="700" x2="990" y2="700" style="stroke-width:3"/>
+			<line x1="1" y1="840" x2="990" y2="840" style="stroke-width:3"/>
+		</svg>
+		<svg class="chassis-overdraw" id="splitBlade">
+			<line x1="495" y1="140" x2="495" y2="280" style="stroke-width:3"/>
+		</svg>
+    	<svg class="faceplate" id="faceplate-1u"><polygon points="40,10 850,10 850,130 40,130"/></svg>
+    	<svg class="faceplate" id="faceplate-small"><polygon points="40,10 350,10 350,130 40,130"/></svg>
+		<svg class="faceplate" id="faceplate-6405"><polygon points="40,290 850,290 850,970 40,970"/></svg>
+		<svg id="rj45-down-nofunc">
+			<polygon points="1,1 11,1 11,11 8,11 8,13 4,13 4,11 1,11" style="stroke-width:1" transform="scale(2)"/>
+			<polygon points="-2,-2 13,-2, 13,13 -2,13" style="stroke-width:1" transform="scale(2)"/>
+		</svg>
+		<svg id="rj45-up-nofunc">
+			<polygon points="1,1 11,1 11,11 8,11 8,13 4,13 4,11 1,11" style="stroke-width:1" transform="scale(2) rotate(180 6 7)"/>
+			<polygon points="-2,-2 13,-2, 13,13 -2,13" style="stroke-width:1" stroke="black" fill-opacity="0.5" transform="scale(2)"/>
+		</svg>
+		<svg onClick="selectHandler(this.id, 'blink-blue-white');" class="port" id="rj45-down"><polygon points="1,1 11,1 11,11 8,11 8,13 4,13 4,11 1,11" style="stroke-width:1" transform="scale(2)"/></svg>
+		<svg onClick="selectHandler(this.id, 'blink-blue-white');" class="port" id="rj45-up"><polygon points="1,1 11,1 11,11 8,11 8,13 4,13 4,11 1,11" style="stroke-width:1" transform="scale(2) rotate(180 6 7)"/></svg>
+		<svg onClick="selectHandler(this.id, 'blink-blue-white');" class="port" id="qsfp"><polygon points="1,1 20,1 20,13, 1,13" style="stroke-width:3" transform="scale(2)"/></svg>
+		<svg onClick="selectHandler(this.id, 'blink-blue-white');" class="port" id="sfp+"><polygon points="1,1 20,1 20,13, 1,13" style="stroke-width:1" transform="scale(2)"/></svg>
+		<svg class="stackIndicator" id="stackIndicator"><polygon points="1,1 5,1 3,5" style="stroke-width:1" transform="scale(2)"/></svg>
+		<svg class="lagIndicator" id="lagIndicator"><polygon points="1,1 2,1 2,5 4,5 4,6 1,6" style="stroke-width:1" transform="scale(2)"/></svg>
+		<svg class="trunkIndicator" id="trunkIndicator"><polygon points="1,1 6,1 6,2 4,2 4,6 3,6 3,2 1,2" style="stroke-width:1" transform="scale(2)"/></svg>
+		<svg onClick="selectHandler(this.id, 'blink-blue-white');" class="port" id="qsfp-fiber" xmlns="http://www.w3.org/2000/svg">
+	        <g transform="scale(2)">
+    	        <polygon points="1,1 20,1 20,13 1,13" style="stroke-width:3"/>
+        	    <circle cx=15 cy=7 r=3 style="fill:#696969" />
+            	<circle cx=6 cy=7 r=3 style="fill:#696969"/>
+	        </g>
+        </svg>
+		<svg onclick="buttonHandler(this.id, 'blue-hover');" class="button" id="svg-button">
+		  	<polygon points="1,1 100,1 100,30, 1,30" transform="scale(2)" fill="blue"/>
+		  	<text color="white">Add Card</text>
+		</svg>
+		<svg onClick="selectHandler(this.id, 'blink-blue-white');" class="port" id="sfp-fiber" xmlns="http://www.w3.org/2000/svg">
+	        <g transform="scale(2)">
+    	        <polygon points="1,1 20,1 20,13 1,13" style="stroke-width:1"/>
+        	    <circle cx=15 cy=7 r=3 style="fill:#696969" />
+            	<circle cx=6 cy=7 r=3 style="fill:#696969"/>
+	        </g>
+        </svg>
+		<svg onClick="selectHandler(this.id, 'blink-blue-white');" class="port" id="sfp-copper" xmlns="http://www.w3.org/2000/svg">
+	        <g transform="scale(2)">
+    	        <polygon points="1,1 20,1 20,13 1,13" style="stroke-width:1"/>
+				<polygon points="1,1 11,1 11,11 8,11 8,13 4,13 4,11 1,11" style="stroke-width:1; fill:#696969" transform="translate(5,1) scale(.85)"/>
+	        </g>
+        </svg>
+        </defs>
+</svg>

@@ -1,0 +1,27 @@
+{% extends 'CradlepointReportingProject/base.html' %}
+
+{% block crp_content %}
+    <h1> Listing of all Cradlepoint devices in the environment </h1>
+    <br>
+    {% for row in CP_LIST|batch(5) %}
+    <div class="container">
+        <div class="row">
+            <div class="col-sm">
+                {{row[0]}}
+            </div>
+            <div class="col-sm">
+                {{row[1]}}
+            </div>
+            <div class="col-sm">
+                {{row[2]}}
+            </div>
+            <div class="col-sm">
+                {{row[3]}}
+            </div>
+            <div class="col-sm">
+                {{row[4]}}
+            </div>
+        </div>
+    </div>
+      {% endfor %}
+{% endblock %}

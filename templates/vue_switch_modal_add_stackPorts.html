@@ -1,0 +1,50 @@
+<!--add data modal - insert SFP-->
+<div
+ref="switch_StackPortsaddData"
+class="modal fade"
+:class="{ show: switch_activeStackPortsAddData, 'd-block': switch_activeStackPortsAddData }"
+tabindex="-1"
+role="dialog">
+<div class="modal-dialog" role="document">
+<div class="modal-content">
+  <div class="modal-header">
+	<h5 class="modal-title">Add Stack Ports</h5>
+	<button
+	  type="button"
+	  class="close"
+	  data-dismiss="modal"
+	  aria-label="Close"
+	  @click="switch_toggleStackPorts">
+	  <span aria-hidden="true">&times;</span>
+	</button>
+  </div>
+  <div class="modal-body">
+	<form>
+	  <div class="mb-3">
+		<label for="addModel" class="form-label">Stack Port Type:</label>
+		 <select type="text" class="form-control" id="addStackPorts" v-model="stackPortsTypeSelected" placeholder="Select Stack Port Type">
+			  <option disabled>Please select a stack port type</option>
+			  <option v-for="t in stack_port_types" v-bind:value="t.value">{%raw%}{{t.name}}{%endraw%}</option>
+	  	</select>
+	  </div>
+
+	  <div class="btn-group" role="group">
+		<button
+		  type="button"
+		  class="btn btn-primary btn-sm"
+		  @click="switch_handleStackPortAddSubmit">
+		  Submit
+		</button>
+		<button
+		  type="button"
+		  class="btn btn-danger btn-sm"
+		  @click="switch_toggleStackPorts">
+		  Cancel
+		</button>
+	  </div>
+	</form>
+  </div>
+</div>
+</div>
+</div>
+<div v-if="switch_activeStackPortsAddData" class="modal-backdrop fade show"></div>

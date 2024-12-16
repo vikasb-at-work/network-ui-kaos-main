@@ -1,0 +1,35 @@
+<style>
+    table {  
+        border-collapse: collapse;
+    }
+    th {
+        padding: 1px;
+        text-align: center;
+        border-bottom: 1px solid black;
+    }
+	td {
+		padding: 1px;
+		border-bottom: 1px solid lightgrey;
+	}
+	.align-right {
+		text-align: right;
+		padding-left: 50px;
+	}
+</style>
+
+<table>
+    <tr>
+      <th>Date</th>
+      <th>Usage</th>
+    </tr>
+    {% for cp in CP_DICT %}
+    <tr>
+      <td>{{ cp["date"] }}</td>   
+      <td class="align-right">{{ "{:,.2f}".format(cp["MB_used"]|round(2)) }}</td>   
+    </tr>
+    {% endfor %}
+  </table>
+<br>
+<br>
+
+  

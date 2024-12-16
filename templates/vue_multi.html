@@ -1,0 +1,396 @@
+{% extends 'menu.html' %}
+{% block content %}
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="check-circle-fill" fill="currentColor" viewBox="0 0 16 16">
+    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+  </symbol>
+  <symbol id="info-fill" fill="currentColor" viewBox="0 0 16 16">
+    <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+  </symbol>
+  <symbol id="exclamation-triangle-fill" fill="currentColor" viewBox="0 0 16 16">
+    <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+  </symbol>
+</svg>
+
+<template id="gridTemplate">
+  <div id="alert" class="alert fixed-top" style="margin-top: 50px; padding: 10px; z-index: 1" role="alert">
+	  <svg id="message_box_icon" class="bi flex-shrink-0 me-2" width="24" height="24" role="img"><use xlink:href=""></svg>{%raw%}{{message}}{%endraw%}
+  </div>
+  <div class="container">
+    <div class="row">
+      <div class="col-sm-10">
+        <h1>Global Variables</h1>
+        <hr><br><br>
+        <button type="button" @click="toggleAddData" class="btn btn-success btn-sm">Add Variable</button>
+        <br><br>
+        <table class="table table-hover">
+          <thead>
+            <tr>
+			  <th v-for="(c, index) in cols" :key=index scope="col">
+					<div>{%raw%}{{c.text}}{%endraw%}
+					  <template v-if="sort.column === c.name && sort.by === 'asc'">
+						<i class="fa-solid fa-sort-up" @click="sort={column: c.name, by: 'desc'}"></i>
+					  </template>
+					  <template v-else-if="sort.column === c.name && sort.by === 'desc'">
+						<i class="fa-solid fa-sort-down" @click="sort={column: c.name, by: ''}"></i>
+					  </template>
+					  <template v-else>
+						<i class="fa-solid fa-sort" @click="sort={column: c.name, by: 'asc'}"></i>
+					  </template>
+					</div>
+				   </div>
+				  </div>
+				</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(row, index) in filtered_data" :key="index">
+              <td>{%raw%}{{row.name}}{%endraw%}</td>
+              <td>{%raw%}{{row.value}}{%endraw%}</td>
+              <td>{%raw%}{{row.description}}{%endraw%}</td>
+              <td>
+                <div class="btn-group" role="group">
+                  <button type="button" @click="toggleEditData (row)" class="btn btn-warning btn-sm">Update</button>
+                  <button type="button" @click="are_you_sure(handleDelete,row)" class="btn btn-danger btn-sm">Delete</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+<!--add data modal -->
+<div
+  ref="addData"
+  class="modal fade"
+  :class="{ show: activeAddData, 'd-block': activeAddData }"
+  tabindex="-1"
+  role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Add a new variable</h5>
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close"
+          @click="toggleAddData">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <div class="mb-3">
+            <label for="addName" class="form-label">Name:</label>
+            <input
+              type="text"
+              class="form-control"
+              id="addName"
+              v-model="addData.name"
+              placeholder="Enter variable name e.g. banner_exec">
+          </div>
+
+          <div class="mb-3">
+            <label for="addValue" class="form-label">Value:</label>
+            <textarea
+              class="form-control"
+			  style="whitespace: pre"
+              id="addValue"
+			  rows=8
+			  cols=80
+              v-model="addData.value"
+			  placeholder="Enter variable value e.g. Welcome to General Mills Network\n"></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label for="addDescription" class="form-label">Description:</label>
+            <input
+              type="text"
+              class="form-control"
+              id="addDescription"
+              v-model="addData.description"
+              placeholder="Enter description e.g. This variable is for the exec banner.">
+          </div>
+
+          <div class="btn-group" role="group">
+            <button
+              type="button"
+              class="btn btn-primary btn-sm"
+              @click="handleAddSubmit">
+              Submit
+            </button>
+            <button
+              type="button"
+              class="btn btn-danger btn-sm"
+              @click="handleAddReset">
+              Reset
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<div v-if="activeAddData" class="modal-backdrop fade show"></div>
+
+<!-- edit data modal -->
+<div
+  ref="editData"
+  class="modal fade"
+  :class="{ show: activeEditData, 'd-block': activeEditData }"
+  tabindex="-1"
+  role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Update Variable</h5>
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close"
+          @click="toggleEditData">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <div class="mb-3">
+            <label for="editName" class="form-label">Name:</label>
+            <input
+              type="text"
+              class="form-control"
+              id="editCore"
+              v-model="editData.name"
+              placeholder="Enter New Variable Name">
+		    <input type="hidden" id="editData" v-model="editData.name">
+          </div>
+
+          <div class="mb-3">
+            <label for="editValue" class="form-label">Value:</label>
+            <textarea
+              class="form-control"
+              id="editValue"
+              rows=8
+              cols=80
+              v-model="editData.value"
+              placeholder="Enter variable value e.g. Welcome to General Mills Network\n"></textarea>
+          </div>
+
+		  <div class="mb-3">
+            <label for="editDescription" class="form-label">Description:</label>
+            <input
+              type="text"
+              class="form-control"
+			  style="whitespace: pre"
+              id="editDesciption"
+              v-model="editData.description"
+              placeholder="Enter New Description">
+		    <input type="hidden" id="editData" v-model="editData.description">
+          </div>
+
+          <div class="btn-group" role="group">
+            <button
+              type="button"
+              class="btn btn-primary btn-sm"
+              @click="handleEditSubmit">
+              Submit
+            </button>
+            <button
+              type="button"
+              class="btn btn-danger btn-sm"
+              @click="handleEditCancel">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<div v-if="activeEditData" class="modal-backdrop fade show"></div>
+{% include "vue_utility_modal_are_you_sure.html" %}
+  </div>
+</template>
+
+<script type="module">
+  import { createApp } from 'https://unpkg.com/petite-vue?module'
+  import 'https://unpkg.com/axios/dist/axios.min.js'
+ 
+  const endpoint = "/rest/v1/config/switchMultiVar";
+  
+  function app() {
+    return {
+      $template: '#gridTemplate',
+	  cols: [
+      {name: 'name', text: 'Name'},
+      {name: 'value', text: 'Value'},
+      {name: 'description', text: 'Description'}
+	  ],
+	  areYouSure: {title: 'WARNING - DATA WILL BE REMOVED', body: 'This action will delete data.  Are you sure?', button:'Yes, proceed.', action:undefined},
+	  data: [],
+      sort: {
+	      column: 'name',
+	      by: 'asc'
+      },
+	  message_class: "none",
+	  message: "",
+      message_icon: "",
+	  activeAddData: false,
+	  activeEditData: false,
+      addData: { name: '', description: '', value: '' },
+	  editData: { name: '', description: '', value: '', id: ''},
+	  deleteData: { id: '' },
+	  add_data(payload) {
+		const path = endpoint;
+		axios.post(path, payload).then(() => { this.get_data(); }).catch((error) => {console.log(error); this.get_data(); });
+	  },
+	  message_alert(message_class, message){
+		  this.message_class=message_class;
+		  this.message=message;
+		  switch (message_class) {
+			case 'alert-success': this.message_icon = "#check-circle-fill"; break;
+			case 'alert-info' : this.message_icon = "#info-fill"; break;
+			case 'alert-warning': this.message_icon = "#exclamation-triangle-fill"; break;
+		    case 'alert-danger' : this.message_icon = "#exclamation-triangle-fill"; break;
+		  }
+		  this.alert_box = document.getElementById("alert");
+		  this.message_box_icon = document.getElementById("message_box_icon");
+		  this.message_box_icon.getElementsByTagName("use")[0].setAttributeNS('http://www.w3.org/1999/xlink', 'href', this.message_icon);
+		  this.alert_box.classList = ("alert fixed-top");
+		  this.alert_box.classList.add(this.message_class);
+	  },
+	  edit_data(payload) {
+		const path = endpoint+"/"+this.editData.id
+		axios.put(path, payload).then(() => { this.get_data(); }).catch((error) => {console.log(error); this.get_data(); });
+		this.message_alert("alert-success","You have updated the record successfully");
+	  },
+	  delete_data(payload) {
+		  const path = endpoint+"/"+this.deleteData.id
+		  axios.delete(path).then(() => { this.get_data(); }).catch((error) => {console.log(error); this.get_data(); });
+		  this.message_alert("alert-danger","You have deleted record "+this.deleteData.id)
+	  },
+      get_data() {
+		const path = endpoint;
+		axios.get(path).then((res) => {
+			this.data = return_result(res.data);
+		}).catch((error) => {console.error(error);})
+      },
+	  get filtered_data() {
+		let new_data = this.data;
+		if (new_data[0] != "undefined") {
+		if (this.sort.by == 'asc') {
+			switch (this.sort.column) {
+				case "id": new_data.sort ( (a,b) => (a.id > b.id) ? 1: -1); break;
+				case "name": new_data.sort ( (a,b) => (a.name > b.name) ? 1: -1); break;
+				case "description": new_data.sort ( (a,b) => (a.description > b.description) ? 1: -1); break;
+				case "value": new_data.sort ( (a,b) => (a.value > b.value) ? 1: -1); break;
+			}
+		} else {
+			switch (this.sort.column) {
+				case "id": new_data.sort ( (a,b) => (a.id < b.id) ? 1: -1); break;
+				case "name": new_data.sort ( (a,b) => (a.name < b.name) ? 1: -1); break;
+				case "description": new_data.sort ( (a,b) => (a.description < b.description) ? 1: -1); break;
+				case "value": new_data.sort ( (a,b) => (a.value < b.value) ? 1: -1); break;
+			}
+		}
+		return new_data;
+		}
+	  },
+      handleAddReset() {
+		this.initForm()
+	  },
+      handleAddSubmit() {
+		this.toggleAddData();
+		const payload = {
+			name: this.addData.name,
+			description: this.addData.description,
+			value: this.addData.value
+		}	
+		this.add_data(payload);
+		this.initForm();
+		this.message_alert("alert-success","You have added a new record to the database.");
+	  },
+	  handleEditCancel() {
+		this.toggleEditData()
+	  },
+      handleEditSubmit() {
+		this.toggleEditData();
+		const payload = {
+			id: this.editData.id,
+			name: this.editData.name,
+			description: this.editData.description,
+			value: this.editData.value
+		}
+		this.edit_data(payload);
+      },
+	  handleDelete(id) {
+		if (id) {
+			this.deleteData.id = id.id;
+			this.delete_data();
+		}
+	  },
+	  initForm() {
+		this.addData.name = '';
+		this.addData.description = '';
+		this.addData.value = '';
+	  },
+      toggleAddData() {
+        const body = document.querySelector('body');
+        this.activeAddData = !this.activeAddData;
+        if (this.activeAddData) {
+          body.classList.add('modal-open');
+        } else {
+          body.classList.remove('modal-open');
+        }
+      },
+	  toggleEditData(id) {
+		if (id) {
+			this.editData.name = id.name;
+			this.editData.description = id.description;
+			this.editData.value = id.value;
+			this.editData.id = id.id;
+		}
+		const body = document.querySelector('body');
+		this.activeEditData = !this.activeEditData;
+		if (this.activeEditData) {
+			body.classList.add('modal-open');
+		} else {
+			body.classList.remove('modal-open');
+		}
+	  },
+    are_you_sure(action,id){
+        this.areYouSure.displayed=true
+        var el = document.getElementById('modalAreYouSure');
+        var bel = new bootstrap.Modal(el);
+        bel.show();
+        this.areYouSure.active = bel;
+        this.areYouSure.action=action
+        this.areYouSure.id=id
+    },
+    dismiss_are_you_sure(value){
+        if (this.areYouSure.displayed) {
+            this.areYouSure.result = value;
+            if (value) {
+                this.areYouSure.action(this.areYouSure.id)
+            }
+            this.areYouSure.displayed=false;
+            this.areYouSure.active.hide();
+        }
+    },
+	  mounted() {
+		this.initForm();
+		this.get_data();
+	  }
+    }
+  }
+
+  createApp({app}).mount()
+</script>
+
+<div v-scope="app()" @vue:mounted="mounted"></div>
+
+{% endblock %}
